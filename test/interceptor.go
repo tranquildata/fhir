@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/intervention-engine/fhir/server"
+	"github.com/eug48/fhir/server"
 )
 
 func main() {

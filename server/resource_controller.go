@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/intervention-engine/fhir/models"
-	"github.com/intervention-engine/fhir/search"
+	"github.com/eug48/fhir/models"
+	"github.com/eug48/fhir/search"
 )
 
 // ResourceController provides the necessary CRUD handlers for a given resource.

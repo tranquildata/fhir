@@ -13,8 +13,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/gin-gonic/gin"
-	"github.com/intervention-engine/fhir/models"
-	"github.com/intervention-engine/fhir/search"
+	"github.com/eug48/fhir/models"
+	"github.com/eug48/fhir/search"
 )
 
 // BatchController handles FHIR batch operations via input bundles
@@ -116,19 +116,19 @@ func (b *BatchController) Post(c *gin.Context) {
 			if createStatus[i] == "201" {
 				// Create a new ID
 				id = bson.NewObjectId().Hex()
-			newIDs[i] = id
+				newIDs[i] = id
 			}
 
 			if len(id) > 0 {
 				// Add id to the reference map
-			refMap[entry.FullUrl] = models.Reference{
-				Reference:    entry.Request.Url + "/" + id,
-				Type:         entry.Request.Url,
-				ReferencedID: id,
-				External:     new(bool),
-			}
-			// Rewrite the FullUrl using the new ID
-			entry.FullUrl = responseURL(c.Request, b.Config, entry.Request.Url, id).String()
+				refMap[entry.FullUrl] = models.Reference{
+					Reference:    entry.Request.Url + "/" + id,
+					Type:         entry.Request.Url,
+					ReferencedID: id,
+					External:     new(bool),
+				}
+				// Rewrite the FullUrl using the new ID
+				entry.FullUrl = responseURL(c.Request, b.Config, entry.Request.Url, id).String()
 			}
 
 		} else if entry.Request.Method == "PUT" && isConditional(entry) {
@@ -210,10 +210,10 @@ func (b *BatchController) Post(c *gin.Context) {
 
 			if createStatus[i] == "201" {
 				// creating
-			if err := b.DAL.PostWithID(newIDs[i], entry.Resource); err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
-				return
-			}
+				if err := b.DAL.PostWithID(newIDs[i], entry.Resource); err != nil {
+					c.AbortWithError(http.StatusInternalServerError, err)
+					return
+				}
 				if meta, ok := models.GetResourceMeta(entry.Resource); ok {
 					entry.Response.LastModified = meta.LastUpdated
 				}
