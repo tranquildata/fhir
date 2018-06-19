@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"encoding/json"
 	"time"
 )
@@ -20,19 +21,21 @@ type FHIRDateTime struct {
 }
 
 func (f *FHIRDateTime) UnmarshalJSON(data []byte) (err error) {
+	strData := string(data)
 	if len(data) <= 12 {
 		f.Precision = Precision("date")
-		f.Time, err = time.ParseInLocation("\"2006-01-02\"", string(data), time.Local)
+		f.Time, err = time.ParseInLocation("\"2006-01-02\"", strData, time.Local)
 		if err != nil {
 			f.Precision = Precision("year-month")
-			f.Time, err = time.ParseInLocation("\"2006-01\"", string(data), time.Local)
+			f.Time, err = time.ParseInLocation("\"2006-01\"", strData, time.Local)
 		}
 		if err != nil {
 			// TODO: should move time into a separate type
 			f.Precision = Precision("time")
-			f.Time, err = time.ParseInLocation("\"15:04:05\"", string(data), time.Local)
+			f.Time, err = time.ParseInLocation("\"15:04:05\"", strData, time.Local)
 		}
 		if err != nil {
+			err = fmt.Errorf("unable to parse DateTime: %s", strData)
 			f.Precision = ""
 		}
 
