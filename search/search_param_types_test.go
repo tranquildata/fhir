@@ -942,6 +942,13 @@ var referenceParamInfo = SearchParamInfo{
 	Targets: []string{"Patient"},
 }
 
+var referenceParamAnyInfo = SearchParamInfo{
+	Name:    "foo",
+	Type:    "reference",
+	Paths:   []SearchParamPath{SearchParamPath{Path: "bar", Type: "reference"}},
+	Targets: []string{"Any"},
+}
+
 func (s *SearchPTSuite) TestReferenceID(c *C) {
 	r := ParseReferenceParam("23", referenceParamInfo)
 
@@ -955,11 +962,56 @@ func (s *SearchPTSuite) TestReferenceID(c *C) {
 	c.Assert(lRef.ID, Equals, "23")
 	c.Assert(lRef.Type, Equals, "Patient")
 }
+func (s *SearchPTSuite) TestReferenceIDAny(c *C) {
+	r := ParseReferenceParam("Encounter/23", referenceParamAnyInfo)
+
+	c.Assert(r.Name, Equals, "foo")
+	c.Assert(r.Type, Equals, "reference")
+	c.Assert(r.Paths, HasLen, 1)
+	c.Assert(r.Paths[0], DeepEquals, SearchParamPath{Path: "bar", Type: "reference"})
+
+	c.Assert(r.Reference, FitsTypeOf, LocalReference{})
+	lRef := r.Reference.(LocalReference)
+	c.Assert(lRef.ID, Equals, "23")
+	c.Assert(lRef.Type, Equals, "Encounter")
+}
 
 func (s *SearchPTSuite) TestReferenceIDWithModifier(c *C) {
 	modInfo := referenceParamInfo
 	modInfo.Modifier = "Patient"
 	r := ParseReferenceParam("23", modInfo)
+
+	c.Assert(r.Name, Equals, "foo")
+	c.Assert(r.Type, Equals, "reference")
+	c.Assert(r.Paths, HasLen, 1)
+	c.Assert(r.Paths[0], DeepEquals, SearchParamPath{Path: "bar", Type: "reference"})
+	c.Assert(r.Modifier, Equals, "Patient")
+
+	c.Assert(r.Reference, FitsTypeOf, LocalReference{})
+	lRef := r.Reference.(LocalReference)
+	c.Assert(lRef.ID, Equals, "23")
+	c.Assert(lRef.Type, Equals, "Patient")
+}
+func (s *SearchPTSuite) TestReferenceIDWithModifierAny(c *C) {
+	modInfo := referenceParamAnyInfo
+	modInfo.Modifier = "Patient"
+	r := ParseReferenceParam("23", modInfo)
+
+	c.Assert(r.Name, Equals, "foo")
+	c.Assert(r.Type, Equals, "reference")
+	c.Assert(r.Paths, HasLen, 1)
+	c.Assert(r.Paths[0], DeepEquals, SearchParamPath{Path: "bar", Type: "reference"})
+	c.Assert(r.Modifier, Equals, "Patient")
+
+	c.Assert(r.Reference, FitsTypeOf, LocalReference{})
+	lRef := r.Reference.(LocalReference)
+	c.Assert(lRef.ID, Equals, "23")
+	c.Assert(lRef.Type, Equals, "Patient")
+}
+func (s *SearchPTSuite) TestReferenceIDWithModifierAny2(c *C) {
+	modInfo := referenceParamAnyInfo
+	modInfo.Modifier = "Patient"
+	r := ParseReferenceParam("Patient/23", modInfo)
 
 	c.Assert(r.Name, Equals, "foo")
 	c.Assert(r.Type, Equals, "reference")

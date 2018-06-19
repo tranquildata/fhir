@@ -1111,6 +1111,9 @@ func findReferencedType(typeFromVal string, info SearchParamInfo) string {
 				t = target
 			}
 			valid = (t == target)
+		} else {
+			valid = (t != "")
+			// fmt.Printf("findReferencedType: typeFromVal=%s info=%+v target=%+v valid=%t\n", typeFromVal, info, target, valid)
 		}
 	} else if len(info.Targets) > 1 {
 		for _, target := range info.Targets {
