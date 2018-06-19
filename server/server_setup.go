@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/url"
 	"fmt"
 	"log"
 	"time"
@@ -129,5 +130,10 @@ func (f *FHIRServer) Run() {
 		log.Println("Server: Running in read-only mode")
 	}
 
-	f.Engine.Run(":3001")
+
+	url, err := url.Parse(f.Config.ServerURL)
+	if err != nil {
+		panic("Server: Failed to parse ServerURL: " + f.Config.ServerURL)
+	}
+	f.Engine.Run(":" + url.Port())
 }
