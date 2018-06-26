@@ -74,6 +74,7 @@ var DefaultConfig = Config{
 	DatabaseKillOpPeriod:  10 * time.Second,
 	Auth:                  auth.None(),
 	EnableCISearches:      true,
+	EnableXML:             true,
 	CountTotalResults:     true,
 	ReadOnly:              false,
 	Debug:                 false,
