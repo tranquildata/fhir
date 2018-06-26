@@ -47,7 +47,7 @@ func (f *FHIRDateTime) UnmarshalJSON(data []byte) (err error) {
 	} else {
 		f.Precision = Precision("timestamp")
 		f.Time = time.Time{}
-		f.Time.UnmarshalJSON(data)
+		err = f.Time.UnmarshalJSON(data)
 	}
 	return err
 }
