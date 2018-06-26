@@ -46,10 +46,7 @@ func AbortNonFhirXMLorJSONRequestsMiddleware(c *gin.Context) {
 func hasJsonMimeType(acceptHeader string, formatOption string) int {
 	// _format overrides the Accept header according to the spec
 	switch formatOption {
-	case "json":
-	case "text/json":
-	case "application/json":
-	case "application/fhir+json":
+	case "json", "text/json", "application/json", "application/fhir+json":
 		return 2
 	}
 	if strings.Contains(acceptHeader, "application/fhir+json") || strings.Contains(acceptHeader, "application/json+fhir") {
@@ -61,10 +58,7 @@ func hasJsonMimeType(acceptHeader string, formatOption string) int {
 func hasXmlMimeType(acceptHeader string, formatOption string) int {
 	// _format overrides the Accept header according to the spec
 	switch formatOption {
-	case "xml":
-	case "text/xml":
-	case "application/xml":
-	case "application/fhir+xml":
+	case "xml", "text/xml", "application/xml", "application/fhir+xml":
 		return 2
 	}
 	if strings.Contains(acceptHeader, "application/fhir+xml") || strings.Contains(acceptHeader, "application/xml+fhir") {
