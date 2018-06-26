@@ -1862,12 +1862,16 @@ func (s *SearchPTSuite) TestQueryOptionsInvalidRevIncludeParams(c *C) {
 }
 
 func (s *SearchPTSuite) TestQueryOptionsInvalidFormatParam(c *C) {
-	// Format that is not supported (XML)
-	q := Query{Resource: "Patient", Query: "_format=xml"}
+	// Format that is not supported (Turtle)
+	q := Query{Resource: "Patient", Query: "_format=ttl"}
 	c.Assert(func() { q.Options() }, Panics, createUnsupportedSearchError("MSG_PARAM_INVALID", "Parameter \"_format\" content is invalid"))
 
 	// Valid format (json)
 	q = Query{Resource: "Patient", Query: "_format=json"}
+	q.Options()
+	
+	// Valid format (xml)
+	q = Query{Resource: "Patient", Query: "_format=xml"}
 	q.Options()
 }
 

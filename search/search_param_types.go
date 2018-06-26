@@ -220,8 +220,12 @@ func (q *Query) Options() *QueryOptions {
 			options.RevInclude = append(options.RevInclude, RevIncludeOption{Resource: incls[0], Parameter: revInclParam})
 
 		case FormatParam:
-			if queryParam.Value != "json" && queryParam.Value != "application/json" && queryParam.Value != "application/json+fhir" && queryParam.Value != "application/fhir+json" {
-				// Currently we only support JSON
+			switch (queryParam.Value) {
+			// Currently we only support JSON and (if enabled) XML
+			// _format is processed closer to the HTTP code rather than here
+			case "json", "application/json", "application/json+fhir", "application/fhir+json":
+			case "xml", "application/xml", "application/xml+fhir", "application/fhir+xml":
+			default:
 				panic(createUnsupportedSearchError("MSG_PARAM_INVALID", "Parameter \"_format\" content is invalid"))
 			}
 
