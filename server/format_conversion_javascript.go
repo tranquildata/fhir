@@ -7913,6 +7913,8 @@ function writeAttributes(attributes, options, depth) {
       quote = options.noQuotesForNativeAttributes && typeof attributes[key] !== 'string' ? '' : '"';
       attr = '' + attributes[key]; // ensure number and boolean are converted to String
       attr = attr.replace(/"/g, '&quot;');
+      // FIXME: replace with vendor fix: see https://github.com/nashwaan/xml-js/issues/69
+      attr = attr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       attrName = 'attributeNameFn' in options ? options.attributeNameFn(key, attr, currentElementName, currentElement) : key;
       result += (options.spaces && options.indentAttributes? writeIndentation(options, depth+1, false) : ' ');
       result += attrName + '=' + quote + ('attributeValueFn' in options ? options.attributeValueFn(attr, key, currentElementName, currentElement) : attr) + quote;
@@ -8321,14 +8323,18 @@ ConvertToXML.prototype.resourceToXML = function(obj, xmlObj) {
 ConvertToXML.prototype.propertyToXML = function(parentXmlObj, parentType, obj, propertyName) {
     var self = this;
 
-    if (!obj || !obj[propertyName]) return;
+    // PATCH
+    // if (!obj || !obj[propertyName]) return;
+    if (!obj || obj[propertyName] === undefined || obj[propertyName] === null) return;
 
     var propertyType = _.find(parentType._properties, function(property) {
         return property._name == propertyName;
     });
 
     function pushProperty(value) {
-        if (!value) return;
+        // PATCH
+        // if (!value) return;
+        if (value === undefined || value === null) return;
 
         var nextXmlObj = {
             type: 'element',
@@ -8360,13 +8366,21 @@ ConvertToXML.prototype.propertyToXML = function(parentXmlObj, parentType, obj, p
             case 'xhtml':
                 if (propertyName === 'div') {
                     var divXmlObj = convert.xml2js(value);
+                    // PATCH
+                    nextXmlObj.attributes = {
+                      'xmlns': 'http://www.w3.org/1999/xhtml'
+                    };
                     if (divXmlObj.elements.length === 1 && divXmlObj.elements[0].name === 'div') {
                         nextXmlObj.elements = divXmlObj.elements[0].elements;
                     }
                 }
                 break;
             case 'Resource':
-                nextXmlObj.elements.push(self.resourceToXML(value).elements[0]);
+                // PATCH
+                // nextXmlObj.elements.push(self.resourceToXML(value).elements[0]);
+                var resourceXmlObj = self.resourceToXML(value).elements[0];
+                delete resourceXmlObj.attributes.xmlns;
+                nextXmlObj.elements.push(resourceXmlObj);
                 break;
             case 'BackboneElement':
                 for (var x in propertyType._properties) {
