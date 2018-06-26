@@ -61,7 +61,9 @@ func (f FHIRDateTime) MarshalJSON() ([]byte, error) {
 		return json.Marshal(f.Time.Format("2006"))
 	} else if f.Precision == Time {
 		return json.Marshal(f.Time.Format("15:04:05"))
-	} else {
+	} else if f.Precision == Date {
 		return json.Marshal(f.Time.Format("2006-01-02"))
+	} else {
+		return nil, fmt.Errorf("FHIRDateTime.MarshalJSON: unrecognised precision: %s", f.Precision)
 	}
 }

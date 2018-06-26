@@ -69,4 +69,7 @@ func (s *FDSuite) TestFHIRDateTime(c *check.C) {
 
 	foo5, err := json.Marshal(simple.Foo[5])
 	c.Assert(string(foo5), check.Equals, "\"1994\"")
+
+
+	// TODO: test error handling
 }
