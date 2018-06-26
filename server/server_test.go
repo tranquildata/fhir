@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"runtime"
+	"path"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/search"
@@ -40,6 +43,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	config := DefaultConfig
 	config.DatabaseName = "fhir-test"
 	config.IndexConfigPath = "../fixtures/test_indexes.conf"
+	config.AllowResourcesWithoutMeta = true
 
 	// Set up the database
 	var err error
@@ -52,7 +56,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 
 	// Build routes for testing
 	s.Engine = gin.New()
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, DefaultConfig), DefaultConfig)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, config), config)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)
@@ -266,7 +270,8 @@ func (s *ServerSuite) TestGetPatientSearchPagingPreservesSearchParams(c *C) {
 }
 
 func (s *ServerSuite) TestGetPatient(c *C) {
-	res, err := http.Get(s.Server.URL + "/Patient/" + s.FixtureID)
+	url := s.Server.URL + "/Patient/" + s.FixtureID
+	res, err := http.Get(url)
 	util.CheckErr(err)
 
 	decoder := json.NewDecoder(res.Body)
@@ -313,9 +318,21 @@ func (s *ServerSuite) TestCreatePatient(c *C) {
 	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 	s.checkCreatedPatient(createdPatientID, c)
+}
+
+func resourceIdFromLocation(res *http.Response) string {
+	return resourceIdFromLocationStr(res.Header["Location"][0])
+}
+func resourceIdFromLocationStr(location string) string {
+	splitLocation := strings.Split(location, "/")
+	for i, str := range splitLocation {
+		if str == "_history" {
+			return splitLocation[i-1] // id comes before _history
+		}
+	}
+	return splitLocation[len(splitLocation)-1] // should be last
 }
 
 func (s *ServerSuite) TestCreatePatient987(c *C) {
@@ -327,8 +344,7 @@ func (s *ServerSuite) TestCreatePatient987(c *C) {
 	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 	s.checkCreatedPatient(createdPatientID, c)
 }
 
@@ -344,8 +360,7 @@ func (s *ServerSuite) TestCreatePatientConditionalCreated(c *C) {
 	res, err := client.Do(req); util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 	s.checkCreatedPatient(createdPatientID, c)
 	s.checkPatientCount(2, c) // 1st patient from SetUpTest
 }
@@ -365,8 +380,7 @@ func (s *ServerSuite) TestCreatePatientConditionalCreated2(c *C) {
 	res, err := client.Do(req); util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 	s.checkCreatedPatient(createdPatientID, c)
 	s.checkPatientCount(4, c) // 1st patient from SetUpTest
 }
@@ -389,8 +403,7 @@ func (s *ServerSuite) TestCreatePatientConditionalExists(c *C) {
 	res, err := client.Do(req); util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 200)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 	s.checkCreatedPatient(createdPatientID, c)
 
 	s.checkPatientCount(3, c)
@@ -433,6 +446,10 @@ func (s *ServerSuite) TestCreatePatientByPut(c *C) {
 }
 
 func (s *ServerSuite) checkCreatedPatient(createdPatientID string, c *C) {
+	if false {
+		_, file, line, _ := runtime.Caller(1)
+		c.Logf("checkCreatedPatient: called from %s:%d", path.Base(file), line)
+	}
 
 	worker := s.MasterSession.GetWorkerSession()
 	defer worker.Close()
@@ -544,8 +561,7 @@ func (s *ServerSuite) TestConditionalUpdatePatientNoMatch(c *C) {
 	res, err := http.DefaultClient.Do(req)
 
 	c.Assert(res.StatusCode, Equals, 201)
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 
 	patientCollection := worker.DB().C("patients")
 	count, err := patientCollection.Count()
@@ -624,10 +640,28 @@ func (s *ServerSuite) TestBatchConditionalUpdatePatientUUIDIdentifier(c *C) {
 	err = patientCollection.FindId(testPatient.Id).One(&patient)
 	util.CheckErr(err)
 	c.Assert(patient.Name[0].Given[0], Equals, "Donny") // patient should have been modified
+	c.Assert(patient.Id, Equals, testPatient.Id)
 	c.Assert(patient.Meta, NotNil)
 	c.Assert(patient.Meta.LastUpdated, NotNil)
 	c.Assert(patient.Meta.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
 	c.Assert(time.Since(patient.Meta.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+	// check prev version stored with versionId of 0 (as fixture didn't have an initial versionId of 1)
+	prevCollection := worker.DB().C("patients_prev")
+	count, err = prevCollection.Count(); util.CheckErr(err)
+	c.Assert(count, Equals, 1)
+	prevQuery := bson.M{
+		"_id._id": testPatient.Id,
+		"_id._version": 0,
+	}
+	patient = models.Patient{}
+	err = prevCollection.Find(prevQuery).One(&patient)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to find prev version (%#v)", prevQuery)
+	}
+	util.CheckErr(err)
+	c.Assert(patient.Name[0].Given[0], Equals, "Donald") // should have prev version
+	c.Assert(patient.Meta, IsNil)
 }
 
 func (s *ServerSuite) TestBatchCreate(c *C) {
@@ -664,8 +698,7 @@ func (s *ServerSuite) TestBatchCreate(c *C) {
 	c.Assert(existingPatient.Name[0].Given[0], Equals, "Donald") // patient should not have been modified
 	c.Assert(existingPatient.Meta, IsNil)
 
-	newPatientIdPos := strings.LastIndex(resBundle.Entry[0].Response.Location, "/")
-	newPatientId := resBundle.Entry[0].Response.Location[newPatientIdPos+1:]
+	newPatientId := resourceIdFromLocationStr(resBundle.Entry[0].Response.Location)
 	newPatient := models.Patient{}
 	err = patientCollection.FindId(newPatientId).One(&newPatient)
 	util.CheckErr(err)
@@ -746,8 +779,7 @@ func (s *ServerSuite) TestBatchCreateConditional201(c *C) {
 	c.Assert(existingPatient.Name[0].Given[0], Equals, "Donald") // patient should not have been modified
 	c.Assert(existingPatient.Meta, IsNil)
 
-	newPatientIdPos := strings.LastIndex(resBundle.Entry[0].Response.Location, "/")
-	newPatientId := resBundle.Entry[0].Response.Location[newPatientIdPos+1:]
+	newPatientId := resourceIdFromLocationStr(resBundle.Entry[0].Response.Location)
 	newPatient := models.Patient{}
 	err = patientCollection.FindId(newPatientId).One(&newPatient)
 	util.CheckErr(err)
@@ -851,8 +883,7 @@ func (s *ServerSuite) TestDeletePatient(c *C) {
 	res, err := http.Post(s.Server.URL+"/Patient", "application/json", data)
 	util.CheckErr(err)
 
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 
 	req, err := http.NewRequest("DELETE", s.Server.URL+"/Patient/"+createdPatientID, nil)
 	util.CheckErr(err)
@@ -1026,8 +1057,7 @@ func (s *ServerSuite) TestPatientEverything(c *C) {
 	res, err := http.Post(s.Server.URL+"/Patient", "application/json", data)
 	util.CheckErr(err)
 
-	splitLocation := strings.Split(res.Header["Location"][0], "/")
-	createdPatientID := splitLocation[len(splitLocation)-1]
+	createdPatientID := resourceIdFromLocation(res)
 
 	// Do the $everything query
 	res, err = http.Get(s.Server.URL + "/Patient/" + createdPatientID + "/$everything")

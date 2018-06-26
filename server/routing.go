@@ -37,6 +37,10 @@ func RegisterController(name string, e *gin.Engine, m []gin.HandlerFunc, dal Dat
 
 	rcItem := rcBase.Group("/:id")
 	rcItem.GET("", rc.ShowHandler)
+	if config.EnableHistory {
+		rcItem.GET("/_history/:vid", rc.ShowHandler)
+		rcItem.GET("/_history", rc.HistoryHandler)
+	}
 	rcItem.PUT("", rc.UpdateHandler)
 	rcItem.DELETE("", rc.DeleteHandler)
 

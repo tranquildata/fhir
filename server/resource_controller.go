@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/search"
 )
@@ -38,6 +39,10 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 			case *search.Error:
 				c.Render(x.HTTPStatus, CustomFhirRenderer{x.OperationOutcome, c})
 				return
+			case error:
+				outcome := models.NewOperationOutcome("fatal", "exception", x.Error())
+				c.Render(http.StatusInternalServerError, CustomFhirRenderer{outcome, c})
+				return
 			default:
 				outcome := models.NewOperationOutcome("fatal", "exception", "")
 				c.Render(http.StatusInternalServerError, CustomFhirRenderer{outcome, c})
@@ -63,21 +68,54 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 
 // LoadResource uses the resource id in the request to get a resource from the DataAccessLayer and store it in the
 // context.
-func (rc *ResourceController) LoadResource(c *gin.Context) (interface{}, error) {
-	result, err := rc.DAL.Get(c.Param("id"), rc.Name)
+func (rc *ResourceController) LoadResource(c *gin.Context) (resourceId string, result interface{}, err error) {
+	resourceId = c.Param("id")
+	resourceVersionId := c.Param("vid")
+
+	if resourceVersionId == "" {
+		result, err = rc.DAL.Get(resourceId, rc.Name)
+	} else {
+		result, err = rc.DAL.GetVersion(resourceId, resourceVersionId, rc.Name)
+	}
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	c.Set(rc.Name, result)
 	c.Set("Resource", rc.Name)
-	return result, nil
+	return
 }
 
 // ShowHandler handles requests to get a particular resource by ID.
 func (rc *ResourceController) ShowHandler(c *gin.Context) {
 	c.Set("Action", "read")
-	resource, err := rc.LoadResource(c)
+	resourceId, resource, err := rc.LoadResource(c)
+	if err == nil {
+		err = setHeaders(c, rc, false, resource, resourceId)
+		if err != nil {
+			err = errors.Wrap(err, "ShowHandler setHeaders failed")
+		}
+	}
+
+	switch (err) {
+	case nil:
+		c.Render(http.StatusOK, CustomFhirRenderer{resource, c})
+	case ErrNotFound:
+		c.Status(http.StatusNotFound)
+	case ErrDeleted:
+		c.Status(http.StatusGone)
+	default:
+		fmt.Printf("HTTP 500: %#v\n", err)
+		c.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (rc *ResourceController) HistoryHandler(c *gin.Context) {
+	c.Set("Action", "history")
+
+	baseURL := responseURL(c.Request, rc.Config, rc.Name)
+	resourceId := c.Param("id")
+	bundle, err := rc.DAL.History(*baseURL, rc.Name, resourceId)
 	if err != nil && err != ErrNotFound {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -87,7 +125,7 @@ func (rc *ResourceController) ShowHandler(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	}
-	c.Render(http.StatusOK, CustomFhirRenderer{resource, c})
+	c.Render(http.StatusOK, CustomFhirRenderer{bundle, c})
 }
 
 // EverythingHandler handles requests for everything related to a Patient or Encounter resource.
@@ -97,6 +135,10 @@ func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 			switch x := r.(type) {
 			case *search.Error:
 				c.Render(x.HTTPStatus, CustomFhirRenderer{x.OperationOutcome, c})
+				return
+			case error:
+				outcome := models.NewOperationOutcome("fatal", "exception", x.Error())
+				c.Render(http.StatusInternalServerError, CustomFhirRenderer{outcome, c})
 				return
 			default:
 				outcome := models.NewOperationOutcome("fatal", "exception", "")
@@ -137,15 +179,16 @@ func (rc *ResourceController) CreateHandler(c *gin.Context) {
 	// check for conditional create
 	ifNoneExist := c.GetHeader("If-None-Exist")
 	var httpStatus int
-	var id string
+	var resourceId string
 	if len(ifNoneExist) > 0 {
 		query := search.Query{Resource: rc.Name, Query: ifNoneExist}
-		httpStatus, id, resource, err = rc.DAL.ConditionalPost(query, resource)
+		httpStatus, resourceId, resource, err = rc.DAL.ConditionalPost(query, resource)
 	} else {
 		httpStatus = http.StatusCreated
-		id, err = rc.DAL.Post(resource)
+		resourceId, err = rc.DAL.Post(resource)
 	}
 	if err != nil {
+		err = errors.Wrap(err, "CreateHandler Post/ConditionalPost failed")
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -154,9 +197,15 @@ func (rc *ResourceController) CreateHandler(c *gin.Context) {
 	c.Set("Resource", rc.Name)
 	c.Set("Action", "create")
 
-	if len(id) > 0 {
-		c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id).String())
+	if resource != nil { // nil when e.g. HTTP status from ConditionalPost 412
+		err = setHeaders(c, rc, true, resource, resourceId)
+		if err != nil {
+			err = errors.Wrap(err, "CreateHandler setHeaders failed")
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 	}
+
 	c.Render(httpStatus, CustomFhirRenderer{resource, c})
 }
 
@@ -171,7 +220,8 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 		return
 	}
 
-	createdNew, err := rc.DAL.Put(c.Param("id"), resource)
+	resourceId := c.Param("id")
+	createdNew, err := rc.DAL.Put(resourceId, resource)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -180,7 +230,10 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 	c.Set(rc.Name, resource)
 	c.Set("Resource", rc.Name)
 
-	c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, c.Param("id")).String())
+	// spec implies location header only set when createdNew
+	setLocationHeader := createdNew
+	err = setHeaders(c, rc, setLocationHeader, resource, resourceId)
+	
 	if createdNew {
 		c.Set("Action", "create")
 		c.Render(http.StatusCreated, CustomFhirRenderer{resource, c})
@@ -204,7 +257,7 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 	}
 
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}
-	id, createdNew, err := rc.DAL.ConditionalPut(query, resource)
+	resourceId, createdNew, err := rc.DAL.ConditionalPut(query, resource)
 	if err == ErrMultipleMatches {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
@@ -215,7 +268,8 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 
 	c.Set("Resource", rc.Name)
 
-	c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id).String())
+	err = setHeaders(c, rc, true, resource, resourceId)
+
 	if createdNew {
 		c.Set("Action", "create")
 		c.Render(http.StatusCreated, CustomFhirRenderer{resource, c})
@@ -229,7 +283,8 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := rc.DAL.Delete(id, rc.Name); err != nil && err != ErrNotFound {
+	newVersionId, err := rc.DAL.Delete(id, rc.Name)
+	if err != nil && err != ErrNotFound {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -238,6 +293,9 @@ func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 	c.Set("Resource", rc.Name)
 	c.Set("Action", "delete")
 
+	if newVersionId != "" {
+		c.Header("ETag", "W/\"" + newVersionId + "\"")
+	}
 	c.Status(http.StatusNoContent)
 }
 
@@ -279,6 +337,43 @@ func responseURL(r *http.Request, config Config, paths ...string) *url.URL {
 	responseURL.Path = fmt.Sprintf("/%s", strings.Join(paths, "/"))
 
 	return &responseURL
+}
+
+func setHeaders(c *gin.Context, rc *ResourceController, setLocationHeader bool, resource interface{}, id string) error {
+	meta, ok := models.GetResourceMeta(resource)
+	if !ok {
+		if rc.Config.AllowResourcesWithoutMeta {
+			fmt.Printf("WARNING: Resource %s/%s without Meta info & AllowResourcesWithoutMeta is on. Spec compliance broken.", rc.Name, id)
+			return nil
+		}
+		return fmt.Errorf("setHeaders: Failed to get resource meta element")
+	}
+	if meta == nil {
+		if rc.Config.AllowResourcesWithoutMeta {
+			fmt.Printf("WARNING: Resource %s/%s with nil Meta info & AllowResourcesWithoutMeta is on. Spec compliance broken.", rc.Name, id)
+			return nil
+		}
+		return fmt.Errorf("setHeaders: resource meta element is nil")
+	}
+
+	if meta.LastUpdated != nil {
+		if meta.LastUpdated.Precision != models.Timestamp {
+			return fmt.Errorf("setHeaders: meta.LastUpdated not a timestamp")
+		}
+		c.Header("Last-Modified", meta.LastUpdated.Time.UTC().Format(http.TimeFormat))
+	}
+	if meta.VersionId != "" {
+		c.Header("ETag", "W/\"" + meta.VersionId + "\"")
+	}
+	if setLocationHeader {
+		if rc.Config.EnableHistory && meta.VersionId != "" {
+			c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id, "_history", meta.VersionId).String())
+		} else {
+			c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id).String())
+		}
+	}
+
+	return nil
 }
 
 // CustomFhirRenderer replaces gin's default JSON renderer and ensures

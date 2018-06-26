@@ -92,6 +92,7 @@ func (f *FHIRServer) Run() {
 	defer session.Close()
 
 	session.SetSocketTimeout(f.Config.DatabaseSocketTimeout)
+	session.SetSafe(&mgo.Safe{}) // makes the session check for errors such as ErrNotFound
 
 	Database = session.DB(f.Config.DatabaseName)
 	log.Println("MongoDB: Connected")

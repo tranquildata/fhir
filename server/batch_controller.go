@@ -83,7 +83,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			if !strings.Contains(bundle.Entry[i].Request.Url, "/") && !strings.Contains(bundle.Entry[i].Request.Url, "?") {
 				c.AbortWithError(http.StatusBadRequest, errors.New("Batch PUT url must have an id or a condition"))
 				return
-		}
+			}
 		}
 		entries[i] = &bundle.Entry[i]
 	}
@@ -99,7 +99,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		if entry.Request.Method == "POST" {
 
 			id := ""
-			
+
 			if len(entry.Request.IfNoneExist) > 0 {
 				// Conditional Create
 				query := search.Query{Resource: entry.Request.Url, Query: entry.Request.IfNoneExist}
@@ -192,7 +192,7 @@ func (b *BatchController) Post(c *gin.Context) {
 						fmt.Errorf("Couldn't identify resource and id to delete from %s", entry.Request.Url))
 					return
 				}
-				if err := b.DAL.Delete(parts[1], parts[0]); err != nil && err != ErrNotFound {
+				if _, err := b.DAL.Delete(parts[1], parts[0]); err != nil && err != ErrNotFound {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
 				}
@@ -219,13 +219,12 @@ func (b *BatchController) Post(c *gin.Context) {
 
 			if createStatus[i] == "201" {
 				// creating
-				if err := b.DAL.PostWithID(newIDs[i], entry.Resource); err != nil {
+				err := b.DAL.PostWithID(newIDs[i], entry.Resource)
+				if err != nil {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
 				}
-				if meta, ok := models.GetResourceMeta(entry.Resource); ok {
-					entry.Response.LastModified = meta.LastUpdated
-				}
+				updateEntryMeta(entry)
 			} else if createStatus[i] == "200" {
 				// have one existing resource
 				components := strings.Split(entry.FullUrl, "/")
@@ -235,13 +234,9 @@ func (b *BatchController) Post(c *gin.Context) {
 				if err != nil {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
-			}
-				entry.Resource = existingResource
-				if meta, ok := models.GetResourceMeta(existingResource); ok {
-					if meta != nil && meta.LastUpdated != nil {
-				entry.Response.LastModified = meta.LastUpdated
-			}
 				}
+				entry.Resource = existingResource
+				updateEntryMeta(entry)
 			} else if createStatus[i] == "412" {
 				entry.Response.Outcome = &models.OperationOutcome{
 					Issue: []models.OperationOutcomeIssueComponent{
@@ -277,9 +272,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			} else {
 				entry.Response.Status = "200"
 			}
-			if meta, ok := models.GetResourceMeta(entry.Resource); ok {
-				entry.Response.LastModified = meta.LastUpdated
-			}
+			updateEntryMeta(entry)
 		}
 	}
 
@@ -300,6 +293,17 @@ func (b *BatchController) Post(c *gin.Context) {
 		converter.SendXML(bundle, c)
 	} else {
 		c.JSON(http.StatusOK, bundle)
+	}
+}
+
+func updateEntryMeta(entry *models.BundleEntryComponent) {
+	if meta, ok := models.GetResourceMeta(entry.Resource); ok && meta != nil {
+		if meta.LastUpdated != nil {
+			entry.Response.LastModified = meta.LastUpdated
+		}
+		if meta.VersionId != "" {
+			entry.Response.Etag = "W/\"" + meta.VersionId + "\""
+		}
 	}
 }
 
@@ -408,7 +412,7 @@ func hasTempID(str string) bool {
 	// hasPrefix := strings.HasPrefix(str, "urn:uuid:") || strings.HasPrefix(str, "urn%3Auuid%3A")
 	// contains := strings.Contains(str, "urn:uuid:") || strings.Contains(str, "urn%3Auuid%3A")
 	// if matches != contains {
-		// fmt.Printf("re != contains (re = %t): %s\n", matches, str)
+	// fmt.Printf("re != contains (re = %t): %s\n", matches, str)
 	// }
 
 	return matches

@@ -12,6 +12,8 @@ import (
 type DataAccessLayer interface {
 	// Get retrieves a single resource instance identified by its resource type and ID
 	Get(id, resourceType string) (result interface{}, err error)
+	// GetVersion retrieves a single resource instance identified by its resource type, ID and versionId
+	GetVersion(id, versionId, resourceType string) (result interface{}, err error)
 	// Post creates a resource instance, returning its new ID.
 	Post(resource interface{}) (id string, err error)
 	// ConditionalPost creates a resource if the query finds no matches
@@ -25,7 +27,7 @@ type DataAccessLayer interface {
 	// error is returned.
 	ConditionalPut(query search.Query, resource interface{}) (id string, createdNew bool, err error)
 	// Delete removes the resource instance with the given ID.  This operation cannot be undone.
-	Delete(id, resourceType string) error
+	Delete(id, resourceType string) (newVersionId string, err error)
 	// ConditionalDelete removes zero or more resources matching the passed in search criteria.  This operation cannot
 	// be undone.
 	ConditionalDelete(query search.Query) (count int, err error)
@@ -35,10 +37,15 @@ type DataAccessLayer interface {
 	// search options that don't make sense in this context: _include, _revinclude, _summary, _elements, _contained,
 	// and _containedType.  It honors search options such as _count, _sort, and _offset.
 	FindIDs(searchQuery search.Query) (result []string, err error)
+	// History executes the history operation (partial support)
+	History(baseURL url.URL, resoureType string, id string) (result *models.Bundle, err error)
 }
 
-// ErrNotFound indicates an error
+// ErrNotFound indicates that the resource was not found (HTTP 404)
 var ErrNotFound = errors.New("Resource Not Found")
+
+// ErrDeleted indicates that the resource has been deleted (HTTP 410)
+var ErrDeleted = errors.New("Resource deleted")
 
 // ErrMultipleMatches indicates that the conditional update query returned multiple matches
 var ErrMultipleMatches = errors.New("Multiple Matches")

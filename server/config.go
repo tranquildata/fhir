@@ -52,6 +52,14 @@ type Config struct {
 	// case-insesitivity when performing searches on string fields, codes, etc.
 	EnableCISearches bool
 
+	// Whether to support storing previous versions of each resource
+	EnableHistory bool
+
+	// Whether to allow retrieving resources with no meta component,
+	// meaning Last-Modified & ETag headers can't be generated (breaking spec compliance)
+	// May be needed to support previous databases
+	AllowResourcesWithoutMeta bool
+
 	// ReadOnly toggles whether the server is in read-only mode. In read-only
 	// mode any HTTP verb other than GET, HEAD or OPTIONS is rejected.
 	ReadOnly bool
@@ -74,6 +82,7 @@ var DefaultConfig = Config{
 	DatabaseKillOpPeriod:  10 * time.Second,
 	Auth:                  auth.None(),
 	EnableCISearches:      true,
+	EnableHistory:         true,
 	EnableXML:             true,
 	CountTotalResults:     true,
 	ReadOnly:              false,
