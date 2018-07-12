@@ -123,9 +123,12 @@ func (f *FHIRServer) Run() {
 	if !f.Config.ReadOnly {
 		worker := masterSession.GetWorkerSession()
 		defer worker.Close()
-		err = worker.DB().C("countcache").DropCollection()
-		if err != nil {
-			log.Println("Server: Failed to clear cache, or cache was empty")
+		count, err := worker.DB().C("countcache").Count()
+		if count > 0 || err != nil {
+			err = worker.DB().C("countcache").DropCollection()
+			if err != nil {
+				panic(fmt.Sprintf("Server: Failed to clear count cache (%+v)", err))
+			}
 		}
 	} else {
 		log.Println("Server: Running in read-only mode")
