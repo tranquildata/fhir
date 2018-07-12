@@ -7,7 +7,6 @@
   "identifier": [
     {
       "use": "usual",
-      "label": "MRN",
       "system": "urn:oid:0.1.2.3.4.5.6.7",
       "value": "urn:uuid:6002c2ab-9571-4db7-9a79-87163475b071"
     }

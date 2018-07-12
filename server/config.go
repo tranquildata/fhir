@@ -60,6 +60,9 @@ type Config struct {
 	// May be needed to support previous databases
 	AllowResourcesWithoutMeta bool
 
+	// ValidatorURL is an endpoint to which validation requests will be sent
+	ValidatorURL string
+
 	// ReadOnly toggles whether the server is in read-only mode. In read-only
 	// mode any HTTP verb other than GET, HEAD or OPTIONS is rejected.
 	ReadOnly bool

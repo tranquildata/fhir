@@ -315,9 +315,11 @@
 	},
 	"effectiveDateTime": "2011-11-01T11:03:20-04:00",
 	"issued": "2011-11-02T13:30:00-04:00",
-	"performer": [{
-		"reference": "Organization/4072118964683285544",
-		"display": "Acme Laboratory, Inc"
+	"performer": [
+		{ "actor": {
+			"reference": "Organization/4072118964683285544",
+			"display": "Acme Laboratory, Inc"
+		}
 	}],
 	"result": [{
 		"reference": "Observation/5433989216383325950"
@@ -488,7 +490,7 @@
 		"reference": "Patient/4954037118555241963"
 	},
 	"notGiven": false,
-	"reported": false
+	"primarySource": false
 }, {
   "resourceType": "ImagingStudy",
   "id": "7045606679745526994",

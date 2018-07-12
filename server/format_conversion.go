@@ -1,8 +1,7 @@
 package server
 
 import (
-	"io"
-	"io/ioutil"
+	"fmt"
 	"encoding/json"
 	"github.com/dop251/goja"
 	"github.com/gin-gonic/gin"
@@ -48,30 +47,32 @@ func (c *FhirFormatConverter) XmlToJson(xml string) (json string, err error) {
 	if err != nil {
 		return
 	}
-	json = jsonVal.Export().(string)
+	var isString bool
+	json, isString = jsonVal.Export().(string)
+	if !isString {
+		return "", fmt.Errorf("fhir.xmlToJson: return value is not a string but %T", jsonVal.Export())
+	}
 	return
 }
 
 func (c *FhirFormatConverter) JsonToXml(json string) (xml string, err error) {
 
+	if json == "" {
+		return "", nil
+	}
+	// fmt.Printf("[JsonToXML] json: %s\n", json)
 	c.runtime.Set("strJSON", c.runtime.ToValue(json))
+	// FIXME: JSON.parse doesn't correctly parse FHIR decimals..
 	xmlVal, err := c.runtime.RunString("fhir.objToXml(JSON.parse(strJSON));")
 	if err != nil {
 		return
 	}
-	xml = xmlVal.Export().(string)
+	var isString bool
+	xml, isString = xmlVal.Export().(string)
+	if !isString {
+		return "", fmt.Errorf("fhir.JsonToXml: return value is not a string but %T", xmlVal.Export())
+	}
 	return
-}
-
-func (c *FhirFormatConverter) ReadXML(body io.Reader, obj interface{}) error {
-	bodyBytes, err := ioutil.ReadAll(body)
-	if err != nil { return err }
-
-	jsonStr, err := c.XmlToJson(string(bodyBytes))
-	if err != nil { return err }
-
-	err = json.Unmarshal([]byte(jsonStr), obj)
-	return err
 }
 
 func (c *FhirFormatConverter) SendXML(obj interface{}, context *gin.Context) error {

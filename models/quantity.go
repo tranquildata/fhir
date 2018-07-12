@@ -27,7 +27,7 @@
 package models
 
 type Quantity struct {
-	Value      *float64 `bson:"value,omitempty" json:"value,omitempty"`
+	Value      *Decimal `bson:"value,omitempty" json:"value,omitempty"`
 	Comparator string   `bson:"comparator,omitempty" json:"comparator,omitempty"`
 	Unit       string   `bson:"unit,omitempty" json:"unit,omitempty"`
 	System     string   `bson:"system,omitempty" json:"system,omitempty"`

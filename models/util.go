@@ -975,7 +975,7 @@ func MapToResource(resourceMap interface{}, asPointer bool) (interface{}, error)
 // bson.M map to a specific resource type.
 func BSONMapToResource(bsonMap bson.M, asPointer bool) (interface{}, error) {
 	data, _ := bson.Marshal(bsonMap)
-	raw := bson.Raw{3, data}
+	raw := bson.Raw{ Kind: 3, Data: data}
 	t := bsonMap["resourceType"]
 	switch t {
 	case "Account":

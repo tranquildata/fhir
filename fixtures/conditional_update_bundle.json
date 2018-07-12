@@ -65,7 +65,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Encounter?date=sa2011-11-01T07%3A59%3A59-04%3A00\u0026date=lt2011-11-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
+        "url":"Encounter?date=sa2011-11-01T07%3A59%3A58-04%3A00\u0026date=lt2011-11-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
       }
     },
     {
@@ -95,7 +95,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Encounter?date=sa2012-10-01T07%3A59%3A59-04%3A00\u0026date=lt2012-10-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
+        "url":"Encounter?date=sa2012-10-01T07%3A59%3A58-04%3A00\u0026date=lt2012-10-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
       }
     },
     {
@@ -125,7 +125,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Encounter?date=sa2012-11-01T07%3A59%3A59-04%3A00\u0026date=lt2012-11-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
+        "url":"Encounter?date=sa2012-11-01T07%3A58%3A59-04%3A00\u0026date=lt2012-11-01T08%3A00%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fwww.ama-assn.org%2Fgo%2Fcpt%7C99201"
       }
     },
     {
@@ -155,7 +155,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Encounter?date=sa2012-11-01T08%3A44%3A59-04%3A00\u0026date=lt2012-11-01T08%3A45%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fsnomed.info%2Fsct%7C171047005"
+        "url":"Encounter?date=sa2012-11-01T08%3A43%3A59-04%3A00\u0026date=lt2012-11-01T08%3A45%3A01-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026type=http%3A%2F%2Fsnomed.info%2Fsct%7C171047005"
       }
     },
     {
@@ -309,12 +309,14 @@
         },
         "valueQuantity":{
           "value":8,
+          "system": "http://unitsofmeasure.org",
+          "code": "%",
           "unit":"%"
         }
       },
       "request":{
         "method":"PUT",
-        "url":"Observation?code=http%3A%2F%2Floinc.org%7C17856-6\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-quantity=8%7C%7C%25"
+        "url":"Observation?code=http%3A%2F%2Floinc.org%7C17856-6\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-quantity=8%7Chttp%3A%2F%2Funitsofmeasure.org%7C%25"
       }
     },
     {
@@ -350,7 +352,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Procedure?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
+        "url":"Procedure?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
       }
     },
     {
@@ -394,7 +396,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"DiagnosticReport?code=http%3A%2F%2Floinc.org%7C59776-5\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
+        "url":"DiagnosticReport?code=http%3A%2F%2Floinc.org%7C59776-5\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
       }
     },
     {
@@ -434,7 +436,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433581000124101"
+        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433581000124101"
       }
     },
     {
@@ -474,7 +476,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433571000124104"
+        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433571000124104"
       }
     },
     {
@@ -514,7 +516,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A39-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433491000124102"
+        "url":"Observation?code=http%3A%2F%2Fsnomed.info%2Fsct%7C116783008\u0026date=sa2011-11-01T08%3A16%3A38-04%3A00\u0026date=lt2011-11-01T08%3A16%3A41-04%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0\u0026value-concept=http%3A%2F%2Fsnomed.info%2Fsct%7C433491000124102"
       }
     },
     {
@@ -550,7 +552,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"Procedure?code=http%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Ficd-10%7C0210093%2Chttp%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Ficd-9%7C36.10%2Chttp%3A%2F%2Fsnomed.info%2Fsct%7C10190003\u0026date=sa2013-03-02T10%3A44%3A59-05%3A00\u0026date=lt2013-03-02T10%3A45%3A01-05%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
+        "url":"Procedure?code=http%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Ficd-10%7C0210093%2Chttp%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Ficd-9%7C36.10%2Chttp%3A%2F%2Fsnomed.info%2Fsct%7C10190003\u0026date=sa2013-03-02T10%3A44%3A58-05%3A00\u0026date=lt2013-03-02T10%3A45%3A01-05%3A00\u0026patient=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
       }
     },
     {
@@ -578,7 +580,7 @@
       },
       "request":{
         "method":"PUT",
-        "url":"MedicationStatement?code=http%3A%2F%2Fwww.nlm.nih.gov%2Fresearch%2Fumls%2Frxnorm%2F%7C1000048\u0026effective=sa2012-10-01T07%3A59%3A59-04%3A00\u0026effective=lt2012-10-01T08%3A00%3A01-04%3A00\u0026subject=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
+        "url":"MedicationStatement?code=http%3A%2F%2Fwww.nlm.nih.gov%2Fresearch%2Fumls%2Frxnorm%2F%7C1000048\u0026effective=sa2012-10-01T07%3A59%3A58-04%3A00\u0026effective=lt2012-10-01T08%3A00%3A01-04%3A00\u0026subject=urn%3Auuid%3Ae3c242ee-0f2a-4921-90bf-895c2c4da1f0"
       }
     },
     {
@@ -641,7 +643,7 @@
       "resource":{
         "resourceType":"AllergyIntolerance",
         "id":"c46dd0bc-555d-4da8-ac14-be763688d05f",
-        "onset":"2012-01-01T00:42:00-05:00",
+        "onsetDateTime":"2012-01-01T00:42:00-05:00",
         "patient":{
           "reference":"urn:uuid:e3c242ee-0f2a-4921-90bf-895c2c4da1f0"
         },
@@ -654,7 +656,7 @@
           ],
           "text":"Medication, Allergy: Influenza Vaccine (Code List: 2.16.840.1.113883.3.526.3.1254)"
         },
-        "status":"active",
+        "clinicalStatus":"active",
         "criticality":"CRITH",
         "reaction":[
           {

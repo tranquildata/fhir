@@ -1,11 +1,11 @@
 package server
 
 import (
+	"time"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/eug48/fhir/models"
+	"github.com/eug48/fhir/models2"
 	"github.com/eug48/fhir/search"
 )
 
@@ -31,21 +32,30 @@ func NewBatchController(dal DataAccessLayer, config Config) *BatchController {
 	}
 }
 
+func abortWithErr(c *gin.Context, err error) {
+	outcome := &models.OperationOutcome{
+		Issue: []models.OperationOutcomeIssueComponent{
+			models.OperationOutcomeIssueComponent{
+				Severity: "fatal", // fatal means "The issue caused the action to fail, and no further checking could be performed."
+				Code:     "structure",
+				Diagnostics: err.Error(),
+			},
+		},
+	}
+	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+
 // Post processes and incoming batch request
 func (b *BatchController) Post(c *gin.Context) {
-	bundle := &models.Bundle{}
-	err := FHIRBind(c, bundle)
+	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
-		outcome := &models.OperationOutcome{
-			Issue: []models.OperationOutcomeIssueComponent{
-				models.OperationOutcomeIssueComponent{
-					Severity: "fatal", // fatal means "The issue caused the action to fail, and no further checking could be performed."
-					Code:     "structure",
-					Diagnostics: err.Error(),
-				},
-			},
-		}
-		c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+		abortWithErr(c, err)
+		return
+	}
+
+	bundle, err := bundleResource.AsShallowBundle()
+	if err != nil {
+		abortWithErr(c, err)
 		return
 	}
 
@@ -53,7 +63,7 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	// Loop through the entries, ensuring they have a request and that we support the method,
 	// while also creating a new entries array that can be sorted by method.
-	entries := make([]*models.BundleEntryComponent, len(bundle.Entry))
+	entries := make([]*models2.ShallowBundleEntryComponent, len(bundle.Entry))
 	for i := range bundle.Entry {
 		if bundle.Entry[i].Request == nil {
 			c.AbortWithError(http.StatusBadRequest, errors.New("Entries in a batch operation require a request"))
@@ -92,7 +102,7 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	// Now loop through the entries, assigning new IDs to those that are POST or Conditional PUT and fixing any
 	// references to reference the new ID.
-	refMap := make(map[string]models.Reference)
+	refMap := make(map[string]string)
 	newIDs := make([]string, len(entries))
 	createStatus := make([]string, len(entries))
 	for i, entry := range entries {
@@ -130,12 +140,7 @@ func (b *BatchController) Post(c *gin.Context) {
 
 			if len(id) > 0 {
 				// Add id to the reference map
-				refMap[entry.FullUrl] = models.Reference{
-					Reference:    entry.Request.Url + "/" + id,
-					Type:         entry.Request.Url,
-					ReferencedID: id,
-					External:     new(bool),
-				}
+				refMap[entry.FullUrl] = entry.Request.Url + "/" + id
 				// Rewrite the FullUrl using the new ID
 				entry.FullUrl = responseURL(c.Request, b.Config, entry.Request.Url, id).String()
 			}
@@ -161,7 +166,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			// Use a regex to swap out the temp IDs with the new IDs
 			for oldID, ref := range refMap {
 				re := regexp.MustCompile("([=,])(" + oldID + "|" + url.QueryEscape(oldID) + ")(&|,|$)")
-				entry.Request.Url = re.ReplaceAllString(entry.Request.Url, "${1}"+ref.Reference+"${3}")
+				entry.Request.Url = re.ReplaceAllString(entry.Request.Url, "${1}"+ref+"${3}")
 			}
 
 			if hasTempID(entry.Request.Url) {
@@ -177,8 +182,8 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	}
 
-	// Update all the references to the entries (to reflect newly assigned IDs)
-	updateAllReferences(entries, refMap)
+	// When being converted to BSON references will be updated to reflect newly assigned IDs
+	bundle.SetTransformReferencesMap(refMap)
 
 	// Then make the changes in the database and update the entry response
 	for i, entry := range entries {
@@ -247,6 +252,7 @@ func (b *BatchController) Post(c *gin.Context) {
 						},
 					},
 				}
+				entry.Resource = nil
 			}
 			entry.Request = nil
 
@@ -296,18 +302,26 @@ func (b *BatchController) Post(c *gin.Context) {
 	}
 }
 
-func updateEntryMeta(entry *models.BundleEntryComponent) {
-	if meta, ok := models.GetResourceMeta(entry.Resource); ok && meta != nil {
-		if meta.LastUpdated != nil {
-			entry.Response.LastModified = meta.LastUpdated
+func updateEntryMeta(entry *models2.ShallowBundleEntryComponent) {
+	
+	// TODO: keep LastModified as a string
+	lastUpdated := entry.Resource.LastUpdated()
+	if lastUpdated != "" {
+		t := time.Time{}
+		err := t.UnmarshalJSON([]byte("\"" + lastUpdated + "\""))
+		if err != nil {
+			panic(fmt.Errorf("failed to parse LastUpdated String: %s", lastUpdated))
 		}
-		if meta.VersionId != "" {
-			entry.Response.Etag = "W/\"" + meta.VersionId + "\""
-		}
+		entry.Response.LastModified = &models.FHIRDateTime{ Time: t, Precision: "timestamp" }
+	}
+
+	versionId := entry.Resource.VersionId()
+	if versionId != "" {
+		entry.Response.Etag = "W/\"" + versionId + "\""
 	}
 }
 
-func (b *BatchController) resolveConditionalPut(request *http.Request, entryIndex int, entry *models.BundleEntryComponent, newIDs []string, refMap map[string]models.Reference) error {
+func (b *BatchController) resolveConditionalPut(request *http.Request, entryIndex int, entry *models2.ShallowBundleEntryComponent, newIDs []string, refMap map[string]string) error {
 	// Do a preflight to either get the existing ID, get a new ID, or detect multiple matches (not allowed)
 	parts := strings.SplitN(entry.Request.Url, "?", 2)
 	query := search.Query{Resource: parts[0], Query: parts[1]}
@@ -331,12 +345,7 @@ func (b *BatchController) resolveConditionalPut(request *http.Request, entryInde
 
 	// Add the new ID to the reference map
 	newIDs[entryIndex] = id
-	refMap[entry.FullUrl] = models.Reference{
-		Reference:    entry.Request.Url,
-		Type:         query.Resource,
-		ReferencedID: id,
-		External:     new(bool),
-	}
+	refMap[entry.FullUrl] = entry.Request.Url
 
 	// Rewrite the FullUrl using the new ID
 	entry.FullUrl = responseURL(request, b.Config, entry.Request.Url, id).String()
@@ -344,57 +353,7 @@ func (b *BatchController) resolveConditionalPut(request *http.Request, entryInde
 	return nil
 }
 
-func updateAllReferences(entries []*models.BundleEntryComponent, refMap map[string]models.Reference) {
-	// First, get all the references by reflecting through the fields of each model
-	var refs []*models.Reference
-	for _, entry := range entries {
-		model := entry.Resource
-		if model != nil {
-			entryRefs := findRefsInValue(reflect.ValueOf(model))
-			refs = append(refs, entryRefs...)
-		}
-	}
-	// Then iterate through and update as necessary
-	for _, ref := range refs {
-		newRef, found := refMap[ref.Reference]
-		if found {
-			*ref = newRef
-		}
-	}
-}
-
-func findRefsInValue(val reflect.Value) []*models.Reference {
-	var refs []*models.Reference
-
-	// Dereference pointers in order to simplify things
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
-
-	// Make sure it's a valid thing, else return right away
-	if !val.IsValid() {
-		return refs
-	}
-
-	// Handle it if it's a ref, otherwise iterate its members for refs
-	if val.Type() == reflect.TypeOf(models.Reference{}) {
-		refs = append(refs, val.Addr().Interface().(*models.Reference))
-	} else if val.Kind() == reflect.Struct {
-		for i := 0; i < val.NumField(); i++ {
-			subRefs := findRefsInValue(val.Field(i))
-			refs = append(refs, subRefs...)
-		}
-	} else if val.Kind() == reflect.Slice {
-		for i := 0; i < val.Len(); i++ {
-			subRefs := findRefsInValue(val.Index(i))
-			refs = append(refs, subRefs...)
-		}
-	}
-
-	return refs
-}
-
-func isConditional(entry *models.BundleEntryComponent) bool {
+func isConditional(entry *models2.ShallowBundleEntryComponent) bool {
 	if entry.Request == nil {
 		return false
 	} else if entry.Request.Method != "PUT" && entry.Request.Method != "DELETE" {
@@ -419,7 +378,7 @@ func hasTempID(str string) bool {
 }
 
 // Support sorting by request method, as defined in the spec
-type byRequestMethod []*models.BundleEntryComponent
+type byRequestMethod []*models2.ShallowBundleEntryComponent
 
 func (e byRequestMethod) Len() int {
 	return len(e)

@@ -1,17 +1,20 @@
 package search
 
 import (
-	"runtime"
+	"bytes"
 	"crypto/md5"
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
-	"regexp"
-	"strings"
 	"path"
+	"regexp"
+	"runtime"
+	"strings"
 
 	"strconv"
 
 	"github.com/eug48/fhir/models"
+	"github.com/eug48/fhir/models2"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -36,6 +39,27 @@ func (b *BSONQuery) usesPipeline() bool {
 	return b.Query == nil
 }
 
+func (b *BSONQuery) DebugString() string {
+	out := bytes.Buffer{}
+	out.WriteString(fmt.Sprintf("Resource: %s; ", b.Resource))
+	if b.Query != nil {
+		queryJSON, err := bson.MarshalJSON(b.Query)
+		if err != nil { panic(err) }
+		out.WriteString("Query: ")
+		// out.WriteString(fmt.Sprintf("%+v; as JSON: ", b.Query))
+		out.Write(queryJSON)
+		out.WriteString("; ")
+	}
+	if b.Pipeline != nil {
+		pipelineJson, err := bson.MarshalJSON(b.Pipeline)
+		if err != nil { panic(err) }
+		out.WriteString("Pipeline: ")
+		out.Write(pipelineJson)
+		out.WriteString("; ")
+	}
+	return out.String()
+}
+
 // CountCache is used to cache the total count of results for a specific query.
 // The Id is the md5 hash of the query string.
 type CountCache struct {
@@ -50,6 +74,17 @@ type MongoSearcher struct {
 	enableCISearches  bool
 	readonly          bool
 }
+
+func (dal *MongoSearcher) debug(format string, a ...interface{}) {
+	return
+	fmt.Println()
+	fmt.Print("[search] ")
+	fmt.Printf(format, a...)
+	fmt.Println()
+	fmt.Println()
+}
+
+
 
 // NewMongoSearcher creates a new instance of a MongoSearcher, given a pointer
 // to an mgo.Database.
@@ -71,19 +106,7 @@ func (m *MongoSearcher) GetDB() *mgo.Database {
 // Search takes a Query and returns a set of results (Resources).
 // If an error occurs during the search the corresponding mongo error
 // is returned and results will be nil.
-func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, err error) {
-	options := query.Options()
-
-	// Check if the search uses _include or _revinclude. If so, we'll need to
-	// return a slice of Resources PLUS related Resources.
-	if query.UsesIncludes() || query.UsesRevIncludes() {
-		results = models.NewSlicePlusForResourceName(query.Resource, 0, 0)
-	} else {
-		results = models.NewSliceForResourceName(query.Resource, 0, 0)
-	}
-
-	// build the BSON query (without any options)
-	bsonQuery := m.convertToBSON(query)
+func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, total uint32, err error) {
 
 	// Check to see if we already have a count cached for this query. If so, use it
 	// and tell the searcher to skip doing the count. This can only be done reliably if
@@ -104,7 +127,7 @@ func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, 
 
 	// There's no point in running the query if we already know it will return 0 results.
 	if m.readonly && !doCount && total == 0 {
-		return results, 0, nil
+		return resources, 0, nil
 	}
 
 	// Don't do the count at all if m.countTotalResults is disabled.
@@ -115,14 +138,18 @@ func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, 
 	var computedTotal uint32
 	var mgoPipe *mgo.Pipe
 	var mgoQuery *mgo.Query
+	options := query.Options()
+	bsonQuery := m.convertToBSON(query) // build the BSON query (without any options)
 	usesPipeline := bsonQuery.usesPipeline()
 
 	// Execute the query
 	if usesPipeline {
 		// The (slower) aggregation pipeline is used if the query contains includes or revincludes
+		m.debug("aggregate (%s) %#v count=%b", bsonQuery.DebugString(), options, doCount)
 		mgoPipe, computedTotal, err = m.aggregate(bsonQuery, options, doCount)
 	} else {
 		// Otherwise, the (faster) standard query is used
+		m.debug("find (%s) %#v count=%b", bsonQuery.DebugString(), options, doCount)
 		mgoQuery, computedTotal, err = m.find(bsonQuery, options, doCount)
 	}
 
@@ -130,7 +157,7 @@ func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, 
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			// This was a valid search that returned zero results
-			return results, 0, nil
+			return resources, 0, nil
 		}
 
 		e, ok := err.(*mgo.QueryError)
@@ -150,18 +177,25 @@ func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, 
 	// and just return the total.
 	if options.Summary == "count" {
 		// results should be an empty slice
-		return results, computedTotal, nil
+		return resources, computedTotal, nil
 	}
 
 	// Collect the results
+	var bsonResults []bson.D
 	if usesPipeline {
-		err = mgoPipe.All(results)
+		err = mgoPipe.All(&bsonResults)
 	} else {
-		err = mgoQuery.All(results)
+		err = mgoQuery.All(&bsonResults)
 	}
-
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.Wrap(err, "Search: pipeline or query failed")
+	}
+	for _, bsonDoc := range bsonResults {
+		resource, err := models2.NewResourceFromBSON(bsonDoc)
+		if err != nil {
+			return nil, 0, errors.Wrap(err, "Search: NewResourceFromBSON failed")
+		}
+		resources = append(resources, resource)
 	}
 
 	// If the count wasn't already in cache, add it to cache.
@@ -180,7 +214,7 @@ func (m *MongoSearcher) Search(query Query) (results interface{}, total uint32, 
 		total = computedTotal
 	}
 
-	return results, total, nil
+	return resources, total, nil
 }
 
 // aggregate takes a BSONQuery and runs its Pipeline through the mongo aggregation framework. Any query options
@@ -408,7 +442,7 @@ func (m *MongoSearcher) convertOptionsToPipelineStages(resource string, o *Query
 					continue
 				}
 				// Mongo paths shouldn't have the array indicators, so remove them
-				localField := strings.Replace(inclPath.Path, "[]", "", -1) + ".referenceid"
+				localField := strings.Replace(inclPath.Path, "[]", "", -1) + ".reference__id"
 				for i, inclTarget := range incl.Parameter.Targets {
 					if inclTarget == "Any" {
 						continue
@@ -453,7 +487,7 @@ func (m *MongoSearcher) convertOptionsToPipelineStages(resource string, o *Query
 					continue
 				}
 				// Mongo paths shouldn't have the array indicators, so remove them
-				foreignField := strings.Replace(inclPath.Path, "[]", "", -1) + ".referenceid"
+				foreignField := strings.Replace(inclPath.Path, "[]", "", -1) + ".reference__id"
 				as := fmt.Sprintf("_revIncluded%sResourcesReferencing%s", incl.Parameter.Resource, strings.Title(incl.Parameter.Name))
 				// If there are multiple paths, we need to store each path separately
 				if len(incl.Parameter.Paths) > 1 {
@@ -496,7 +530,7 @@ func (m *MongoSearcher) createChainedSearchPipelineStages(searchParam SearchPara
 	for i, path := range lookupRef.Paths {
 		stages[i] = bson.M{"$lookup": bson.M{
 			"from":         collectionName,
-			"localField":   convertSearchPathToMongoField(path.Path) + ".referenceid",
+			"localField":   convertSearchPathToMongoField(path.Path) + ".reference__id",
 			"foreignField": "_id",
 			"as":           "_lookup" + strconv.Itoa(i),
 		}}
@@ -547,7 +581,7 @@ func (m *MongoSearcher) createReverseChainedSearchPipelineStages(searchParam Sea
 		stages[i] = bson.M{"$lookup": bson.M{
 			"from":         collectionName,
 			"localField":   "_id",
-			"foreignField": convertSearchPathToMongoField(path.Path) + ".referenceid",
+			"foreignField": convertSearchPathToMongoField(path.Path) + ".reference__id",
 			"as":           "_lookup" + strconv.Itoa(i),
 		}}
 	}
@@ -709,8 +743,10 @@ func (m *MongoSearcher) createCompositeQueryObject(c *CompositeParam) bson.M {
 func (m *MongoSearcher) createDateQueryObject(d *DateParam) bson.M {
 	single := func(p SearchParamPath) bson.M {
 		switch p.Type {
-		case "date", "dateTime", "instant":
+		case "date", "dateTime":
 			return buildBSON(p.Path, dateSelector(d))
+		case "instant":
+			return buildBSON(p.Path, instantSelector(d))
 		case "Period":
 			return buildBSON(p.Path, periodSelector(d))
 		case "Timing":
@@ -723,68 +759,141 @@ func (m *MongoSearcher) createDateQueryObject(d *DateParam) bson.M {
 	return orPaths(single, d.Paths)
 }
 
-// Note that this solution is not 100% correct because we don't represent dates as ranges in the
-// database -- but the FHIR spec calls for this sort of behavior to correctly implement these
-// searches.  An easy example is that while 2012-01-01 should be compared as the range from
-// 00:00:00.000 to 23:59:59.999, we currently only compare against 00:00:00.000 -- so some things
-// that should match, might not.
-// TODO: Fix this via more complex search criteria (not likely feasible) or by a different representation in the
-// database (e.g., storing upper and lower bounds of dates in the DB).
 func dateSelector(d *DateParam) bson.M {
-	var timeCriteria bson.M
-	switch d.Prefix {
-	case EQ:
-		timeCriteria = bson.M{
-			"$gte": d.Date.RangeLowIncl(),
-			"$lt":  d.Date.RangeHighExcl(),
-		}
-	case GT, SA:
-		timeCriteria = bson.M{
-			"$gt": d.Date.RangeLowIncl(),
-		}
-	case LT, EB:
-		timeCriteria = bson.M{
-			"$lt": d.Date.RangeLowIncl(),
-		}
-	case GE:
-		timeCriteria = bson.M{
-			"$gte": d.Date.RangeLowIncl(),
-		}
-	case LE:
-		timeCriteria = bson.M{
-			"$lt": d.Date.RangeHighExcl(),
-		}
-	default:
-		panic(createUnsupportedSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", d.Name)))
-	}
-
-	return bson.M{"time": timeCriteria}
-}
-
-// Note that this solution is not 100% correct because we don't represent dates as ranges in the
-// database -- but the FHIR spec calls for this sort of behavior to correctly implement these
-// searches.  An easy example is that while 2012-01-01 should be compared as the range from
-// 00:00:00.000 to 23:59:59.999, we currently only compare against 00:00:00.000 -- so some things
-// that should match, might not.
-// TODO: Fix this via more complex search criteria (not likely feasible) or by a different representation in the
-// database (e.g., storing upper and lower bounds of dates in the DB).
-func periodSelector(d *DateParam) bson.M {
 	switch d.Prefix {
 	case EQ:
 		return bson.M{
-			"start.time": bson.M{
+			// "the range of the search value fully contains the range of the target value"
+
+			"__from": bson.M{
 				"$gte": d.Date.RangeLowIncl(),
 			},
-			"end.time": bson.M{
-				"$lt": d.Date.RangeHighExcl(),
+			"__to": bson.M{
+				"$lte": d.Date.RangeHighExcl(),
 			},
 		}
 	case GT:
 		return bson.M{
+			// "the range above the search value intersects (i.e. overlaps) with the range of the target value"
+			"__to": bson.M{
+				"$gt": d.Date.RangeHighExcl(),
+			},
+		}
+	case LT:
+		return bson.M{
+			// "the range below the search value intersects (i.e. overlaps) with the range of the target value"
+			"__from": bson.M{
+				"$lt": d.Date.RangeLowIncl(),
+			},
+		}
+	case GE:
+		return bson.M{
 			"$or": []bson.M{
 				bson.M{
-					"end.time": bson.M{
-						"$gt": d.Date.RangeLowIncl(),
+					// "the range above the search value intersects (i.e. overlaps) with the range of the target value"
+					"__to": bson.M{
+						"$gte": d.Date.RangeHighExcl(),
+					},
+				},
+				bson.M{
+					// "or the range of the search value fully contains the range of the target value"
+					"__from": bson.M{
+						"$gte": d.Date.RangeLowIncl(),
+					},
+				},
+			},
+		}
+	case LE:
+		return bson.M{
+			"$or": []bson.M{
+				bson.M{
+					// "the range below the search value intersects (i.e. overlaps) with the range of the target value"
+					"__from": bson.M{
+						"$lte": d.Date.RangeLowIncl(),
+					},
+				},
+				bson.M{
+					// "or the range of the search value fully contains the range of the target value"
+					"__to": bson.M{
+						"$lte": d.Date.RangeHighExcl(),
+					},
+				},
+			},
+		}
+	case SA:
+		return bson.M{
+			// "the range of the search value does not overlap with the range of the target value,
+			//  and the range above the search value contains the range of the target value"
+			"__from": bson.M{
+				"$gt": d.Date.RangeHighExcl(),
+			},
+		}
+	case EB:
+		// "the range of the search value does overlap not with the range of the target value,
+		//  and the range below the search value contains the range of the target value"
+		return bson.M{
+			"__to": bson.M{
+				"$lt": d.Date.RangeLowIncl(),
+			},
+		}
+	}
+	panic(createUnsupportedSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", d.Name)))
+}
+
+func instantSelector(p *DateParam) bson.M {
+	var timestamp bson.M
+	switch p.Prefix {
+	case EQ:
+		timestamp = bson.M{
+			"$gte": p.Date.RangeLowIncl(),
+			"$lt":  p.Date.RangeHighExcl(),
+		}
+	case GT:
+		timestamp = bson.M{
+			"$gt": p.Date.RangeLowIncl(),
+		}
+	case GE:
+		timestamp = bson.M{
+			"$gte": p.Date.RangeLowIncl(),
+		}
+	case SA:
+		timestamp = bson.M{
+			"$gt": p.Date.RangeHighExcl(),
+		}
+	case LT, EB:
+		timestamp = bson.M{
+			"$lt": p.Date.RangeLowIncl(),
+		}
+	case LE:
+		timestamp = bson.M{
+			"$lt": p.Date.RangeHighExcl(),
+		}
+	default:
+		panic(createUnsupportedSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", p.Name)))
+	}
+
+	return timestamp
+}
+
+func periodSelector(d *DateParam) bson.M {
+	switch d.Prefix {
+	case EQ:
+		// "the range of the search value fully contains the range of the target value"
+		return bson.M{
+			"start.__from": bson.M{
+				"$gte": d.Date.RangeLowIncl(),
+			},
+			"end.__to": bson.M{
+				"$lte": d.Date.RangeHighExcl(),
+			},
+		}
+	case GT:
+		// "the range above the search value intersects (i.e. overlaps) with the range of the target value"
+		return bson.M{
+			"$or": []bson.M{
+				bson.M{
+					"end.__to": bson.M{
+						"$gt": d.Date.RangeHighExcl(),
 					},
 				},
 				// Also support instances where period exists, but end is null (ongoing)
@@ -795,10 +904,11 @@ func periodSelector(d *DateParam) bson.M {
 			},
 		}
 	case LT:
+		// "the range below the search value intersects (i.e. overlaps) with the range of the target value"
 		return bson.M{
 			"$or": []bson.M{
 				bson.M{
-					"start.time": bson.M{
+					"start.__from": bson.M{
 						"$lt": d.Date.RangeLowIncl(),
 					},
 				},
@@ -813,13 +923,15 @@ func periodSelector(d *DateParam) bson.M {
 		return bson.M{
 			"$or": []bson.M{
 				bson.M{
-					"start.time": bson.M{
-						"$gte": d.Date.RangeLowIncl(),
+					// "the range above the search value intersects (i.e. overlaps) with the range of the target value"
+					"end.__to": bson.M{
+						"$gte": d.Date.RangeHighExcl(),
 					},
 				},
 				bson.M{
-					"end.time": bson.M{
-						"$gt": d.Date.RangeLowIncl(),
+					// "or the range of the search value fully contains the range of the target value"
+					"start.__from": bson.M{
+						"$gte": d.Date.RangeLowIncl(),
 					},
 				},
 				// Also support instances where period exists, but end is null (ongoing)
@@ -833,13 +945,15 @@ func periodSelector(d *DateParam) bson.M {
 		return bson.M{
 			"$or": []bson.M{
 				bson.M{
-					"end.time": bson.M{
-						"$lt": d.Date.RangeHighExcl(),
+					// "the range below the search value intersects (i.e. overlaps) with the range of the target value"
+					"start.__from": bson.M{
+						"$lte": d.Date.RangeLowIncl(),
 					},
 				},
 				bson.M{
-					"start.time": bson.M{
-						"$lt": d.Date.RangeLowIncl(),
+					// "or the range of the search value fully contains the range of the target value"
+					"end.__to": bson.M{
+						"$lte": d.Date.RangeHighExcl(),
 					},
 				},
 				// Also support instances where period exists, but start is null
@@ -851,13 +965,17 @@ func periodSelector(d *DateParam) bson.M {
 		}
 	case SA:
 		return bson.M{
-			"start.time": bson.M{
-				"$gte": d.Date.RangeHighExcl(),
+			// "the range of the search value does not overlap with the range of the target value,
+			//  and the range above the search value contains the range of the target value"
+			"start.__from": bson.M{
+				"$gt": d.Date.RangeHighExcl(),
 			},
 		}
 	case EB:
 		return bson.M{
-			"end.time": bson.M{
+			// "the range of the search value does overlap not with the range of the target value,
+			//  and the range below the search value contains the range of the target value"
+			"end.__to": bson.M{
 				"$lt": d.Date.RangeLowIncl(),
 			},
 		}
@@ -872,6 +990,11 @@ func (m *MongoSearcher) createNumberQueryObject(n *NumberParam) bson.M {
 		exact, _ := n.Number.Value.Float64()
 
 		var criteria bson.M
+
+		if p.Type == "decimal" {
+			// TODO
+			panic(createUnsupportedSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" (decimal type) is not yet supported", n.Name)))
+		}
 
 		switch n.Prefix {
 		case EQ:
@@ -924,29 +1047,56 @@ func (m *MongoSearcher) createQuantityQueryObject(q *QuantityParam) bson.M {
 
 		switch q.Prefix {
 		case EQ:
-			// Equality is in the range [l, h)
 			criteria = bson.M{
-				"value": bson.M{
+				"value.__from": bson.M{
 					"$gte": l,
-					"$lt":  h,
+				},
+				"value.__to": bson.M{
+					"$lte":  h,
 				},
 			}
 
 		case LT:
 			criteria = bson.M{
-				"value": bson.M{"$lt": exact},
+				"value.__from": bson.M{"$lt": exact},
 			}
 		case GT:
 			criteria = bson.M{
-				"value": bson.M{"$gt": exact},
+				"value.__to": bson.M{"$gt": exact},
 			}
 		case GE:
 			criteria = bson.M{
-				"value": bson.M{"$gte": l},
+				"$or": []bson.M{
+					bson.M{
+						// "the range above the search value intersects (i.e. overlaps) with the range of the target value"
+						"value.__to": bson.M{
+							"$gte": h,
+						},
+					},
+					bson.M{
+						// "or the range of the search value fully contains the range of the target value"
+						"value.__from": bson.M{
+							"$gte": l,
+						},
+					},
+				},
 			}
 		case LE:
 			criteria = bson.M{
-				"value": bson.M{"$lte": h},
+				"$or": []bson.M{
+					bson.M{
+						// "the range below the search value intersects (i.e. overlaps) with the range of the target value"
+						"value.__from": bson.M{
+							"$lte": l,
+						},
+					},
+					bson.M{
+						// "or the range of the search value fully contains the range of the target value"
+						"value.__to": bson.M{
+							"$lte": h,
+						},
+					},
+				},
 			}
 		default:
 			// NE, SA, EB are not supported for Quantity queries
@@ -954,10 +1104,27 @@ func (m *MongoSearcher) createQuantityQueryObject(q *QuantityParam) bson.M {
 		}
 
 		if q.System == "" {
-			criteria["$or"] = []bson.M{
-				bson.M{"code": m.ci(q.Code)},
-				bson.M{"unit": m.ci(q.Code)},
-			}
+
+			// FIXME: need to search by both the 'units' and 'code' field...............
+			// (http://build.fhir.org/search.html#quantity)
+			// however query with $and is not working since the $and seems to need to be at the
+			// very top of the mongodb query
+			panic(createUnsupportedSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\": search by quantity with a code system not yet supported", q.Name)))
+
+			// orClause := []bson.M{
+			// 	bson.M{"code": m.ci(q.Code)},
+			// 	bson.M{"unit": m.ci(q.Code)},
+			// }
+
+			// _, haveExistingOr := criteria["$or"]
+			// if haveExistingOr {
+			// 	criteria = bson.M{
+			// 		"$and": []bson.M{ criteria, bson.M { "$or": orClause } },
+			// 	}
+			// } else {
+			// 	criteria["$or"] = orClause
+			// }
+			
 		} else {
 			criteria["code"] = m.ci(q.Code)
 			criteria["system"] = m.ci(q.System)
@@ -976,9 +1143,9 @@ func (m *MongoSearcher) createReferenceQueryObject(r *ReferenceParam) bson.M {
 		criteria := bson.M{}
 		switch ref := r.Reference.(type) {
 		case LocalReference:
-			criteria["referenceid"] = ref.ID
+			criteria["reference__id"] = ref.ID
 			if ref.Type != "" {
-				criteria["type"] = ref.Type
+				criteria["reference__type"] = ref.Type
 			}
 		case ExternalReference:
 			criteria["reference"] = m.ci(ref.URL)
@@ -1114,26 +1281,26 @@ func (m *MongoSearcher) createOrQueryObject(o *OrParam) bson.M {
 }
 
 var showOpOutcomeDiagnostics = true
+
 func DisableOperationOutcomeDiagnosticsFileLine() { // e.g. for testing OperationOutcomes
 	showOpOutcomeDiagnostics = false
 }
 func getOpOutcomeDiagnostics() string {
 	if showOpOutcomeDiagnostics {
 		_, file, line, _ := runtime.Caller(3)
-		return fmt.Sprintf ("%s:%d", path.Base(file), line)
+		return fmt.Sprintf("%s:%d", path.Base(file), line)
 	} else {
 		return ""
 	}
 }
-
 
 func createOpOutcome(severity, code, detailsCode, detailsDisplay string) *models.OperationOutcome {
 
 	outcome := &models.OperationOutcome{
 		Issue: []models.OperationOutcomeIssueComponent{
 			models.OperationOutcomeIssueComponent{
-				Severity: severity,
-				Code:     code,
+				Severity:    severity,
+				Code:        code,
 				Diagnostics: getOpOutcomeDiagnostics(),
 			},
 		},
@@ -1341,6 +1508,7 @@ func processOrCriteria(path string, orValue interface{}, result bson.M) {
 }
 
 // Case-insensitive match
+// TODO: consider case-insensitive indexes in MongoDB 3.4 (https://docs.mongodb.com/manual/core/index-case-insensitive/)
 func (m *MongoSearcher) ci(s string) interface{} {
 	if m.enableCISearches {
 		return bson.RegEx{Pattern: fmt.Sprintf("^%s$", regexp.QuoteMeta(s)), Options: "i"}
@@ -1349,6 +1517,7 @@ func (m *MongoSearcher) ci(s string) interface{} {
 }
 
 // Case-insensitive starts-with
+// TODO: consider case-insensitive indexes in MongoDB 3.4 (https://docs.mongodb.com/manual/core/index-case-insensitive/)
 func (m *MongoSearcher) cisw(s string) interface{} {
 	if m.enableCISearches {
 		return bson.RegEx{Pattern: fmt.Sprintf("^%s", regexp.QuoteMeta(s)), Options: "i"}

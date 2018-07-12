@@ -43,7 +43,10 @@ func (s *FormatConversionSuite) TestObservation(c *C) {
 	c.Assert(err, IsNil)
 	obj := &models.Observation{}
 	err = json.Unmarshal(jsonBytes, obj)
-	c.Assert(*obj.ValueQuantity.Value, Equals, 170.0)
+	c.Assert(obj.ValueQuantity.Value.From, Equals, 169.5)
+	c.Assert(obj.ValueQuantity.Value.To, Equals, 170.5)
+	c.Assert(obj.ValueQuantity.Value.Num, Equals, 170.0)
+	c.Assert(obj.ValueQuantity.Value.Str, Equals, "170")
 	c.Assert(err, IsNil)
 }
 func (s *FormatConversionSuite) TestBundle2_json(c *C) {
@@ -58,7 +61,10 @@ func (s *FormatConversionSuite) TestBundle2_json(c *C) {
 	observation1 := obj.Entry[1].Resource.(*models.Observation)
 
 	c.Assert(observation1.Status, Equals, "final")
-	c.Assert(*observation1.ValueQuantity.Value, Equals, 170.0)
+	c.Assert(observation1.ValueQuantity.Value.From, Equals, 169.5)
+	c.Assert(observation1.ValueQuantity.Value.To, Equals, 170.5)
+	c.Assert(observation1.ValueQuantity.Value.Num, Equals, 170.0)
+	c.Assert(observation1.ValueQuantity.Value.Str, Equals, "170")
 	c.Assert(err, IsNil)
 }
 func (s *FormatConversionSuite) TestBundle2_convert_xml(c *C) {
@@ -79,7 +85,10 @@ func (s *FormatConversionSuite) TestBundle2_convert_xml(c *C) {
 	observation1 := obj.Entry[1].Resource.(*models.Observation)
 
 	c.Assert(observation1.Status, Equals, "final")
-	c.Assert(*observation1.ValueQuantity.Value, Equals, 170.0)
+	c.Assert(observation1.ValueQuantity.Value.From, Equals, 169.5)
+	c.Assert(observation1.ValueQuantity.Value.To, Equals, 170.5)
+	c.Assert(observation1.ValueQuantity.Value.Num, Equals, 170.0)
+	c.Assert(observation1.ValueQuantity.Value.Str, Equals, "170")
 }
 
 func areEqualJSON(s1, s2 string) (bool, error) {

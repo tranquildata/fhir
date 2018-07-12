@@ -1,13 +1,12 @@
 package search
 
 import (
+	"github.com/eug48/fhir/utils"
 	"fmt"
-	"math/big"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Constant values for search paramaters and search result parameters
@@ -659,7 +658,7 @@ func ParseCompositeParam(paramString string, info SearchParamInfo) *CompositePar
 // consistent behavior.
 type DateParam struct {
 	SearchParamInfo
-	Date *Date
+	Date *utils.Date
 }
 
 func (d *DateParam) getInfo() SearchParamInfo {
@@ -681,168 +680,14 @@ func ParseDateParam(paramStr string, info SearchParamInfo) *DateParam {
 
 	var value string
 	date.Prefix, value = ExtractPrefixAndValue(paramStr)
-	date.Date = ParseDate(value)
+
+	var err error
+	date.Date, err = utils.ParseDate(value)
+	if err != nil {
+		panic(createInternalServerError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid: %v", info.Name, err)))
+	}
 
 	return date
-}
-
-// Date represents a date in a search query.  FHIR search params may define
-// dates to varying levels of precision, and the amount of precision affects
-// the behavior of the query.  Date's value should only be interpreted in the
-// context of the Precision supplied.
-type Date struct {
-	Value     time.Time
-	Precision DatePrecision
-}
-
-// String returns a string representation of the date, honoring the supplied
-// precision.
-func (d *Date) String() string {
-	s := d.Value.Format(d.Precision.layout())
-	if strings.HasSuffix(s, "+00:00") {
-		s = strings.Replace(s, "+00:00", "Z", 1)
-	}
-	return s
-}
-
-// RangeLowIncl represents the low end of a date range to match against.  As
-// the name suggests, the low end of the range is inclusive.
-func (d *Date) RangeLowIncl() time.Time {
-	return d.Value
-}
-
-// RangeHighExcl represents the high end of a date range to match against.  As
-// the name suggests, the high end of the range is exclusive.
-func (d *Date) RangeHighExcl() time.Time {
-	switch d.Precision {
-	case Year:
-		return d.Value.AddDate(1, 0, 0)
-	case Month:
-		return d.Value.AddDate(0, 1, 0)
-	case Day:
-		return d.Value.AddDate(0, 0, 1)
-	case Minute:
-		return d.Value.Add(time.Minute)
-	case Second:
-		return d.Value.Add(time.Second)
-	case Millisecond:
-		return d.Value.Add(time.Millisecond)
-	default:
-		return d.Value.Add(time.Millisecond)
-	}
-}
-
-// ParseDate parses a FHIR date string (roughly ISO 8601) into a Date object,
-// maintaining the value and the precision supplied.
-func ParseDate(dateStr string) *Date {
-	dt := &Date{}
-
-	dateStr = strings.TrimSpace(dateStr)
-	dtRegex := regexp.MustCompile("([0-9]{4})(-(0[1-9]|1[0-2])(-(0[0-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):([0-5][0-9])(:([0-5][0-9])(\\.([0-9]+))?)?((Z)|(\\+|-)((0[0-9]|1[0-3]):([0-5][0-9])|(14):(00)))?)?)?)?")
-	if m := dtRegex.FindStringSubmatch(dateStr); m != nil {
-		y, mo, d, h, mi, s, ms, tzZu, tzOp, tzh, tzm := m[1], m[3], m[5], m[7], m[8], m[10], m[12], m[14], m[15], m[17], m[18]
-
-		switch {
-		case ms != "":
-			dt.Precision = Millisecond
-
-			// Fix milliseconds (.9 -> .900, .99 -> .990, .999999 -> .999 )
-			switch len(ms) {
-			case 1:
-				ms += "00"
-			case 2:
-				ms += "0"
-			case 3:
-				// do nothing
-			default:
-				ms = ms[:3]
-			}
-		case s != "":
-			dt.Precision = Second
-		case mi != "":
-			dt.Precision = Minute
-		// NOTE: Skip hour precision since FHIR specification disallows it
-		case d != "":
-			dt.Precision = Day
-		case mo != "":
-			dt.Precision = Month
-		case y != "":
-			dt.Precision = Year
-		default:
-			dt.Precision = Millisecond
-		}
-
-		// Get the location (if no time components or no location, use local)
-		loc := time.Local
-		if h != "" {
-			if tzZu == "Z" {
-				loc, _ = time.LoadLocation("UTC")
-			} else if tzOp != "" && tzh != "" && tzm != "" {
-				tzhi, _ := strconv.Atoi(tzh)
-				tzmi, _ := strconv.Atoi(tzm)
-				offset := tzhi*60*60 + tzmi*60
-				if tzOp == "-" {
-					offset *= -1
-				}
-				loc = time.FixedZone(tzOp+tzh+tzm, offset)
-			}
-		}
-
-		// Convert to a time.Time
-		yInt, _ := strconv.Atoi(y)
-		moInt, err := strconv.Atoi(mo)
-		if err != nil {
-			moInt = 1
-		}
-		dInt, err := strconv.Atoi(d)
-		if err != nil {
-			dInt = 1
-		}
-		hInt, _ := strconv.Atoi(h)
-		miInt, _ := strconv.Atoi(mi)
-		sInt, _ := strconv.Atoi(s)
-		msInt, _ := strconv.Atoi(ms)
-
-		dt.Value = time.Date(yInt, time.Month(moInt), dInt, hInt, miInt, sInt, msInt*1000*1000, loc)
-	} else {
-		// TODO: What should we do if the time format is wrong?  Right now, we default to NOW
-		dt.Precision = Millisecond
-		dt.Value = time.Now()
-	}
-
-	return dt
-}
-
-// DatePrecision is an enum representing the precision of a date.
-type DatePrecision int
-
-// Constant values for the DatePrecision enum.
-const (
-	Year DatePrecision = iota
-	Month
-	Day
-	Minute
-	Second
-	Millisecond
-)
-
-func (p DatePrecision) layout() string {
-	switch p {
-	case Year:
-		return "2006"
-	case Month:
-		return "2006-01"
-	case Day:
-		return "2006-01-02"
-	case Minute:
-		return "2006-01-02T15:04-07:00"
-	case Second:
-		return "2006-01-02T15:04:05-07:00"
-	case Millisecond:
-		return "2006-01-02T15:04:05.000-07:00"
-	default:
-		return "2006-01-02T15:04:05.000-07:00"
-	}
 }
 
 // NumberParam represents a number-flavored search parameter.  The following
@@ -851,7 +696,7 @@ func (p DatePrecision) layout() string {
 // Searching on a simple numerical value in a resource.
 type NumberParam struct {
 	SearchParamInfo
-	Number *Number
+	Number *utils.Number
 }
 
 func (n *NumberParam) getInfo() SearchParamInfo {
@@ -873,70 +718,11 @@ func ParseNumberParam(paramStr string, info SearchParamInfo) *NumberParam {
 
 	var value string
 	n.Prefix, value = ExtractPrefixAndValue(paramStr)
-	n.Number = ParseNumber(value)
+	n.Number = utils.ParseNumber(value)
 
 	return n
 }
 
-// Number represents a number in a search query.  FHIR search params may define
-// numbers to varying levels of precision, and the amount of precision affects
-// the behavior of the query.  Number's value should only be interpreted in the
-// context of the Precision supplied.  The Precision indicates the number of
-// decimal places in the precision.
-type Number struct {
-	Value     *big.Rat
-	Precision int
-}
-
-// String returns a string representation of the number, honoring the supplied
-// precision.
-func (n *Number) String() string {
-	return n.Value.FloatString(n.Precision)
-}
-
-// RangeLowIncl represents the low end of a range to match against.  As
-// the name suggests, the low end of the range is inclusive.
-func (n *Number) RangeLowIncl() *big.Rat {
-	return new(big.Rat).Sub(n.Value, n.rangeDelta())
-}
-
-// RangeHighExcl represents the high end of a range to match against.  As
-// the name suggests, the high end of the range is exclusive.
-func (n *Number) RangeHighExcl() *big.Rat {
-	return new(big.Rat).Add(n.Value, n.rangeDelta())
-}
-
-// The FHIR spec defines equality for 100 to be the range [99.5, 100.5) so we
-// must support min/max using rounding semantics. The basic algorithm for
-// determining low/high is:
-//   low  (inclusive) = n - 5 / 10^p
-//   high (exclusive) = n + 5 / 10^p
-// where n is the number and p is the count of the number's decimal places + 1.
-//
-// This function returns the delta ( 5 / 10^p )
-func (n *Number) rangeDelta() *big.Rat {
-	p := n.Precision + 1
-	denomInt := new(big.Int).Exp(big.NewInt(int64(10)), big.NewInt(int64(p)), nil)
-	denomRat, _ := new(big.Rat).SetString(denomInt.String())
-	return new(big.Rat).Quo(new(big.Rat).SetInt64(5), denomRat)
-}
-
-// ParseNumber parses a numeric string into a Number object, maintaining the
-// value and precision supplied.
-func ParseNumber(numStr string) *Number {
-	n := &Number{}
-
-	numStr = strings.TrimSpace(numStr)
-	n.Value, _ = new(big.Rat).SetString(numStr)
-	i := strings.Index(numStr, ".")
-	if i != -1 {
-		n.Precision = len(numStr) - i - 1
-	} else {
-		n.Precision = 0
-	}
-
-	return n
-}
 
 // QuantityParam represents a quantity-flavored search parameter.  The
 // following description is from the FHIR DSTU2 specification:
@@ -944,7 +730,7 @@ func ParseNumber(numStr string) *Number {
 // A quantity parameter searches on the Quantity data type.
 type QuantityParam struct {
 	SearchParamInfo
-	Number *Number
+	Number *utils.Number
 	System string
 	Code   string
 }
@@ -974,7 +760,7 @@ func ParseQuantityParam(paramStr string, info SearchParamInfo) *QuantityParam {
 	q.Prefix, value = ExtractPrefixAndValue(paramStr)
 
 	split := escapeFriendlySplit(value, '|')
-	q.Number = ParseNumber(split[0])
+	q.Number = utils.ParseNumber(split[0])
 	if len(split) == 3 {
 		q.System = unescape(split[1])
 		q.Code = unescape(split[2])

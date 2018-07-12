@@ -31,6 +31,7 @@ func RegisterController(name string, e *gin.Engine, m []gin.HandlerFunc, dal Dat
 	}
 
 	rcBase.GET("", rc.IndexHandler)
+	rcBase.POST("/_search", rc.IndexHandler)
 	rcBase.POST("", rc.CreateHandler)
 	rcBase.PUT("", rc.ConditionalUpdateHandler)
 	rcBase.DELETE("", rc.ConditionalDeleteHandler)

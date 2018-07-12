@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -56,6 +57,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 
 	// Build routes for testing
 	s.Engine = gin.New()
+	s.Engine.Use(gin.Logger())
 	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, config), config)
 
 	// Create httptest server
@@ -515,6 +517,7 @@ func (s *ServerSuite) TestWrongResource(c *C) {
 	defer data.Close()
 
 	res, err := http.Post(s.Server.URL+"/Patient", "application/json", data)
+	logBody(res)
 	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, http.StatusBadRequest)
@@ -725,8 +728,8 @@ func (s *ServerSuite) TestBatchCreateConditional200(c *C) {
 	util.CheckErr(err)
 	res, err := http.DefaultClient.Do(req)
 	util.CheckErr(err)
+	resBody, err := ioutil.ReadAll(logBody(res))
 	c.Assert(res.StatusCode, Equals, 200)
-	resBody, err := ioutil.ReadAll(res.Body)
 	util.CheckErr(err)
 	resBundle := &models.Bundle{}
 	err = json.Unmarshal(resBody, resBundle)
@@ -1007,11 +1010,11 @@ func (s *ServerSuite) TestContainedResources(c *C) {
 	c.Assert(extensionMap["@context"], IsNil)
 	c.Assert(extensionMap["url"], Equals, "http://hl7.org/fhir/StructureDefinition/us-core-race")
 
-	// the managingOrganization reference should be without internal fields like referenceid
+	// the managingOrganization reference should be without internal fields like reference__id
 	managingOrganizationMap := containedMap["managingOrganization"].(map[string]interface{})
 	c.Assert(managingOrganizationMap["reference"], Equals, "Organization/1")
-	c.Assert(managingOrganizationMap["referenceid"], IsNil)
-	c.Assert(managingOrganizationMap["type"], IsNil)
+	c.Assert(managingOrganizationMap["reference__id"], IsNil)
+	c.Assert(managingOrganizationMap["reference__type"], IsNil)
 	c.Assert(managingOrganizationMap["external"], IsNil)
 
 	// Delete this entry
@@ -1085,7 +1088,7 @@ func (s *ServerSuite) TestPatientEverything(c *C) {
 func performSearch(c *C, url string) *models.Bundle {
 	res, err := http.Get(url)
 	util.CheckErr(err)
-	decoder := json.NewDecoder(res.Body)
+	decoder := json.NewDecoder(logBody(res))
 	bundle := &models.Bundle{}
 	err = decoder.Decode(bundle)
 	util.CheckErr(err)
@@ -1175,4 +1178,14 @@ func loadFixture(resourceName, fileName string) interface{} {
 	err = decoder.Decode(&resource)
 	util.CheckErr(err)
 	return resource
+}
+
+
+func logBody(res *http.Response) io.Reader {
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+	// fmt.Printf("[logBody] %d bytes: %s\n", len(bodyBytes), string(bodyBytes))
+	return bytes.NewReader(bodyBytes)
 }

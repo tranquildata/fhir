@@ -42,7 +42,7 @@ type DomainResource struct {
 
 // Convert contained resources from map[string]interfac{} to specific types.
 // Custom marshalling methods on those types will then hide internal fields
-// like @context and referenceid.
+// like @context and reference__id.
 func (x *ContainedResources) SetBSON(raw bson.Raw) (err error) {
 
 	// alias type to avoid infinite loop when calling Unmarshal

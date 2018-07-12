@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -32,15 +33,18 @@ var _ = Suite(&BatchControllerSuite{})
 func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	// Set gin to release mode because the first printout of all routes makes it hard to see what is failing
 	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.DebugMode)
 
 	// Set up the database
 	var err error
 	s.initialSession, err = mgo.Dial("localhost")
+	s.initialSession.SetSafe(&mgo.Safe{})
 	util.CheckErr(err)
 	s.MasterSession = NewMasterSession(s.initialSession, "fhir-test")
 
 	// Build routes for testing
 	s.Engine = gin.New()
+	s.Engine.Use(gin.Logger())
 	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, DefaultConfig), DefaultConfig)
 
 	// Create httptest server
@@ -295,7 +299,9 @@ func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 
 	c.Assert(res.StatusCode, Equals, 200)
 
-	decoder = json.NewDecoder(res.Body)
+	var bodyBuf bytes.Buffer
+	bodyTee := io.TeeReader(res.Body, &bodyBuf)
+	decoder = json.NewDecoder(bodyTee)
 	responseBundle := &models.Bundle{}
 	err = decoder.Decode(responseBundle)
 	util.CheckErr(err)
@@ -303,6 +309,8 @@ func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 	c.Assert(responseBundle.Type, Equals, "transaction-response")
 	c.Assert(*responseBundle.Total, Equals, uint32(19))
 	c.Assert(responseBundle.Entry, HasLen, 19)
+	// fmt.Printf("response body: %s\n\n", bodyBuf.String())
+	// fmt.Printf("responseBundle: %+v\n\n", responseBundle)
 
 	for i := range responseBundle.Entry {
 		resEntry, reqEntry := responseBundle.Entry[i], requestBundle.Entry[i]
@@ -449,16 +457,22 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 	// Successful bundle processing should return a 200
 	c.Assert(res.StatusCode, Equals, 200)
 
-	decoder := json.NewDecoder(res.Body)
+	var bodyBuf bytes.Buffer
+	bodyTee := io.TeeReader(res.Body, &bodyBuf)
+	decoder := json.NewDecoder(bodyTee)
 	responseBundle := &models.Bundle{}
 	err = decoder.Decode(responseBundle)
 	util.CheckErr(err)
+	// fmt.Printf("response body: %s\n\n", bodyBuf.String())
+	// fmt.Printf("responseBundle: %+v\n\n", responseBundle)
 
 	c.Assert(responseBundle.Type, Equals, "transaction-response")
 	c.Assert(*responseBundle.Total, Equals, uint32(4))
 	c.Assert(responseBundle.Entry, HasLen, 4)
 
 	patEntry := responseBundle.Entry[0]
+	// fmt.Printf("patEntry: %+v\n\n", patEntry)
+	// fmt.Printf("patEntry.resource: %+v\n\n", patEntry.Resource)
 
 	// response resource type should match request resource type
 	c.Assert(patEntry.Resource, FitsTypeOf, &models.Patient{})
@@ -600,7 +614,10 @@ func (s *BatchControllerSuite) TestConditionalUpdatesBundle(c *C) {
 	c.Assert(response2Bundle.Entry, HasLen, 20)
 
 	// Now check all of the response status for updated (vs created)
-	for _, entry := range response2Bundle.Entry {
+	for i, entry := range response2Bundle.Entry {
+		if entry.Response.Status != "200" {
+			fmt.Printf("assertion failing for resource %d (%s)", i, entry.Response.Location)
+		}
 		c.Assert(entry.Response.Status, Equals, "200")
 	}
 }

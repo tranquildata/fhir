@@ -35,7 +35,11 @@ func testBinding(c *C, contentType string) {
 
 	e := gin.New()
 	e.POST("/Condition", func(ctx *gin.Context) {
-		FHIRBind(ctx, &condition)
+		resource, err := FHIRBind(ctx, "")
+		if (err != nil) {
+			panic(err)
+		}
+		resource.Unmarshal(&condition)
 	})
 
 	e.ServeHTTP(rw, r)

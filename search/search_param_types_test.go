@@ -1,6 +1,8 @@
 package search
 
 import (
+	"github.com/eug48/fhir/utils"
+	. "github.com/eug48/fhir/utils"
 	"fmt"
 	"time"
 
@@ -105,21 +107,21 @@ func (s *SearchPTSuite) TestCompositeParamReconstitution(c *C) {
 
 func (s *SearchPTSuite) TestDatesToMilliseconds(c *C) {
 
-	d := ParseDate("2013-01-02T12:13:14.999-07:00")
+	d := utils.MustParseDate("2013-01-02T12:13:14.999-07:00")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 999000000, s.MDT).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13:14.999-07:00")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 999000000, s.MDT).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 15, 0, s.MDT).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14.999Z")
+	d = utils.MustParseDate("2013-01-02T12:13:14.999Z")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 999000000, time.UTC).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13:14.999Z")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 999000000, time.UTC).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 15, 0, time.UTC).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14.999")
+	d = utils.MustParseDate("2013-01-02T12:13:14.999")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 999000000, time.Local).UnixNano())
 	c.Assert(d.String()[:23], Equals, "2013-01-02T12:13:14.999") // don't check the tz since it varies
@@ -127,28 +129,28 @@ func (s *SearchPTSuite) TestDatesToMilliseconds(c *C) {
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 15, 0, time.Local).UnixNano())
 
 	// Test different levels of precision
-	d = ParseDate("2013-01-02T12:13:14.9")
+	d = utils.MustParseDate("2013-01-02T12:13:14.9")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 900000000, time.Local).UnixNano())
 	c.Assert(d.String()[:23], Equals, "2013-01-02T12:13:14.900") // don't check the tz since it varies
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 900000000, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 901000000, time.Local).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14.09")
+	d = utils.MustParseDate("2013-01-02T12:13:14.09")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 90000000, time.Local).UnixNano())
 	c.Assert(d.String()[:23], Equals, "2013-01-02T12:13:14.090") // don't check the tz since it varies
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 90000000, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 91000000, time.Local).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14.009")
+	d = utils.MustParseDate("2013-01-02T12:13:14.009")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 9000000, time.Local).UnixNano())
 	c.Assert(d.String()[:23], Equals, "2013-01-02T12:13:14.009") // don't check the tz since it varies
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 9000000, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 10000000, time.Local).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14.987654321")
+	d = utils.MustParseDate("2013-01-02T12:13:14.987654321")
 	c.Assert(d.Precision, Equals, Millisecond)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 987000000, time.Local).UnixNano())
 	c.Assert(d.String()[:23], Equals, "2013-01-02T12:13:14.987") // don't check the tz since it varies
@@ -158,21 +160,21 @@ func (s *SearchPTSuite) TestDatesToMilliseconds(c *C) {
 
 func (s *SearchPTSuite) TestDatesToSeconds(c *C) {
 
-	d := ParseDate("2013-01-02T12:13:14-07:00")
+	d := utils.MustParseDate("2013-01-02T12:13:14-07:00")
 	c.Assert(d.Precision, Equals, Second)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 0, s.MDT).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13:14-07:00")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 0, s.MDT).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 15, 0, s.MDT).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14Z")
+	d = utils.MustParseDate("2013-01-02T12:13:14Z")
 	c.Assert(d.Precision, Equals, Second)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 0, time.UTC).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13:14Z")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 0, time.UTC).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 15, 0, time.UTC).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13:14")
+	d = utils.MustParseDate("2013-01-02T12:13:14")
 	c.Assert(d.Precision, Equals, Second)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 14, 0, time.Local).UnixNano())
 	c.Assert(d.String()[:19], Equals, "2013-01-02T12:13:14") // don't check the tz since it varies
@@ -182,21 +184,21 @@ func (s *SearchPTSuite) TestDatesToSeconds(c *C) {
 
 func (s *SearchPTSuite) TestDatesToMinutes(c *C) {
 
-	d := ParseDate("2013-01-02T12:13-07:00")
+	d := utils.MustParseDate("2013-01-02T12:13-07:00")
 	c.Assert(d.Precision, Equals, Minute)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 0, 0, s.MDT).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13-07:00")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 0, 0, s.MDT).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 14, 0, 0, s.MDT).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13Z")
+	d = utils.MustParseDate("2013-01-02T12:13Z")
 	c.Assert(d.Precision, Equals, Minute)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 0, 0, time.UTC).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02T12:13Z")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 0, 0, time.UTC).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 14, 0, 0, time.UTC).UnixNano())
 
-	d = ParseDate("2013-01-02T12:13")
+	d = utils.MustParseDate("2013-01-02T12:13")
 	c.Assert(d.Precision, Equals, Minute)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 12, 13, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String()[:16], Equals, "2013-01-02T12:13") // don't check the tz since it varies
@@ -209,21 +211,21 @@ func (s *SearchPTSuite) TestDatesToMinutes(c *C) {
 func (s *SearchPTSuite) TestDatesToDays(c *C) {
 
 	// Timezone should be ignored when no time components are included
-	d := ParseDate("2013-01-02T-07:00")
+	d := utils.MustParseDate("2013-01-02T-07:00")
 	c.Assert(d.Precision, Equals, Day)
 	c.Assert(d.Value.Unix(), Equals, time.Date(2013, time.January, 2, 0, 0, 0, 0, time.Local).Unix())
 	c.Assert(d.String(), Equals, "2013-01-02")
 	c.Assert(d.RangeLowIncl().Unix(), Equals, time.Date(2013, time.January, 2, 0, 0, 0, 0, time.Local).Unix())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 3, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013-01-02Z")
+	d = utils.MustParseDate("2013-01-02Z")
 	c.Assert(d.Precision, Equals, Day)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 2, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.January, 3, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013-01-02")
+	d = utils.MustParseDate("2013-01-02")
 	c.Assert(d.Precision, Equals, Day)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 2, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01-02")
@@ -234,21 +236,21 @@ func (s *SearchPTSuite) TestDatesToDays(c *C) {
 func (s *SearchPTSuite) TestDatesToMonths(c *C) {
 
 	// Timezone should be ignored when no time components are included
-	d := ParseDate("2013-01T-07:00")
+	d := utils.MustParseDate("2013-01T-07:00")
 	c.Assert(d.Precision, Equals, Month)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.February, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013-01Z")
+	d = utils.MustParseDate("2013-01Z")
 	c.Assert(d.Precision, Equals, Month)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2013, time.February, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013-01")
+	d = utils.MustParseDate("2013-01")
 	c.Assert(d.Precision, Equals, Month)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013-01")
@@ -259,21 +261,21 @@ func (s *SearchPTSuite) TestDatesToMonths(c *C) {
 func (s *SearchPTSuite) TestDatesToYears(c *C) {
 
 	// Timezone should be ignored when no time components are included
-	d := ParseDate("2013T-07:00")
+	d := utils.MustParseDate("2013T-07:00")
 	c.Assert(d.Precision, Equals, Year)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2014, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013Z")
+	d = utils.MustParseDate("2013Z")
 	c.Assert(d.Precision, Equals, Year)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2014, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
-	d = ParseDate("2013")
+	d = utils.MustParseDate("2013")
 	c.Assert(d.Precision, Equals, Year)
 	c.Assert(d.Value.UnixNano(), Equals, time.Date(2013, time.January, 1, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.String(), Equals, "2013")
@@ -284,22 +286,22 @@ func (s *SearchPTSuite) TestDatesToYears(c *C) {
 func (s *SearchPTSuite) TestLeapAndNonLeapYears(c *C) {
 
 	// Non-Leap Year
-	d := ParseDate("1995-02-28")
+	d := utils.MustParseDate("1995-02-28")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(1995, time.February, 28, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(1995, time.March, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
 	// Leap Year
-	d = ParseDate("1996-02-28")
+	d = utils.MustParseDate("1996-02-28")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(1996, time.February, 28, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(1996, time.February, 29, 0, 0, 0, 0, time.Local).UnixNano())
 
 	// Centurial Non-Leap Year (divisible by 4, but centuries are not leap years unless they are divisible by 400)
-	d = ParseDate("1900-02-28")
+	d = utils.MustParseDate("1900-02-28")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(1900, time.February, 28, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(1900, time.March, 1, 0, 0, 0, 0, time.Local).UnixNano())
 
 	// Centurial Leap Year (divisible by 4, and a century, but also divisible by 400-- so it IS a leap year)
-	d = ParseDate("2000-02-28")
+	d = utils.MustParseDate("2000-02-28")
 	c.Assert(d.RangeLowIncl().UnixNano(), Equals, time.Date(2000, time.February, 28, 0, 0, 0, 0, time.Local).UnixNano())
 	c.Assert(d.RangeHighExcl().UnixNano(), Equals, time.Date(2000, time.February, 29, 0, 0, 0, 0, time.Local).UnixNano())
 }

@@ -4,11 +4,12 @@ import (
 	"strings"
 	"fmt"
 	"net/url"
-	"reflect"
 	"strconv"
 	"time"
+	"runtime"
 
 	"github.com/eug48/fhir/models"
+	"github.com/eug48/fhir/models2"
 	"github.com/eug48/fhir/search"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
@@ -74,9 +75,11 @@ func (ws *WorkerSession) DB() (db *mgo.Database) {
 }
 
 func (ws *WorkerSession) CurrentVersionCollection(resourceType string) *mgo.Collection {
+	ws.session.EnsureSafe(&mgo.Safe{})
 	return ws.DB().C(models.PluralizeLowerResourceName(resourceType))
 }
 func (ws *WorkerSession) PreviousVersionsCollection(resourceType string) *mgo.Collection {
+	ws.session.EnsureSafe(&mgo.Safe{})
 	return ws.DB().C(models.PluralizeLowerResourceName(resourceType) + "_prev")
 }
 
@@ -106,6 +109,13 @@ type mongoDataAccessLayer struct {
 	enableCISearches  bool
 	enableHistory     bool
 	readonly          bool
+}
+
+func (dal *mongoDataAccessLayer) debug(format string, a ...interface{}) {
+	return
+	fmt.Print("[mongo] ")
+	fmt.Printf(format, a...)
+	fmt.Println()
 }
 
 // InterceptorList is a list of interceptors registered for a given database operation
@@ -175,18 +185,18 @@ func (dal *mongoDataAccessLayer) hasInterceptorsForOpAndType(op, resourceType st
 	return false
 }
 
-func (dal *mongoDataAccessLayer) Get(id, resourceType string) (result interface{}, err error) {
+func (dal *mongoDataAccessLayer) Get(id, resourceType string) (resource *models2.Resource, err error) {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
-		return nil, convertMongoErr(err)
+		return nil, ErrNotFound
 	}
 
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
 	collection := worker.CurrentVersionCollection(resourceType)
-	result = models.NewStructForResourceName(resourceType)
-	err = collection.FindId(bsonID.Hex()).One(result)
+	var doc bson.D
+	err = collection.FindId(bsonID.Hex()).One(&doc)
 	if err == mgo.ErrNotFound && dal.enableHistory {
 		// check whether this is a deleted record
 		prevCollection := worker.PreviousVersionsCollection(resourceType)
@@ -205,13 +215,15 @@ func (dal *mongoDataAccessLayer) Get(id, resourceType string) (result interface{
 	if err != nil {
 		return nil, convertMongoErr(err)
 	}
+
+	resource, err = models2.NewResourceFromBSON(doc)
 	return
 }
 
-func (dal *mongoDataAccessLayer) GetVersion(id, versionIdStr, resourceType string) (result interface{}, err error) {
+func (dal *mongoDataAccessLayer) GetVersion(id, versionIdStr, resourceType string) (resource *models2.Resource, err error) {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
-		return nil, convertMongoErr(err)
+		return nil, ErrNotFound
 	}
 
 	versionIdInt, err := strconv.Atoi(versionIdStr)
@@ -219,8 +231,7 @@ func (dal *mongoDataAccessLayer) GetVersion(id, versionIdStr, resourceType strin
 		return nil, errors.Wrapf(err, "failed to convert versionId to an integer (%s)", versionIdStr)
 	}
 
-	result = models.NewStructForResourceName(resourceType)
-
+	var result bson.D
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
@@ -230,7 +241,7 @@ func (dal *mongoDataAccessLayer) GetVersion(id, versionIdStr, resourceType strin
 		"meta.versionId": versionIdStr,
 	}
 	curCollection := worker.CurrentVersionCollection(resourceType)
-	err = curCollection.Find(curQuery).One(result)
+	err = curCollection.Find(curQuery).One(&result)
 	// fmt.Printf("GetVersion: curQuery=%+v; err=%+v\n", curQuery, err)
 	if err == mgo.ErrNotFound {
 		// try to search for previous versions
@@ -245,45 +256,50 @@ func (dal *mongoDataAccessLayer) GetVersion(id, versionIdStr, resourceType strin
 		var asBSON bson.D
 		err = prevCollection.Find(prevQuery).One(&asBSON)
 		if err == mgo.ErrNotFound {
-			fmt.Printf("not found: %#v\n", prevQuery)
+			dal.debug("not found: %#v\n", prevQuery)
 			return nil, convertMongoErr(err)
 		} else if err != nil {
 			return nil, errors.Wrap(err, "failed to search for a previous version")
 		}
 
-		deleted, err := unmarshalPreviousVersion(asBSON, result)
+		var deleted bool
+		deleted, resource, err = unmarshalPreviousVersion(asBSON)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal previous version")
 		}
 		if deleted {
 			return nil, ErrDeleted
 		}
-	}
-	if err != nil {
+	} else if err != nil {
 		return nil, errors.Wrap(convertMongoErr(err), "failed to search for current version")
+	} else {
+		resource, err = models2.NewResourceFromBSON(result)
 	}
+
 	return
 }
 
 // Convert document stored in one of the _prev collections into a resource
-func unmarshalPreviousVersion(asBSON bson.D, result interface{}) (deleted bool, err error) {
+func unmarshalPreviousVersion(asBSON bson.D) (deleted bool, resource *models2.Resource, err error) {
+	// fmt.Printf("[unmarshalPreviousVersion] %+v\n", asBSON)
 	// first we have to parse the vermongo-style id
 	if len(asBSON) == 0 {
-		return false, fmt.Errorf("unmarshalPreviousVersion: input empty")
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: input empty")
 	}
 	idItem := asBSON[0]
 	if idItem.Name != "_id" {
-		return false, fmt.Errorf("unmarshalPreviousVersion: first element not an _id")
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: first element not an _id")
 	}
 
 	switch val := idItem.Value.(type) {
 	case bson.D:
 		if len(val) < 2 {
-			return false, fmt.Errorf("unmarshalPreviousVersion: _id value size < 2")
+			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id value size < 2")
 		}
 		actualId := val[0]
+		// fmt.Printf("[unmarshalPreviousVersion] ACTUAL %+v\n", actualId)
 		if actualId.Name != "_id" {
-			return false, fmt.Errorf("unmarshalPreviousVersion: _id value without first inner _id field")
+			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id value without first inner _id field")
 		}
 
 		switch idVal := actualId.Value.(type) {
@@ -296,46 +312,42 @@ func unmarshalPreviousVersion(asBSON bson.D, result interface{}) (deleted bool, 
 					if isInt {
 						deleted = deletedInt > 0
 					} else {
-						return false, fmt.Errorf("unmarshalPreviousVersion: _id._deleted is not an integer")
+						return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._deleted is not an integer")
 					}
 				}
 			}
 			if deleted {
-				return true, nil
+				return true, nil, nil
 			}
 
-			// convert back to a binary so we can re-unmarshal as our DTOs
-			// this seems to be a limitation of mgo, hopefully will be fixed in upcoming mongo-go-driver
-			asBinary, err := bson.Marshal(asBSON)
+			// create a BSON doc with a string id
+			bsonWithStringId := make(bson.D, 0, len(asBSON))
+			stringIdElem := bson.DocElem{Name: "id", Value: idVal}
+			bsonWithStringId = append(bsonWithStringId, stringIdElem)
+			bsonWithStringId = append(bsonWithStringId, asBSON[1:]...)
+
+			// convert to JSON
+			resource, err = models2.NewResourceFromBSON(bsonWithStringId)
 			if err != nil {
-				return false, errors.Wrap(err, "failed marshalling back to bytes")
+				return false, nil, errors.Wrap(err, "unmarshalPreviousVersion: NewResourceFromBSON failed")
 			}
 
-			// convert to our DTO
-			err = bson.Unmarshal(asBinary, result)
-			if err != nil {
-				return false, errors.Wrap(err, "failed to unmarshal bytes to DTO")
-			}
-
-			// set actual Id
-			idField := reflect.ValueOf(result).Elem().FieldByName("Id")
-			idField.Set(reflect.ValueOf(idVal))
-			return false, nil
+			return false, resource, nil
 		default:
-			return false, fmt.Errorf("unmarshalPreviousVersion: _id._id not a string")
+			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._id not a string")
 		}
 	default:
-		return false, fmt.Errorf("unmarshalPreviousVersion: _id not a bson dictionary")
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id not a bson dictionary")
 	}
 }
 
-func (dal *mongoDataAccessLayer) Post(resource interface{}) (id string, err error) {
+func (dal *mongoDataAccessLayer) Post(resource *models2.Resource) (id string, err error) {
 	id = bson.NewObjectId().Hex()
 	err = convertMongoErr(dal.PostWithID(id, resource))
 	return
 }
 
-func (dal *mongoDataAccessLayer) ConditionalPost(query search.Query, resource interface{}) (httpStatus int, id string, outputResource interface{}, err error) {
+func (dal *mongoDataAccessLayer) ConditionalPost(query search.Query, resource *models2.Resource) (httpStatus int, id string, outputResource *models2.Resource, err error) {
 	existingIds, err := dal.FindIDs(query)
 	if err != nil {
 		return
@@ -361,7 +373,7 @@ func (dal *mongoDataAccessLayer) ConditionalPost(query search.Query, resource in
 	return
 }
 
-func (dal *mongoDataAccessLayer) PostWithID(id string, resource interface{}) error {
+func (dal *mongoDataAccessLayer) PostWithID(id string, resource *models2.Resource) error {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
 		return convertMongoErr(err)
@@ -370,19 +382,15 @@ func (dal *mongoDataAccessLayer) PostWithID(id string, resource interface{}) err
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
-	reflect.ValueOf(resource).Elem().FieldByName("Id").SetString(bsonID.Hex())
-	resourceType := reflect.TypeOf(resource).Elem().Name()
+	dal.debug("PostWithID: updating %+v", resource)
+	resource.SetId(bsonID.Hex())
+	updateResourceMeta(resource, 1)
+	resourceType := resource.ResourceType()
 	curCollection := worker.CurrentVersionCollection(resourceType)
-
-	if dal.enableHistory {
-		versionIdInt := 1
-		updateResourceMeta(resource, &versionIdInt)
-	} else {
-		updateResourceMeta(resource, nil)
-	}
 
 	dal.invokeInterceptorsBefore("Create", resourceType, resource)
 
+	dal.debug("PostWithID: inserting %+v", resource)
 	err = curCollection.Insert(resource)
 
 	if err == nil {
@@ -394,7 +402,7 @@ func (dal *mongoDataAccessLayer) PostWithID(id string, resource interface{}) err
 	return convertMongoErr(err)
 }
 
-func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNew bool, err error) {
+func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (createdNew bool, err error) {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
 		return false, convertMongoErr(err)
@@ -403,12 +411,13 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
-	resourceType := reflect.TypeOf(resource).Elem().Name()
+	resourceType := resource.ResourceType()
 	curCollection := worker.CurrentVersionCollection(resourceType)
-	reflect.ValueOf(resource).Elem().FieldByName("Id").SetString(bsonID.Hex())
+	resource.SetId(bsonID.Hex())
+	dal.debug("PUT %s/%s", resourceType, resource.Id())
 
 	var curVersionId *int = nil
-	var newVersionId *int = nil
+	var newVersionId = 1
 	if dal.enableHistory {
 
 		// get current version of this document
@@ -420,16 +429,15 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 		// extract current version
 		if currentDoc != nil {
 			hasVersionId, curVersionIdTemp := getVersionIdFromResource(currentDoc)
-			var newVersionIdTemp int
 			if hasVersionId {
-				newVersionIdTemp = curVersionIdTemp + 1
+				newVersionId = curVersionIdTemp + 1
 			} else {
 				// for documents created by previous versions not supporting versioning or if it was disabled
-				newVersionIdTemp = 1
+				newVersionId = 1
 				curVersionIdTemp = 0
 			}
-			newVersionId = &newVersionIdTemp
 			curVersionId = &curVersionIdTemp
+			dal.debug("  versionIds: current %d; new %d", *curVersionId, newVersionId)
 
 			// store current document in the previous version collection, adding its versionId to
 			// its mongo _id like in vermongo (https://github.com/thiloplanz/v7files/wiki/Vermongo)
@@ -445,11 +453,16 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 				current version - they are harmless in this case since the correct
 				data should have been written to prev.
 				Should be fixed by MongoDB 4.0 transactions. */
+				dal.debug("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
 				fmt.Printf("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
 			} else if err != nil {
 				return false, errors.Wrap(convertMongoErr(err), "failed to store previous version")
 			}
+		} else {
+			dal.debug("  versionIds: no current; new %d", newVersionId)
 		}
+	} else {
+		dal.debug("  versionIds: history disabled; new %d", newVersionId)
 	}
 
 	updateResourceMeta(resource, newVersionId)
@@ -466,10 +479,14 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 		var info *mgo.ChangeInfo
 		selector := bson.M{"_id": bsonID.Hex()}
 		info, err = curCollection.Upsert(selector, resource)
+		dal.debug("   upsert %#v", selector)
 		if err != nil {
-			err = errors.Wrap(err, "PUT handler: failed to upsert new document")
+			bson, err2 := resource.GetBSON()
+			if err2 != nil { panic(err2) }
+			err = errors.Wrapf(err, "PUT handler: failed to upsert new document: %#v --> %s %#v", selector, resource.JsonBytes(), bson)
+		} else {
+			updated = info.Updated
 		}
-		updated = info.Updated
 	} else {
 		// atomic chec-then-update
 		selector := bson.M{
@@ -481,6 +498,7 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 			selector["meta.versionId"] = bson.M{"$exists": false}
 		}
 		err = curCollection.Update(selector, resource)
+		dal.debug("   update %#v", selector)
 		if err == mgo.ErrNotFound {
 			// "If the session is in safe mode (see SetSafe) a ErrNotFound error is
 			// returned if a document isn't found, or a value of type *LastError
@@ -490,6 +508,11 @@ func (dal *mongoDataAccessLayer) Put(id string, resource interface{}) (createdNe
 			err = errors.Wrap(err, "PUT handler: failed to update current document")
 		}
 		updated = 1
+	}
+	if updated == 0 {
+		dal.debug("      created new")
+	} else {
+		dal.debug("      updated %d", updated)
 	}
 
 	if err == nil {
@@ -546,7 +569,7 @@ func setVermongoId(doc *bson.D, versionIdInt int) {
 	(*doc)[0].Value = newId
 }
 
-func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, resource interface{}) (id string, createdNew bool, err error) {
+func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, resource *models2.Resource) (id string, createdNew bool, err error) {
 	if IDs, err := dal.FindIDs(query); err == nil {
 		switch len(IDs) {
 		case 0:
@@ -567,7 +590,7 @@ func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, resource int
 func (dal *mongoDataAccessLayer) Delete(id, resourceType string) (newVersionId string, err error) {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
-		return "", convertMongoErr(err)
+		return "", ErrNotFound
 	}
 
 	worker := dal.MasterSession.GetWorkerSession()
@@ -612,6 +635,7 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mgo.
 	if err = curCollection.FindId(id).One(&currentDoc); err != nil && err != mgo.ErrNotFound {
 		return "", errors.Wrap(convertMongoErr(err), "saveDeletionIntoHistory: error retrieving current version")
 	}
+	err = nil
 
 	// extract current version
 	if currentDoc != nil {
@@ -633,12 +657,12 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mgo.
 		// NOTE: currentDoc._id modified in-place
 
 		// create a deletion record
-		now := &models.FHIRDateTime{Time: time.Now(), Precision: models.Timestamp}
+		now := time.Now()
 		deletionRecord := bson.M{
-			"_id": bson.M{
-				"_id":      id,
-				"_version": newVersionId,
-				"_deleted": 1,
+			"_id": bson.D{
+				bson.DocElem{ Name: "_id", Value: id },
+				bson.DocElem{ Name: "_version", Value : newVersionId },
+				bson.DocElem{ Name: "_deleted", Value: 1 },
 			},
 			"meta": bson.M{
 				"versionId":   newVersionIdStr,
@@ -689,8 +713,7 @@ func (dal *mongoDataAccessLayer) ConditionalDelete(query search.Query) (count in
 		*/
 
 		// get the resources that are about to be deleted
-		var bundle *models.Bundle
-		bundle, err = dal.Search(url.URL{}, query) // the baseURL argument here does not matter
+		bundle, err := dal.Search(url.URL{}, query) // the baseURL argument here does not matter
 
 		if err == nil {
 			for _, elem := range bundle.Entry {
@@ -701,12 +724,7 @@ func (dal *mongoDataAccessLayer) ConditionalDelete(query search.Query) (count in
 
 			for _, elem := range bundle.Entry {
 				if dal.enableHistory {
-					idField := reflect.ValueOf(elem.Resource).Elem().FieldByName("Id")
-					idKind := idField.Kind()
-					id := idField.String()
-					if idKind.String() != "string" {
-						return count, errors.Wrapf(err, "failed to save deletion into history (%s/%s) - id not a string!", resourceType, id)
-					}
+					id := elem.Resource.Id()
 					_, err = saveDeletionIntoHistory(resourceType, id, curCollection, prevCollection)
 					if err != nil {
 						return count, errors.Wrapf(err, "failed to save deletion into history (%s/%s)", resourceType, id)
@@ -737,7 +755,7 @@ func (dal *mongoDataAccessLayer) ConditionalDelete(query search.Query) (count in
 			if count < len(IDsToDelete) {
 				// Some but not all resources were removed, so use the original search query
 				// to see which resources are left.
-				var failBundle *models.Bundle
+				var failBundle *models2.ShallowBundle
 				failBundle, searchErr = dal.Search(url.URL{}, query)
 				deletedIds = setDiff(IDsToDelete, getResourceIdsFromBundle(failBundle))
 			} else {
@@ -747,7 +765,7 @@ func (dal *mongoDataAccessLayer) ConditionalDelete(query search.Query) (count in
 
 			if searchErr == nil {
 				for _, elem := range bundle.Entry {
-					id := reflect.ValueOf(elem.Resource).Elem().FieldByName("Id").String()
+					id := elem.Resource.Id()
 
 					if elementInSlice(id, deletedIds) {
 						// This resource was confirmed deleted
@@ -771,9 +789,15 @@ func (dal *mongoDataAccessLayer) ConditionalDelete(query search.Query) (count in
 	}
 }
 
-func (dal *mongoDataAccessLayer) History(baseURL url.URL, resourceType string, id string) (result *models.Bundle, err error) {
+func (dal *mongoDataAccessLayer) History(baseURL url.URL, resourceType string, id string) (bundle *models2.ShallowBundle, err error) {
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
+
+	// check id
+	_, err = convertIDToBsonID(id)
+	if err != nil {
+		return nil, ErrNotFound
+	}
 
 	baseURLstr := baseURL.String()
 	if !strings.HasSuffix(baseURLstr, "/") {
@@ -784,123 +808,128 @@ func (dal *mongoDataAccessLayer) History(baseURL url.URL, resourceType string, i
 	prevCollection := worker.PreviousVersionsCollection(resourceType)
 	curCollection := worker.CurrentVersionCollection(resourceType)
 
-	var entryList []models.BundleEntryComponent
-	method := "POST"
-	makeEntryRequest := func(actualMethod string) (*models.BundleEntryRequestComponent) {
-		url := ""
-		if method == "POST" {
-			url = resourceType
-		} else {
-			url = resourceType + "/" + id
+	var entryList []models2.ShallowBundleEntryComponent
+	makeEntryRequest := func(method string) (*models.BundleEntryRequestComponent) {
+		return &models.BundleEntryRequestComponent{
+			Url: resourceType + "/" + id,
+			Method: method,
 		}
-		return &models.BundleEntryRequestComponent{Url: url, Method: actualMethod}
-	}
-
-	// sort - oldest versions last
-	iter := prevCollection.Find(bson.M{"_id._id": id}).Sort("_id._version").Iter()
-
-	var prevDocBson bson.D
-	for iter.Next(&prevDocBson) {
-
-		var entry models.BundleEntryComponent
-		entry.FullUrl = fullUrl
-
-		resource := models.NewStructForResourceName(resourceType)
-		deleted, err := unmarshalPreviousVersion(prevDocBson, resource)
-		if err != nil {
-			return nil, err
-		}
-		if deleted {
-			entry.Request = makeEntryRequest("DELETE")
-		} else {
-			entry.Resource = resource
-			entry.Request = makeEntryRequest(method)
-			method = "PUT"
-		}
-
-		entryList = append(entryList, entry)
-	}
-	if err := iter.Close(); err != nil && err != mgo.ErrNotFound {
-		return nil, err
 	}
 
 	// add current version
-	var curDoc interface{}
-	curDoc = models.NewStructForResourceName(resourceType)
-	err = curCollection.Find(bson.M{"_id": id}).One(curDoc)
+	var curDoc bson.D
+	err = curCollection.Find(bson.M{"_id": id}).One(&curDoc)
 	if err == nil {
-		var entry models.BundleEntryComponent
+		var entry models2.ShallowBundleEntryComponent
 		entry.FullUrl = fullUrl
-		entry.Resource = &curDoc
-		entry.Request = makeEntryRequest(method)
+		entry.Resource, err = models2.NewResourceFromBSON(curDoc)
+		if err != nil {
+			return nil, errors.Wrap(err, "History: NewResourceFromBSON failed")
+		}
+		entry.Request = makeEntryRequest("PUT")
 		entryList = append(entryList, entry)
 	} else if err != mgo.ErrNotFound {
 		return nil, err
 	}
 
-	// output a Bundle
-	var bundle models.Bundle
-	bundle.Id = bson.NewObjectId().Hex()
-	bundle.Type = "history"
-	bundle.Entry = entryList
+	// sort - oldest versions last
+	iter := prevCollection.Find(bson.M{"_id._id": id}).Sort("-_id._version").Iter()
+
+	var prevDocBson bson.D
+	for iter.Next(&prevDocBson) {
+
+		var entry models2.ShallowBundleEntryComponent
+		entry.FullUrl = fullUrl
+
+		deleted, resource, err := unmarshalPreviousVersion(prevDocBson)
+		if err != nil {
+			return nil, errors.Wrap(err, "History: unmarshalPreviousVersion failed")
+		}
+		if deleted {
+			entry.Request = makeEntryRequest("DELETE")
+		} else {
+			entry.Resource = resource
+			entry.Request = makeEntryRequest("PUT")
+		}
+
+		entryList = append(entryList, entry)
+	}
+	if err := iter.Close(); err != nil && err != mgo.ErrNotFound {
+		return nil, errors.Wrap(err, "History: MongoDB query for previous versions failed")
+	}
+
 	totalDocs := uint32(len(entryList))
-	bundle.Total = &totalDocs
+	if totalDocs == 0 {
+		return nil, ErrNotFound
+	}
+
+	// last entry should be a POST
+	entryList[len(entryList)-1].Request.Method = "POST"
+	entryList[len(entryList)-1].Request.Url = resourceType
+
+	// output a Bundle
+	bundle = &models2.ShallowBundle {
+		Id: bson.NewObjectId().Hex(),
+		Type: "history",
+		Entry: entryList,
+		Total: &totalDocs,
+	}
 
 	// TODO: use paging
 	// bundle.Link = dal.generatePagingLinks(baseURL, searchQuery, total, uint32(numResults))
 
-	return &bundle, nil
+	return bundle, nil
 }
 
-func (dal *mongoDataAccessLayer) Search(baseURL url.URL, searchQuery search.Query) (*models.Bundle, error) {
+func (dal *mongoDataAccessLayer) Search(baseURL url.URL, searchQuery search.Query) (*models2.ShallowBundle, error) {
 
 	worker := dal.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
 	searcher := search.NewMongoSearcher(worker.DB(), dal.countTotalResults, dal.enableCISearches, dal.readonly)
 
-	result, total, err := searcher.Search(searchQuery)
+	resources, total, err := searcher.Search(searchQuery)
 	if err != nil {
 		return nil, convertMongoErr(err)
 	}
 
-	includesMap := make(map[string]interface{})
-	var entryList []models.BundleEntryComponent
-	resultVal := reflect.ValueOf(result).Elem()
-	numResults := resultVal.Len()
+	includesMap := make(map[string]*models2.Resource)
+	var entryList []models2.ShallowBundleEntryComponent
+	numResults := len(resources)
 	baseURLstr := baseURL.String()
 	if !strings.HasSuffix(baseURLstr, "/") {
 		baseURLstr = baseURLstr + "/"
 	}
 
 	for i := 0; i < numResults; i++ {
-		var entry models.BundleEntryComponent
-		entry.Resource = resultVal.Index(i).Addr().Interface()
-		entry.FullUrl = baseURLstr + resultVal.Index(i).FieldByName("Id").String()
+		var entry models2.ShallowBundleEntryComponent
+		entry.Resource = resources[i]
+		entry.FullUrl = baseURLstr + resources[i].Id()
 		entry.Search = &models.BundleEntrySearchComponent{Mode: "match"}
 		entryList = append(entryList, entry)
 
 		if searchQuery.UsesIncludes() || searchQuery.UsesRevIncludes() {
-			rpi, ok := entry.Resource.(ResourcePlusRelatedResources)
-			if ok {
-				for k, v := range rpi.GetIncludedAndRevIncludedResources() {
-					includesMap[k] = v
-				}
+
+			for _, included := range entry.Resource.SearchIncludes() {
+				includesMap[included.ResourceType() + "/" + included.Id()] = included
 			}
+
 		}
 	}
 
 	for _, v := range includesMap {
-		var entry models.BundleEntryComponent
+		dal.debug("includesMap: %#v\n", v)
+		var entry models2.ShallowBundleEntryComponent
 		entry.Resource = v
 		entry.Search = &models.BundleEntrySearchComponent{Mode: "include"}
 		entryList = append(entryList, entry)
 	}
 
-	var bundle models.Bundle
-	bundle.Id = bson.NewObjectId().Hex()
-	bundle.Type = "searchset"
-	bundle.Entry = entryList
+	bundle := models2.ShallowBundle {
+		Id: bson.NewObjectId().Hex(),
+		Type: "searchset",
+		Entry: entryList,
+	}
 
 	// Only include the total if counts are enabled, or if _summary=count was applied.
 	if dal.countTotalResults || searchQuery.Options().Summary == "count" {
@@ -938,11 +967,9 @@ func (dal *mongoDataAccessLayer) FindIDs(searchQuery search.Query) (IDs []string
 		return nil, convertMongoErr(err)
 	}
 
-	resultsVal := reflect.ValueOf(results).Elem()
-	IDs = make([]string, resultsVal.Len())
-
-	for i := 0; i < resultsVal.Len(); i++ {
-		IDs[i] = resultsVal.Index(i).FieldByName("Id").String()
+	IDs = make([]string, len(results))
+	for i, result := range results {
+		IDs[i] = result.Id()
 	}
 
 	return IDs, nil
@@ -1027,14 +1054,6 @@ func (dal *mongoDataAccessLayer) generatePagingLinks(baseURL url.URL, query sear
 	return links
 }
 
-// ResourcePlusRelatedResources is an interface to capture those structs that implement the functions for
-// getting included and rev-included resources
-type ResourcePlusRelatedResources interface {
-	GetIncludedAndRevIncludedResources() map[string]interface{}
-	GetIncludedResources() map[string]interface{}
-	GetRevIncludedResources() map[string]interface{}
-}
-
 func newRawSelfLink(baseURL url.URL, query search.Query) models.BundleLinkComponent {
 	queryString := ""
 	if len(query.Query) > 0 {
@@ -1061,37 +1080,30 @@ func convertIDToBsonID(id string) (bson.ObjectId, error) {
 	return bson.ObjectId(""), models.NewOperationOutcome("fatal", "exception", "Id must be a valid BSON ObjectId")
 }
 
-func updateResourceMeta(resource interface{}, versionId *int) {
-	m := reflect.ValueOf(resource).Elem().FieldByName("Meta")
-	if m.IsNil() {
-		newMeta := &models.Meta{}
-		m.Set(reflect.ValueOf(newMeta))
-	}
-	now := &models.FHIRDateTime{Time: time.Now(), Precision: models.Timestamp}
-	m.Elem().FieldByName("LastUpdated").Set(reflect.ValueOf(now))
+func updateResourceMeta(resource *models2.Resource, versionId int) {
+	now := time.Now()
+	resource.SetLastUpdatedTime(now)
 
-	if versionId != nil {
-		versionIdStr := strconv.Itoa(*versionId)
-		m.Elem().FieldByName("VersionId").SetString(versionIdStr)
-	}
+	resource.SetVersionId(versionId)
 }
 
 func convertMongoErr(err error) error {
 	switch err {
-	default:
-		return err
 	case mgo.ErrNotFound:
 		return ErrNotFound
+	default:
+		_, filename, lineno, _ := runtime.Caller(1)
+		return errors.Wrapf(err, "MongoDB operation error (%s:%d)", filename, lineno)
 	}
 }
 
 // getResourceIdsFromBundle parses a slice of BSON resource IDs from a valid
 // bundle of resources (typically returned from a search operation). Order is
 // preserved.
-func getResourceIdsFromBundle(bundle *models.Bundle) []string {
+func getResourceIdsFromBundle(bundle *models2.ShallowBundle) []string {
 	resourceIds := make([]string, int(*bundle.Total))
 	for i, elem := range bundle.Entry {
-		resourceIds[i] = reflect.ValueOf(elem.Resource).Elem().FieldByName("Id").String()
+		resourceIds[i] = elem.Resource.Id()
 	}
 	return resourceIds
 }

@@ -133,7 +133,7 @@ func killOp(adminDB *mgo.Database, opID uint32) error {
 	var err error
 	reply := Reply{}
 	// see: https://docs.mongodb.com/manual/reference/command/killOp/
-	err = adminDB.Run(bson.D{{"killOp", 1}, {"op", opID}}, &reply)
+	err = adminDB.Run(bson.D{{Name: "killOp", Value: 1}, {Name: "op", Value: opID}}, &reply)
 	if reply.Ok != OK {
 		if reply.Info != "" {
 			return errors.New(reply.Info)

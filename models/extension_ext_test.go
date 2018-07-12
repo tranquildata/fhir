@@ -278,9 +278,9 @@ func (e *ExtensionSuite) TestMarshalReferenceExtension(c *check.C) {
 		},
 		"foo": bson.M{
 			"reference":   "Practitioner/123",
-			"referenceid": "123",
-			"type":        "Practitioner",
-			"external":    true,
+			"reference__id": "123",
+			"reference__type":        "Practitioner",
+			"reference__external":    true,
 		},
 	}
 
@@ -318,9 +318,9 @@ func (e *ExtensionSuite) TestUnmarshalReferenceExtension(c *check.C) {
 		},
 		"foo": bson.M{
 			"reference":   "Practitioner/123",
-			"referenceid": "123",
-			"type":        "Practitioner",
-			"external":    true,
+			"reference__id": "123",
+			"reference__type":        "Practitioner",
+			"reference__external":    true,
 		},
 	})
 	util.CheckErr(err)
@@ -349,10 +349,6 @@ func (e *ExtensionSuite) TestMarshalDateTimeExtension(c *check.C) {
 				"@type": "dateTime",
 			},
 		},
-		"foo": bson.M{
-			"time":      time.Date(2012, time.March, 1, 12, 0, 0, 0, time.UTC),
-			"precision": "timestamp",
-		},
 	}
 
 	// This is where SetBSON is called to marshal it into BSON bytes
@@ -364,10 +360,10 @@ func (e *ExtensionSuite) TestMarshalDateTimeExtension(c *check.C) {
 	err = bson.Unmarshal(data, &m)
 	util.CheckErr(err)
 
-	// Can't do deep equals of whole object because the time location won't match (despite having the same offset)
 	c.Assert(m["@context"], check.DeepEquals, expected["@context"])
-	c.Assert(m["foo"].(bson.M)["precision"], check.Equals, expected["foo"].(bson.M)["precision"])
-	c.Assert(m["foo"].(bson.M)["time"].(time.Time).Unix(), check.Equals, expected["foo"].(bson.M)["time"].(time.Time).Unix())
+	c.Assert(m["foo"].(bson.M)["__from"].(time.Time).Unix(), check.Equals, time.Date(2012, time.March, 1, 12, 0, 0, 0, time.UTC).Unix())
+	c.Assert(m["foo"].(bson.M)["__to"].(time.Time).Unix(), check.Equals, time.Date(2012, time.March, 1, 12, 0, 1, 0, time.UTC).Unix())
+	c.Assert(m["foo"].(bson.M)["__strDate"].(string), check.Equals, "2012-03-01T12:00:00Z")
 }
 
 func (e *ExtensionSuite) TestUnmarshalDateTimeExtension(c *check.C) {
@@ -387,10 +383,7 @@ func (e *ExtensionSuite) TestUnmarshalDateTimeExtension(c *check.C) {
 				"@type": "dateTime",
 			},
 		},
-		"foo": bson.M{
-			"time":      time.Date(2012, time.March, 1, 12, 0, 0, 0, time.UTC),
-			"precision": "timestamp",
-		},
+		"foo": time.Date(2012, time.March, 1, 12, 0, 0, 0, time.UTC),
 	})
 	util.CheckErr(err)
 
@@ -406,13 +399,18 @@ func (e *ExtensionSuite) TestUnmarshalDateTimeExtension(c *check.C) {
 }
 
 func (e *ExtensionSuite) TestMarshalRangeExtension(c *check.C) {
-	l := float64(10)
-	h := float64(20)
+	// l := float64(10)
+	// h := float64(20)
+	l, err := NewDecimal("10")
+	util.CheckErr(err)
+	h, err := NewDecimal("20")
+	util.CheckErr(err)
+
 	ext := &Extension{
 		Url: "http://example.org/fhir/extensions/foo",
 		ValueRange: &Range{
-			Low:  &Quantity{Value: &l, Unit: "mm"},
-			High: &Quantity{Value: &h, Unit: "mm"},
+			Low:  &Quantity{Value: l, Unit: "mm"},
+			High: &Quantity{Value: h, Unit: "mm"},
 		},
 	}
 
@@ -424,8 +422,22 @@ func (e *ExtensionSuite) TestMarshalRangeExtension(c *check.C) {
 			},
 		},
 		"foo": bson.M{
-			"low":  bson.M{"value": float64(10), "unit": "mm"},
-			"high": bson.M{"value": float64(20), "unit": "mm"},
+			"low":  bson.M{
+				"value": bson.M{
+							"__to": float64(10.5),
+							"__from": float64(9.5),
+							"__num": float64(10),
+							"__strNum": "10",
+						},
+				"unit": "mm"},
+			"high":  bson.M{
+				"value": bson.M{
+							"__to": float64(20.5),
+							"__from": float64(19.5),
+							"__num": float64(20),
+							"__strNum": "20",
+						},
+				"unit": "mm"},
 		},
 	}
 
@@ -442,13 +454,18 @@ func (e *ExtensionSuite) TestMarshalRangeExtension(c *check.C) {
 }
 
 func (e *ExtensionSuite) TestUnmarshalRangeExtension(c *check.C) {
-	l := float64(10)
-	h := float64(20)
+	// l := float64(10)
+	// h := float64(20)
+	l, err := NewDecimal("10")
+	util.CheckErr(err)
+	h, err := NewDecimal("20")
+	util.CheckErr(err)
+
 	expected := Extension{
 		Url: "http://example.org/fhir/extensions/foo",
 		ValueRange: &Range{
-			Low:  &Quantity{Value: &l, Unit: "mm"},
-			High: &Quantity{Value: &h, Unit: "mm"},
+			Low:  &Quantity{Value: l, Unit: "mm"},
+			High: &Quantity{Value: h, Unit: "mm"},
 		},
 	}
 
@@ -461,8 +478,24 @@ func (e *ExtensionSuite) TestUnmarshalRangeExtension(c *check.C) {
 			},
 		},
 		"foo": bson.M{
-			"low":  bson.M{"value": float64(10), "unit": "mm"},
-			"high": bson.M{"value": float64(20), "unit": "mm"},
+			// "low":  bson.M{"value": float64(10), "unit": "mm"},
+			// "high": bson.M{"value": float64(20), "unit": "mm"},
+			"low":  bson.M{
+				"value": bson.M{
+							"__to": float64(10.5),
+							"__from": float64(9.5),
+							"__num": float64(10),
+							"__strNum": "10",
+						},
+				"unit": "mm"},
+			"high":  bson.M{
+				"value": bson.M{
+							"__to": float64(20.5),
+							"__from": float64(19.5),
+							"__num": float64(20),
+							"__strNum": "20",
+						},
+				"unit": "mm"},
 		},
 	})
 	util.CheckErr(err)
