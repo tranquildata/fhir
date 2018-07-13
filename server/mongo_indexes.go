@@ -183,17 +183,20 @@ func parseCompoundIndex(indexSpec string) (*mgo.Index, error) {
 // to the format used by mgo.Index: "(-)<key>"
 func parseIndexKey(spec string) string {
 
-	keyAndDirection := strings.Split(spec, "_")
-
-	if len(keyAndDirection) != 2 {
-		return ""
-	}
-
 	direction := ""
-	if keyAndDirection[1] == "-1" {
+	key := ""
+	if strings.HasSuffix(spec, "_1") {
+		// ascending
+		key = strings.TrimSuffix(spec, "_1")
+	} else if strings.HasSuffix(spec, "_-1") {
+		// descending
 		direction = "-"
+		key = strings.TrimSuffix(spec, "_-1")
+	} else {
+		return "" // error
 	}
-	return fmt.Sprintf("%s%s", direction, keyAndDirection[0])
+
+	return fmt.Sprintf("%s%s", direction, key)
 }
 
 func newParseIndexError(indexName, reason string) error {
