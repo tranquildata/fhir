@@ -2,6 +2,7 @@ vendor
 
 # Binary artifacts
 /fhir
+/fhir-server/fhir-server
 /test/test
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
