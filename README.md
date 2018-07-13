@@ -3,11 +3,11 @@ GoFHIR - Intervention Engine FHIR Server
 
 This project provides [HL7 FHIR STU3](http://hl7.org/fhir/STU3/index.html) models and server components implemented in Go and using MongoDB for storage. It aims to work well when multiple instances are run in containers - starting quickly, having modest resource utilisation and giving good performance.
 
-This is a continuation of the [FHIR Server](https://github.com/mitre/fhir-server) developed by the MITRE corporation. It is not a complete implementation of FHIR, as features are driven by the
+This is a continuation of the [FHIR Server](https://github.com/mitre/fhir-server) developed by the MITRE Corporation. It is not a complete implementation of FHIR, as features are driven by the
 [Intervention Engine](https://github.com/intervention-engine/ie), [eCQM Engine](https://github.com/mitre/ecqm), [Patient Matching Test Harness](https://github.com/mitre/ptmatch),
-[Synthetic Mass](https://github.com/synthetichealth/syntheticmass) and [Patient Assistance tool](https://www.patsoftware.com.au/) projects.
+[Synthetic Mass](https://github.com/synthetichealth/syntheticmass) and [Patient Assistance Tool](https://www.patsoftware.com.au/) projects.
 
-Currently this server library supports:
+Currently this server should be considered experimental, with preliminary support for:
 
 -	JSON representations of all resources
 -	XML representations of all resources via [FHIR.js](https://github.com/lantanagroup/FHIR.js) (except for primitive extensions)
@@ -26,12 +26,22 @@ Currently this server does *not* support the following major features:
 
 -	Transactional isolation (see workaround below)
 -	Validation (work in progress)
--	Resource summries
+-	Resource summaries
 -	Advanced search features
 	-	Custom search parameters
 	-	Full-text search
 	-	Filter expressions
 -	GraphQL
+
+The following relatively basic items are next in line for development:
+
+- `If-Match` and `If-None-Match`
+- History support for paging, `_since`, `_at` and `_count`
+- GET entries in transactions
+- Batch interdependency validation
+- Search for quantities with the system unspecified (i.e. by both unit and code)
+
+Users are strongly encouraged to test thoroughly and contributions (including tests) would be most welcome.
 
 
 Transactions
