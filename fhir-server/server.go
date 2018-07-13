@@ -39,6 +39,10 @@ func main() {
 		}()
 	}
 
+	if *enableXML == false {
+		fmt.Println("XML support is disabled (use --enableXML to enable)")
+	}
+
 	fmt.Printf("MongoDB: host is %s\n", *mongodbHostPort)
 
 	var MyConfig = server.Config{
