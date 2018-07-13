@@ -1,3 +1,5 @@
+vendor
+
 # Binary artifacts
 /fhir
 /test/test

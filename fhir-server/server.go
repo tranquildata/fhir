@@ -39,7 +39,7 @@ func main() {
 		}()
 	}
 
-	fmt.Printf("MongoDB host: %s\n", *mongodbHostPort)
+	fmt.Printf("MongoDB: host is %s\n", *mongodbHostPort)
 
 	var MyConfig = server.Config{
 		ServerURL:             fmt.Sprintf("http://localhost:%d", *port),
@@ -63,7 +63,7 @@ func main() {
 	}
 
 	// Mutex middleware to work around the lack of proper transactions in MongoDB (at least until MongoDB 4.0)
-	s.Engine.Use(client_specified_mutexes.Middleware())
+	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
 
 	s.Run()
 }

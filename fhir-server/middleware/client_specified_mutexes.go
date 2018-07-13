@@ -1,22 +1,22 @@
-package client_specified_mutexes
+package middleware
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
-type LockRequest struct {
+type lockRequest struct {
 	mutexName string
 	gateChannel chan int
 }
-type UnlockRequest struct {
+type unlockRequest struct {
 	mutexName string
 	lockId int
 }
 
-func Middleware() gin.HandlerFunc {
-	var lockRequests = make (chan *LockRequest)
-	var unlockRequests = make (chan *UnlockRequest)
+func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
+	var lockRequests = make (chan *lockRequest)
+	var unlockRequests = make (chan *unlockRequest)
 
 	go func() {
 		mutexes := make(map[string]map[int]chan int)
@@ -71,11 +71,11 @@ func Middleware() gin.HandlerFunc {
 
 		mutexName := c.GetHeader("X-Mutex-Name")
 		if mutexName != "" {
-			lockRequest := &LockRequest{mutexName: mutexName, gateChannel: make(chan int) }
+			lockRequest := &lockRequest{mutexName: mutexName, gateChannel: make(chan int) }
 			lockRequests <- lockRequest
 			lockId := <- lockRequest.gateChannel
 			defer func() {
-				unlockRequest := &UnlockRequest{mutexName, lockId }
+				unlockRequest := &unlockRequest{mutexName, lockId }
 				unlockRequests <- unlockRequest
 			}()
 			c.Header("X-Mutex-Used", "1")

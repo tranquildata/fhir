@@ -8,7 +8,7 @@
     ],
     "kind": "instance",
     "name": "GoFHIR Capability Statement",
-    "publisher": "The MITRE Corporation",
+    "publisher": "PAT Pty Ltd, The MITRE Corporation",
     "resourceType": "CapabilityStatement",
     "rest": [
         {
