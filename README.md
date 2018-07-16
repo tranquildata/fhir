@@ -45,14 +45,16 @@ Users are strongly encouraged to test thoroughly and contributions (including te
 
 
 Transactions
------------
+--------------
 
-MongoDB is used as the underlying database and has recently acquired multi-document transaction features in MongoDB 4.0. This can be supported by this project once implemented in the new offially-supported Go driver - see https://github.com/mongodb/mongo-go-driver.
+MongoDB is used as the underlying database and has recently acquired multi-document transaction features in version 4.0. This can be supported by this project once implemented in the new offcially-supported Go driver - see https://github.com/mongodb/mongo-go-driver.
 
-In the meantime this project implements a workaround. Clients can send a `X-Mutex-Name` header and two requests with the same value of this header should execute serially.
+Another approach would be to create an alternative backend, perhaps using PostgreSQL, ArangoDB or Dgraph.
+
+In the meantime this project implements a partial workaround. Clients can send a `X-Mutex-Name` header and two requests with the same value of this header will execute serially (provided there is only one active instance of this server). Please note that this won't give you the all-or-nothing behaviour of real transactions.
 
 Getting started using Docker
------
+-------------------------------
 
 1. Install Docker
 2. Run an image of this FHIR server that includes MongoDB, deleting all data after exiting:
@@ -70,7 +72,7 @@ See MongoDB's Docker image documentation for more information, including how to 
 
 
 Building and running from source
------------
+---------------------------------
 
 1. Install the Go programming language (at least version 1.10)
 2. Install and start MongoDB
@@ -92,7 +94,7 @@ Building and running from source
 		-port int
 				Port to listen on (default 3001)
 		-reqlog
-				Enables request logging -- do NOT use in production
+				Enables request logging -- use with caution in production
 		-startMongod
 				Run mongod (for 'getting started' docker images - development only)
 
@@ -102,7 +104,7 @@ If you wish to test the server with synthetic patient data, please reference [Ge
 
 
 Building docker images
------------
+--------------------------
 
 Dockerfiles as well as a Google Cloud Container Builder `cloudBuild.json` spec are in the root of the repository.
 
@@ -127,7 +129,7 @@ You can also set up a trigger via https://console.cloud.google.com/gcr/triggers
 
 
 Development
------------
+-------------
 
 This project uses Go 1.10. To test the library first install dependencies by running `dep ensure -vendor-only  -v`. You can also try using the older `go get -t ./...` (this requires the project to be at the right place in your GOPATH).
 
@@ -144,7 +146,7 @@ $ go run server.go
 ```
 
 As a library
--------
+--------------
 
 This package can also be used as a library. Examples of usage can be found in the [server set up of the eCQM Engine](https://github.com/mitre/ecqm/blob/master/server.go), the
 [server set up of Intervention Engine](https://github.com/intervention-engine/ie/blob/master/server.go), or the [GoFHIR server used by SyntheticMass](https://github.com/synthetichealth/gofhir/blob/master/main.go).
