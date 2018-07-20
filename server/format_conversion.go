@@ -75,7 +75,7 @@ func (c *FhirFormatConverter) JsonToXml(json string) (xml string, err error) {
 	return
 }
 
-func (c *FhirFormatConverter) SendXML(obj interface{}, context *gin.Context) error {
+func (c *FhirFormatConverter) SendXML(statusCode int, obj interface{}, context *gin.Context) error {
 	jsonStr, err := json.Marshal(obj)
 	if err != nil {
 		return context.AbortWithError(500, err)
@@ -84,6 +84,6 @@ func (c *FhirFormatConverter) SendXML(obj interface{}, context *gin.Context) err
 	if err != nil {
 		return context.AbortWithError(500, err)
 	}
-	context.Data(200, "application/fhir+xml; charset=utf-8", []byte(xml))
+	context.Data(statusCode, "application/fhir+xml; charset=utf-8", []byte(xml))
 	return err
 }

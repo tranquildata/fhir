@@ -402,7 +402,7 @@ func (dal *mongoDataAccessLayer) PostWithID(id string, resource *models2.Resourc
 	return convertMongoErr(err)
 }
 
-func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (createdNew bool, err error) {
+func (dal *mongoDataAccessLayer) Put(id string, conditionalVersionId string, resource *models2.Resource) (createdNew bool, err error) {
 	bsonID, err := convertIDToBsonID(id)
 	if err != nil {
 		return false, convertMongoErr(err)
@@ -414,11 +414,20 @@ func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (cre
 	resourceType := resource.ResourceType()
 	curCollection := worker.CurrentVersionCollection(resourceType)
 	resource.SetId(bsonID.Hex())
-	dal.debug("PUT %s/%s", resourceType, resource.Id())
+	if conditionalVersionId != "" {
+		dal.debug("PUT %s/%s (If-Match %s)", resourceType, resource.Id(), conditionalVersionId)
+	} else {
+		dal.debug("PUT %s/%s", resourceType, resource.Id())
+	}
 
 	var curVersionId *int = nil
 	var newVersionId = 1
-	if dal.enableHistory {
+	if dal.enableHistory == false {
+		if conditionalVersionId != "" {
+			return false, errors.Errorf("If-Match specified for a conditional put, but version histories are disabled")
+		}
+		dal.debug("  versionIds: history disabled; new %d", newVersionId)
+	} else {
 
 		// get current version of this document
 		var currentDoc *bson.D = nil
@@ -426,9 +435,13 @@ func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (cre
 			return false, errors.Wrap(convertMongoErr(err), "Put handler: error retrieving current version")
 		}
 
-		// extract current version
-		if currentDoc != nil {
-			hasVersionId, curVersionIdTemp := getVersionIdFromResource(currentDoc)
+		if currentDoc == nil {
+			if conditionalVersionId != "" {
+				return false, ErrConflict { msg: "If-Match specified for a resource that doesn't exist" }
+			}
+			dal.debug("  versionIds: no current; new %d", newVersionId)
+		} else {
+			hasVersionId, curVersionIdTemp, curVersionIdStr := getVersionIdFromResource(currentDoc)
 			if hasVersionId {
 				newVersionId = curVersionIdTemp + 1
 			} else {
@@ -438,6 +451,10 @@ func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (cre
 			}
 			curVersionId = &curVersionIdTemp
 			dal.debug("  versionIds: current %d; new %d", *curVersionId, newVersionId)
+
+			if conditionalVersionId != "" && conditionalVersionId != curVersionIdStr {
+				return false, ErrConflict { msg: "If-Match doesn't match current versionId" }
+			}
 
 			// store current document in the previous version collection, adding its versionId to
 			// its mongo _id like in vermongo (https://github.com/thiloplanz/v7files/wiki/Vermongo)
@@ -458,11 +475,7 @@ func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (cre
 			} else if err != nil {
 				return false, errors.Wrap(convertMongoErr(err), "failed to store previous version")
 			}
-		} else {
-			dal.debug("  versionIds: no current; new %d", newVersionId)
 		}
-	} else {
-		dal.debug("  versionIds: history disabled; new %d", newVersionId)
 	}
 
 	updateResourceMeta(resource, newVersionId)
@@ -529,14 +542,15 @@ func (dal *mongoDataAccessLayer) Put(id string, resource *models2.Resource) (cre
 	return createdNew, convertMongoErr(err)
 }
 
-func getVersionIdFromResource(doc *bson.D) (hasVersionId bool, versionId int) {
+func getVersionIdFromResource(doc *bson.D) (hasVersionId bool, versionId int, versionIdStr string) {
 	for _, item := range *doc {
 		if item.Name == "meta" {
 			meta := item.Value.(bson.D)
 			for _, item := range meta {
 				if item.Name == "versionId" {
 					hasVersionId = true
-					versionIdStr, isString := item.Value.(string)
+					var isString bool
+					versionIdStr, isString = item.Value.(string)
 					if !isString {
 						panic(fmt.Errorf("meta.versionId is not a BSON string"))
 					}
@@ -551,7 +565,7 @@ func getVersionIdFromResource(doc *bson.D) (hasVersionId bool, versionId int) {
 			}
 		}
 	}
-	return false, -1
+	return false, -1, ""
 }
 
 // Updates the doc to use a vermongo-like _id (_id: current_id, _version: versionId)
@@ -569,7 +583,7 @@ func setVermongoId(doc *bson.D, versionIdInt int) {
 	(*doc)[0].Value = newId
 }
 
-func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, resource *models2.Resource) (id string, createdNew bool, err error) {
+func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, conditionalVersionId string, resource *models2.Resource) (id string, createdNew bool, err error) {
 	if IDs, err := dal.FindIDs(query); err == nil {
 		switch len(IDs) {
 		case 0:
@@ -583,7 +597,7 @@ func (dal *mongoDataAccessLayer) ConditionalPut(query search.Query, resource *mo
 		return "", false, err
 	}
 
-	createdNew, err = dal.Put(id, resource)
+	createdNew, err = dal.Put(id, conditionalVersionId, resource)
 	return id, createdNew, err
 }
 
@@ -639,7 +653,7 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mgo.
 
 	// extract current version
 	if currentDoc != nil {
-		hasVersionId, curVersionId := getVersionIdFromResource(currentDoc)
+		hasVersionId, curVersionId, _ := getVersionIdFromResource(currentDoc)
 		var newVersionId int
 		if hasVersionId {
 			newVersionId = curVersionId + 1

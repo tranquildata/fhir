@@ -39,7 +39,7 @@ func (m *MongoSearchSuite) SetUpSuite(c *C) {
 	m.EST = time.FixedZone("EST", -5*60*60)
 	m.Local, _ = time.LoadLocation("Local")
 
-	DisableOperationOutcomeDiagnosticsFileLine()
+	models.DisableOperationOutcomeDiagnosticsFileLine()
 	var err error
 
 	//turnOnDebugLog()

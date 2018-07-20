@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"net/http"
-	"path"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"strconv"
@@ -1280,57 +1278,6 @@ func (m *MongoSearcher) createOrQueryObject(o *OrParam) bson.M {
 	}
 }
 
-var showOpOutcomeDiagnostics = true
-
-func DisableOperationOutcomeDiagnosticsFileLine() { // e.g. for testing OperationOutcomes
-	showOpOutcomeDiagnostics = false
-}
-func getOpOutcomeDiagnostics() string {
-	if showOpOutcomeDiagnostics {
-		_, file, line, _ := runtime.Caller(3)
-		return fmt.Sprintf("%s:%d", path.Base(file), line)
-	} else {
-		return ""
-	}
-}
-
-func createOpOutcome(severity, code, detailsCode, detailsDisplay string) *models.OperationOutcome {
-
-	outcome := &models.OperationOutcome{
-		Issue: []models.OperationOutcomeIssueComponent{
-			models.OperationOutcomeIssueComponent{
-				Severity:    severity,
-				Code:        code,
-				Diagnostics: getOpOutcomeDiagnostics(),
-			},
-		},
-	}
-
-	if detailsCode != "" {
-		outcome.Issue[0].Details = &models.CodeableConcept{
-			Coding: []models.Coding{
-				models.Coding{
-					Code:    detailsCode,
-					System:  "http://hl7.org/fhir/ValueSet/operation-outcome",
-					Display: detailsDisplay},
-			},
-			Text: detailsDisplay,
-		}
-	}
-
-	if detailsCode == "" && detailsDisplay != "" {
-		outcome.Issue[0].Details = &models.CodeableConcept{
-			Coding: []models.Coding{
-				models.Coding{
-					Display: detailsDisplay},
-			},
-			Text: detailsDisplay,
-		}
-	}
-
-	return outcome
-}
-
 // Error is an interface for search errors, providing an HTTP status and operation outcome
 type Error struct {
 	HTTPStatus       int
@@ -1347,28 +1294,28 @@ func (e *Error) Error() string {
 func createUnsupportedSearchError(code, display string) *Error {
 	return &Error{
 		HTTPStatus:       http.StatusNotImplemented,
-		OperationOutcome: createOpOutcome("error", "not-supported", code, display),
+		OperationOutcome: models.CreateOpOutcome("error", "not-supported", code, display),
 	}
 }
 
 func createInvalidSearchError(code, display string) *Error {
 	return &Error{
 		HTTPStatus:       http.StatusBadRequest,
-		OperationOutcome: createOpOutcome("error", "processing", code, display),
+		OperationOutcome: models.CreateOpOutcome("error", "processing", code, display),
 	}
 }
 
 func createInternalServerError(code, display string) *Error {
 	return &Error{
 		HTTPStatus:       http.StatusInternalServerError,
-		OperationOutcome: createOpOutcome("fatal", "exception", code, display),
+		OperationOutcome: models.CreateOpOutcome("fatal", "exception", code, display),
 	}
 }
 
 func createOpInterruptedError(display string) *Error {
 	return &Error{
 		HTTPStatus:       http.StatusInternalServerError,
-		OperationOutcome: createOpOutcome("error", "too-costly", "", display),
+		OperationOutcome: models.CreateOpOutcome("error", "too-costly", "", display),
 	}
 }
 

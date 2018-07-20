@@ -4,6 +4,9 @@
     "status": "generated",
     "div": "<div>\n      <p>Patient Donald DUCK @ Acme Healthcare, Inc. MR = 654321</p>\n    </div>"
   },
+  "meta": {
+    "versionId": "1"
+  },
   "identifier": [
     {
       "use": "usual",

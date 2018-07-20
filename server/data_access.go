@@ -21,11 +21,11 @@ type DataAccessLayer interface {
 	// PostWithID creates a resource instance with the given ID.
 	PostWithID(id string, resource *models2.Resource) error
 	// Put creates or updates a resource instance with the given ID.
-	Put(id string, resource *models2.Resource) (createdNew bool, err error)
+	Put(id string, conditionalVersionId string, resource *models2.Resource) (createdNew bool, err error)
 	// ConditionalPut creates or updates a resource based on search criteria.  If the criteria results in zero matches,
 	// the resource is created.  If the criteria results in one match, it is updated.  Otherwise, a ErrMultipleMatches
 	// error is returned.
-	ConditionalPut(query search.Query, resource *models2.Resource) (id string, createdNew bool, err error)
+	ConditionalPut(query search.Query, conditionalVersionId string, resource *models2.Resource) (id string, createdNew bool, err error)
 	// Delete removes the resource instance with the given ID.  This operation cannot be undone.
 	Delete(id, resourceType string) (newVersionId string, err error)
 	// ConditionalDelete removes zero or more resources matching the passed in search criteria.  This operation cannot
@@ -52,3 +52,10 @@ var ErrMultipleMatches = errors.New("Multiple Matches")
 
 // ErrOpInterrupted indicates that the query was interrupted by a killOp() operation
 var ErrOpInterrupted = errors.New("Operation Interrupted")
+
+type ErrConflict struct {
+	msg   string
+}
+func (e ErrConflict) Error() string {
+	return e.msg
+}

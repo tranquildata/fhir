@@ -35,13 +35,13 @@ Currently this server does *not* support the following major features:
 
 The following relatively basic items are next in line for development:
 
-- `If-Match` and `If-None-Match`
+- Conditional reads (`If-Modified-Since` and `If-None-Match`)
 - History support for paging, `_since`, `_at` and `_count`
 - GET entries in transactions
 - Batch interdependency validation
 - Search for quantities with the system unspecified (i.e. by both unit and code)
 
-Users are strongly encouraged to test thoroughly and contributions (including tests) would be most welcome.
+Users are strongly encouraged to test thoroughly and contributions (including more tests) would be most welcome.
 
 
 Transactions

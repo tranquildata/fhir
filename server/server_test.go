@@ -618,6 +618,130 @@ func (s *ServerSuite) TestConditionalUpdatePatientOneMatch(c *C) {
 	c.Assert(time.Since(patient.Meta.LastUpdated.Time).Minutes() < float64(1), Equals, true)
 }
 
+func (s *ServerSuite) TestVersionedConditionalUpdatePatientOneMatch200(c *C) {
+
+	worker := s.MasterSession.GetWorkerSession()
+	defer worker.Close()
+
+	data, err := os.Open("../fixtures/patient-example-c.json")
+	util.CheckErr(err)
+	defer data.Close()
+
+	req, err := http.NewRequest("PUT", s.Server.URL+"/Patient?name=Donald", data)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("If-Match", "W/\"1\"")
+	util.CheckErr(err)
+	res, err := http.DefaultClient.Do(req)
+	util.CheckErr(err)
+	c.Assert(res.StatusCode, Equals, 200)
+
+	patientCollection := worker.DB().C("patients")
+	count, err := patientCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 1)
+	patient := models.Patient{}
+	err = patientCollection.FindId(s.FixtureID).One(&patient)
+	util.CheckErr(err)
+	c.Assert(patient.Name[0].Given[0], Equals, "Donny")
+	c.Assert(patient.Meta, NotNil)
+	c.Assert(patient.Meta.LastUpdated, NotNil)
+	c.Assert(patient.Meta.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+	c.Assert(time.Since(patient.Meta.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+}
+
+func (s *ServerSuite) TestVersionedConditionalUpdatePatientOneMatch409(c *C) {
+
+	worker := s.MasterSession.GetWorkerSession()
+	defer worker.Close()
+
+	data, err := os.Open("../fixtures/patient-example-c.json")
+	util.CheckErr(err)
+	defer data.Close()
+
+	req, err := http.NewRequest("PUT", s.Server.URL+"/Patient?name=Donald", data)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("If-Match", "W/\"5\"")
+	util.CheckErr(err)
+	res, err := http.DefaultClient.Do(req)
+	util.CheckErr(err)
+	logBody(res)
+	c.Assert(res.StatusCode, Equals, 409)
+
+	patientCollection := worker.DB().C("patients")
+	count, err := patientCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 1)
+	patient := models.Patient{}
+	err = patientCollection.FindId(s.FixtureID).One(&patient)
+	util.CheckErr(err)
+	c.Assert(patient.Name[0].Given[0], Equals, "Donald") // unchanged
+	c.Assert(patient.Meta, NotNil)
+}
+
+func (s *ServerSuite) TestVersionedUpdatePatientOneMatch200(c *C) {
+
+	worker := s.MasterSession.GetWorkerSession()
+	defer worker.Close()
+
+	data, err := os.Open("../fixtures/patient-example-c.json")
+	util.CheckErr(err)
+	defer data.Close()
+
+	req, err := http.NewRequest("PUT", s.Server.URL + "/Patient/" + s.FixtureID, data)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("If-Match", "W/\"1\"")
+	util.CheckErr(err)
+	res, err := http.DefaultClient.Do(req)
+	util.CheckErr(err)
+	c.Assert(res.StatusCode, Equals, 200)
+
+	patientCollection := worker.DB().C("patients")
+	count, err := patientCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 1)
+	patient := models.Patient{}
+	err = patientCollection.FindId(s.FixtureID).One(&patient)
+	util.CheckErr(err)
+	c.Assert(patient.Name[0].Given[0], Equals, "Donny")
+	c.Assert(patient.Meta, NotNil)
+	c.Assert(patient.Meta.LastUpdated, NotNil)
+	c.Assert(patient.Meta.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+	c.Assert(time.Since(patient.Meta.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+}
+
+func (s *ServerSuite) TestVersionedUpdatePatientOneMatch409(c *C) {
+
+	worker := s.MasterSession.GetWorkerSession()
+	defer worker.Close()
+
+	data, err := os.Open("../fixtures/patient-example-c.json")
+	util.CheckErr(err)
+	defer data.Close()
+
+	req, err := http.NewRequest("PUT", s.Server.URL + "/Patient/" + s.FixtureID, data)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("If-Match", "W/\"5\"")
+	util.CheckErr(err)
+	res, err := http.DefaultClient.Do(req)
+	util.CheckErr(err)
+	logBody(res)
+	c.Assert(res.StatusCode, Equals, 409)
+
+	patientCollection := worker.DB().C("patients")
+	count, err := patientCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 1)
+	patient := models.Patient{}
+	err = patientCollection.FindId(s.FixtureID).One(&patient)
+	util.CheckErr(err)
+	c.Assert(patient.Name[0].Given[0], Equals, "Donald") // unchanged
+	c.Assert(patient.Meta, NotNil)
+}
+
+
+
+
+
 func (s *ServerSuite) TestBatchConditionalUpdatePatientUUIDIdentifier(c *C) {
 
 	worker := s.MasterSession.GetWorkerSession()
@@ -720,7 +844,7 @@ func (s *ServerSuite) TestBatchCreateConditional200(c *C) {
 	testPatient := s.insertPatientFromFixture("../fixtures/patient-example-uuid-identifier.json")
 
 	// should do nothing
-	data, err := os.Open("../fixtures/patient-example-uuid-identifier-create-conditional-200.json")
+	data, err := os.Open("../fixtures/patient-example-uuid-identifier-create-conditional-200-batch.json")
 	util.CheckErr(err)
 	defer data.Close()
 	req, err := http.NewRequest("POST", s.Server.URL+"/", data)
@@ -802,7 +926,7 @@ func (s *ServerSuite) TestBatchCreateConditional412(c *C) {
 	testPatient2 := s.insertPatientFromFixture("../fixtures/patient-example-uuid-identifier.json")
 
 	// should do nothing
-	data, err := os.Open("../fixtures/patient-example-uuid-identifier-create-conditional-200.json")
+	data, err := os.Open("../fixtures/patient-example-uuid-identifier-create-conditional-200-batch.json")
 	util.CheckErr(err)
 	defer data.Close()
 	req, err := http.NewRequest("POST", s.Server.URL+"/", data)
@@ -818,6 +942,51 @@ func (s *ServerSuite) TestBatchCreateConditional412(c *C) {
 	util.CheckErr(err)
 	c.Assert(*resBundle.Total, Equals, uint32(1))
 	c.Assert(resBundle.Entry[0].Response.Status, Equals, "412")
+
+	patientCollection := worker.DB().C("patients")
+	count, err := patientCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 3) // update should not have created a new patient (1nd patient is from SetUpTest)
+	existingPatient1 := models.Patient{}
+	err = patientCollection.FindId(testPatient1.Id).One(&existingPatient1)
+	util.CheckErr(err)
+	c.Assert(existingPatient1.Name[0].Given[0], Equals, "Donald") // patient should not have been modified
+	c.Assert(existingPatient1.Meta, IsNil)
+
+	existingPatient2 := models.Patient{}
+	err = patientCollection.FindId(testPatient2.Id).One(&existingPatient2)
+	util.CheckErr(err)
+	c.Assert(existingPatient2.Name[0].Given[0], Equals, "Donald") // patient should not have been modified
+	c.Assert(existingPatient2.Meta, IsNil)
+}
+
+func (s *ServerSuite) TestTransactionCreateConditional412(c *C) {
+
+	worker := s.MasterSession.GetWorkerSession()
+	defer worker.Close()
+
+	testPatient1 := s.insertPatientFromFixture("../fixtures/patient-example-uuid-identifier.json")
+	testPatient2 := s.insertPatientFromFixture("../fixtures/patient-example-uuid-identifier.json")
+
+	// should do nothing
+	data, err := os.Open("../fixtures/patient-example-uuid-identifier-create-conditional-200-transaction.json")
+	util.CheckErr(err)
+	defer data.Close()
+	req, err := http.NewRequest("POST", s.Server.URL+"/", data)
+	req.Header.Add("Content-Type", "application/json")
+	util.CheckErr(err)
+	res, err := http.DefaultClient.Do(req)
+	util.CheckErr(err)
+	c.Assert(res.StatusCode, Equals, 412)
+	resBody, err := ioutil.ReadAll(logBody(res))
+	util.CheckErr(err)
+	opOutcome := &models.OperationOutcome{}
+	err = json.Unmarshal(resBody, opOutcome)
+	util.CheckErr(err)
+
+	c.Assert(opOutcome.Issue[0].Severity, Equals, "error")
+	c.Assert(opOutcome.Issue[0].Code, Equals, "duplicate")
+	c.Assert(opOutcome.Issue[0].Details.Text, Equals, "search criteria were not selective enough")
 
 	patientCollection := worker.DB().C("patients")
 	count, err := patientCollection.Count()

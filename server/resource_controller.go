@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/eug48/fhir/utils"
 	"reflect"
 	"bytes"
 	"encoding/json"
@@ -10,7 +11,6 @@ import (
 	"net/url"
 	"strings"
 	"io/ioutil"
-	runtime_debug "runtime/debug"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -38,33 +38,8 @@ func NewResourceController(name string, dal DataAccessLayer, config Config) *Res
 
 func handlePanics(c *gin.Context) {
 	if r := recover(); r != nil {
-		switch x := r.(type) {
-		case *search.Error:
-			c.Render(x.HTTPStatus, CustomFhirRenderer{x.OperationOutcome, c})
-			return
-		case error:
-			cause := errors.Cause(x)
-			_, isSchemaError := cause.(models2.FhirSchemaError)
-			if isSchemaError {
-				outcome := models.NewOperationOutcome("fatal", "structure", cause.Error())
-				c.Render(http.StatusBadRequest, CustomFhirRenderer{outcome, c})
-			} else {
-				fmt.Printf("handlePanics: recovered %+v\n", r)
-				runtime_debug.PrintStack()
-
-				outcome := models.NewOperationOutcome("fatal", "exception", x.Error())
-				c.Render(http.StatusInternalServerError, CustomFhirRenderer{outcome, c})
-			}
-			return
-		default:
-			fmt.Printf("handlePanics: recovered %+v\n", r)
-			runtime_debug.PrintStack()
-
-			str := fmt.Sprintf("%#v", r)
-			outcome := models.NewOperationOutcome("fatal", "exception", str)
-			c.Render(http.StatusInternalServerError, CustomFhirRenderer{outcome, c})
-			return
-		}
+		statusCode, outcome := ErrorToOpOutcome(r)
+		c.Render(statusCode, CustomFhirRenderer{outcome, c})
 	}
 }
 
@@ -244,8 +219,21 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 		return
 	}
 
+	// check for conditional update
+	conditionalVersionId := ""
+	ifMatch := c.GetHeader("If-Match")
+	if ifMatch != "" {
+		conditionalVersionId, err = utils.ETagToVersionId(c.GetHeader("If-Match"))
+		if err != nil {
+			oo := models.NewOperationOutcome("fatal", "structure", err.Error())
+			c.Render(http.StatusBadRequest, CustomFhirRenderer{oo, c})
+			return
+		}
+	}
+
+	// Perform update
 	resourceId := c.Param("id")
-	createdNew, err := rc.DAL.Put(resourceId, resource)
+	createdNew, err := rc.DAL.Put(resourceId, conditionalVersionId, resource)
 	if err != nil {
 		panic(errors.Wrap(err, "Put failed"))
 	}
@@ -279,8 +267,21 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 		return
 	}
 
+	// check for conditional update
+	conditionalVersionId := ""
+	ifMatch := c.GetHeader("If-Match")
+	if ifMatch != "" {
+		conditionalVersionId, err = utils.ETagToVersionId(c.GetHeader("If-Match"))
+		if err != nil {
+			oo := models.NewOperationOutcome("fatal", "structure", err.Error())
+			c.Render(http.StatusBadRequest, CustomFhirRenderer{oo, c})
+			return
+		}
+	}
+
+	// Perform update
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}
-	resourceId, createdNew, err := rc.DAL.ConditionalPut(query, resource)
+	resourceId, createdNew, err := rc.DAL.ConditionalPut(query, conditionalVersionId, resource)
 	if err == ErrMultipleMatches {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return

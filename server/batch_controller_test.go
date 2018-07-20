@@ -392,13 +392,19 @@ func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 	s.checkReference(c, &responseBundle.Entry[12].Resource.(*models.DiagnosticReport).Result[2], obs2Id, "Observation")
 }
 
-func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
-
+func (s *BatchControllerSuite) addMongoRecords1() {
 	worker := s.MasterSession.GetWorkerSession()
 	defer worker.Close()
 
 	// Put some records in the database to update
 	patient := &models.Patient{
+		DomainResource: models.DomainResource {
+			Resource: models.Resource {
+				Meta: &models.Meta {
+					VersionId: "1",
+				},
+			},
+		},
 		Identifier: []models.Identifier{
 			{System: "http://test.org/simple", Value: "doejohn"},
 		},
@@ -408,6 +414,13 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 	}
 	patient.Id = "56afe6b85cdc7ec329dfe6a0"
 	condition := &models.Condition{
+		DomainResource: models.DomainResource {
+			Resource: models.Resource {
+				Meta: &models.Meta {
+					VersionId: "1",
+				},
+			},
+		},
 		Subject: &models.Reference{
 			Type:         "Patient",
 			Reference:    s.Server.URL + "/Patient/56afe6b85cdc7ec329dfe6a0",
@@ -422,7 +435,15 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 		VerificationStatus: "confirmed",
 	}
 	condition.Id = "56afe6b85cdc7ec329dfe6a1"
+
 	condition2 := &models.Condition{
+		DomainResource: models.DomainResource {
+			Resource: models.Resource {
+				Meta: &models.Meta {
+					VersionId: "1",
+				},
+			},
+		},
 		Subject: &models.Reference{
 			Type:         "Patient",
 			Reference:    s.Server.URL + "/Patient/56afe6b85cdc7ec329dfe6a0",
@@ -438,33 +459,37 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 	}
 	condition2.Id = "56afe6b85cdc7ec329dfe6a2"
 
-	// Insert the conditions into the db
+	// Insert into the db
 	patCollection := worker.DB().C("patients")
 	err := patCollection.Insert(patient)
 	util.CheckErr(err)
 	condCollection := worker.DB().C("conditions")
 	err = condCollection.Insert(condition, condition2)
 	util.CheckErr(err)
+}
 
-	// Now load the bundle with the put entries and post it.
-	data, err := os.Open("../fixtures/put_entries_bundle.json")
+func (s *BatchControllerSuite) sendRequest(c *C, filename string, expectedStatusCode int, decodeTo interface{}) {
+	data, err := os.Open(filename)
 	util.CheckErr(err)
 	defer data.Close()
 
 	res, err := http.Post(s.Server.URL+"/", "application/json", data)
 	util.CheckErr(err)
-
-	// Successful bundle processing should return a 200
-	c.Assert(res.StatusCode, Equals, 200)
+	c.Assert(res.StatusCode, Equals, expectedStatusCode)
 
 	var bodyBuf bytes.Buffer
 	bodyTee := io.TeeReader(res.Body, &bodyBuf)
 	decoder := json.NewDecoder(bodyTee)
-	responseBundle := &models.Bundle{}
-	err = decoder.Decode(responseBundle)
+	err = decoder.Decode(decodeTo)
+	// fmt.Printf("[sendRequest] received: %s\n", bodyBuf.String())
 	util.CheckErr(err)
-	// fmt.Printf("response body: %s\n\n", bodyBuf.String())
-	// fmt.Printf("responseBundle: %+v\n\n", responseBundle)
+}
+
+func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
+
+	s.addMongoRecords1()
+	responseBundle := &models.Bundle{}
+	s.sendRequest(c, "../fixtures/put_entries_bundle.json", 200, responseBundle)
 
 	c.Assert(responseBundle.Type, Equals, "transaction-response")
 	c.Assert(*responseBundle.Total, Equals, uint32(4))
@@ -531,6 +556,346 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 	}
 
 	// Now do a quick content check
+	worker := s.MasterSession.GetWorkerSession()
+	condCollection := worker.DB().C("conditions")
+	patCollection := worker.DB().C("patients")
+	defer worker.Close()
+	count, err := condCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 3)
+
+	pat1 := models.Patient{}
+	err = patCollection.FindId("56afe6b85cdc7ec329dfe6a0").One(&pat1)
+	util.CheckErr(err)
+	c.Assert(pat1.Gender, Equals, "male")
+
+	cond1 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a1").One(&cond1)
+	util.CheckErr(err)
+	c.Assert(cond1.Code.Coding, HasLen, 1)
+	c.Assert(cond1.Code.Coding[0].Code, Equals, "Bar2")
+
+	cond2 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a2").One(&cond2)
+	util.CheckErr(err)
+	c.Assert(cond2.Code.Coding, HasLen, 1)
+	c.Assert(cond2.Code.Coding[0].Code, Equals, "Baz2")
+
+	cond3 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a3").One(&cond3)
+	util.CheckErr(err)
+	c.Assert(cond3.Code.Coding, HasLen, 1)
+	c.Assert(cond3.Code.Coding[0].Code, Equals, "Bat")
+}
+
+func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction409(c *C) {
+
+	s.addMongoRecords1()
+	oo := &models.OperationOutcome{}
+	s.sendRequest(c, "../fixtures/put_versioned_entries_transaction_409.json", 409, oo)
+
+	c.Assert(oo.Issue[0].Severity, Equals, "error")
+	c.Assert(oo.Issue[0].Code, Equals, "conflict")
+	c.Assert(oo.Issue[0].Details.Text, Equals, "Version mismatch when handling If-Match (current=1 wanted=5)")
+
+	// Now do a quick content check
+	worker := s.MasterSession.GetWorkerSession()
+	condCollection := worker.DB().C("conditions")
+	patCollection := worker.DB().C("patients")
+	defer worker.Close()
+	count, err := condCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 2) // transaction failed so nothing added
+
+	pat1 := models.Patient{}
+	err = patCollection.FindId("56afe6b85cdc7ec329dfe6a0").One(&pat1)
+	util.CheckErr(err)
+	c.Assert(pat1.Gender, Equals, "") // i.e. transaction failed
+
+	cond1 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a1").One(&cond1)
+	util.CheckErr(err)
+	c.Assert(cond1.Code.Coding, HasLen, 1)
+	c.Assert(cond1.Code.Coding[0].Code, Equals, "Bar")
+
+	cond2 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a2").One(&cond2)
+	util.CheckErr(err)
+	c.Assert(cond2.Code.Coding, HasLen, 1)
+	c.Assert(cond2.Code.Coding[0].Code, Equals, "Baz")
+
+	cond3 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a3").One(&cond3)
+	c.Assert(err, Equals, mgo.ErrNotFound)
+}
+
+func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction200(c *C) {
+
+	s.addMongoRecords1()
+	responseBundle := &models.Bundle{}
+	s.sendRequest(c, "../fixtures/put_versioned_entries_transaction_200.json", 200, responseBundle)
+
+	c.Assert(responseBundle.Type, Equals, "transaction-response")
+	c.Assert(*responseBundle.Total, Equals, uint32(4))
+	c.Assert(responseBundle.Entry, HasLen, 4)
+
+	patEntry := responseBundle.Entry[0]
+
+	// response resource type should match request resource type
+	c.Assert(patEntry.Resource, FitsTypeOf, &models.Patient{})
+
+	// full URLs and IDs should contain correct ID in response
+	c.Assert(patEntry.FullUrl, Equals, s.Server.URL+"/Patient/56afe6b85cdc7ec329dfe6a0")
+	c.Assert(s.getResourceID(patEntry), Equals, "56afe6b85cdc7ec329dfe6a0")
+
+	// resource should have lastUpdatedTime
+	m := reflect.ValueOf(patEntry.Resource).Elem().FieldByName("Meta").Interface().(*models.Meta)
+	c.Assert(m, NotNil)
+	c.Assert(m.LastUpdated, NotNil)
+	c.Assert(m.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+	c.Assert(time.Since(m.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+	// response should not contain the request
+	c.Assert(patEntry.Request, IsNil)
+
+	// response should have 200 status and location
+	c.Assert(patEntry.Response.Status, Equals, "200")
+	c.Assert(patEntry.Response.Location, Equals, patEntry.FullUrl)
+
+	// Now check other entries
+	expectedIDs := []string{"56afe6b85cdc7ec329dfe6a2", "56afe6b85cdc7ec329dfe6a3", "56afe6b85cdc7ec329dfe6a1"}
+	for i := 1; i < len(responseBundle.Entry); i++ {
+		resEntry := responseBundle.Entry[i]
+
+		// response resource type should be a condition
+		c.Assert(resEntry.Resource, FitsTypeOf, &models.Condition{})
+
+		// Reference to patient should be to upserted patient
+		s.checkReference(c, resEntry.Resource.(*models.Condition).Subject, "56afe6b85cdc7ec329dfe6a0", "Patient")
+
+		// check full URL and ID match expected values
+		c.Assert(resEntry.FullUrl, Equals, s.Server.URL+"/Condition/"+expectedIDs[i-1])
+		c.Assert(s.getResourceID(resEntry), Equals, expectedIDs[i-1])
+
+		// resource should have lastUpdatedTime
+		m := reflect.ValueOf(resEntry.Resource).Elem().FieldByName("Meta").Interface().(*models.Meta)
+		c.Assert(m, NotNil)
+		c.Assert(m.LastUpdated, NotNil)
+		c.Assert(m.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+		c.Assert(time.Since(m.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+		// response should not contain the request
+		c.Assert(resEntry.Request, IsNil)
+
+		// response should have 200 or 201 status and location
+		switch i {
+		case 1, 3:
+			c.Assert(resEntry.Response.Status, Equals, "200")
+		case 2:
+			c.Assert(resEntry.Response.Status, Equals, "201")
+		}
+		c.Assert(resEntry.Response.Location, Equals, resEntry.FullUrl)
+	}
+
+	// Now do a quick content check
+	worker := s.MasterSession.GetWorkerSession()
+	condCollection := worker.DB().C("conditions")
+	patCollection := worker.DB().C("patients")
+	defer worker.Close()
+	count, err := condCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 3)
+
+	pat1 := models.Patient{}
+	err = patCollection.FindId("56afe6b85cdc7ec329dfe6a0").One(&pat1)
+	util.CheckErr(err)
+	c.Assert(pat1.Gender, Equals, "male")
+
+	cond1 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a1").One(&cond1)
+	util.CheckErr(err)
+	c.Assert(cond1.Code.Coding, HasLen, 1)
+	c.Assert(cond1.Code.Coding[0].Code, Equals, "Bar2")
+
+	cond2 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a2").One(&cond2)
+	util.CheckErr(err)
+	c.Assert(cond2.Code.Coding, HasLen, 1)
+	c.Assert(cond2.Code.Coding[0].Code, Equals, "Baz2")
+
+	cond3 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a3").One(&cond3)
+	util.CheckErr(err)
+	c.Assert(cond3.Code.Coding, HasLen, 1)
+	c.Assert(cond3.Code.Coding[0].Code, Equals, "Bat")
+}
+
+func (s *BatchControllerSuite) TestVersionedPutEntriesBatch409(c *C) {
+
+	s.addMongoRecords1()
+	responseBundle := &models.Bundle{}
+	s.sendRequest(c, "../fixtures/put_versioned_entries_batch_409.json", 200, responseBundle)
+
+	c.Assert(responseBundle.Type, Equals, "batch-response")
+	c.Assert(*responseBundle.Total, Equals, uint32(4))
+	c.Assert(responseBundle.Entry, HasLen, 4)
+
+	patEntry := responseBundle.Entry[0]
+	c.Assert(patEntry.Resource, IsNil)
+
+	// full URLs and IDs should contain correct ID in response
+	c.Assert(patEntry.FullUrl, Equals, s.Server.URL+"/Patient/56afe6b85cdc7ec329dfe6a0")
+
+	// response should have 409 status and location
+	c.Assert(patEntry.Response.Status, Equals, "409")
+	c.Assert(patEntry.Response.Location, Equals, "")
+
+	oo := patEntry.Response.Outcome.(*models.OperationOutcome)
+	c.Assert(oo.Issue[0].Severity, Equals, "error")
+	c.Assert(oo.Issue[0].Code, Equals, "conflict")
+	c.Assert(oo.Issue[0].Details.Text, Equals, "Version mismatch when handling If-Match (current=1 wanted=5)")
+
+	// Now check other entries
+	expectedIDs := []string{"56afe6b85cdc7ec329dfe6a2", "56afe6b85cdc7ec329dfe6a3", "56afe6b85cdc7ec329dfe6a1"}
+	for i := 1; i < len(responseBundle.Entry); i++ {
+		resEntry := responseBundle.Entry[i]
+
+		// response resource type should be a condition
+		c.Assert(resEntry.Resource, FitsTypeOf, &models.Condition{})
+
+		// Reference to patient should be to upserted patient
+		s.checkReference(c, resEntry.Resource.(*models.Condition).Subject, "56afe6b85cdc7ec329dfe6a0", "Patient")
+
+		// check full URL and ID match expected values
+		c.Assert(resEntry.FullUrl, Equals, s.Server.URL+"/Condition/"+expectedIDs[i-1])
+		c.Assert(s.getResourceID(resEntry), Equals, expectedIDs[i-1])
+
+		// resource should have lastUpdatedTime
+		m := reflect.ValueOf(resEntry.Resource).Elem().FieldByName("Meta").Interface().(*models.Meta)
+		c.Assert(m, NotNil)
+		c.Assert(m.LastUpdated, NotNil)
+		c.Assert(m.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+		c.Assert(time.Since(m.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+		// response should not contain the request
+		c.Assert(resEntry.Request, IsNil)
+
+		// response should have 200 or 201 status and location
+		switch i {
+		case 1, 3:
+			c.Assert(resEntry.Response.Status, Equals, "200")
+		case 2:
+			c.Assert(resEntry.Response.Status, Equals, "201")
+		}
+		c.Assert(resEntry.Response.Location, Equals, resEntry.FullUrl)
+	}
+
+	// Now do a quick content check
+	worker := s.MasterSession.GetWorkerSession()
+	condCollection := worker.DB().C("conditions")
+	patCollection := worker.DB().C("patients")
+	defer worker.Close()
+	count, err := condCollection.Count()
+	util.CheckErr(err)
+	c.Assert(count, Equals, 3)
+
+	pat1 := models.Patient{}
+	err = patCollection.FindId("56afe6b85cdc7ec329dfe6a0").One(&pat1)
+	util.CheckErr(err)
+	c.Assert(pat1.Gender, Equals, "") // i.e. operation failed
+
+	cond1 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a1").One(&cond1)
+	util.CheckErr(err)
+	c.Assert(cond1.Code.Coding, HasLen, 1)
+	c.Assert(cond1.Code.Coding[0].Code, Equals, "Bar2")
+
+	cond2 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a2").One(&cond2)
+	util.CheckErr(err)
+	c.Assert(cond2.Code.Coding, HasLen, 1)
+	c.Assert(cond2.Code.Coding[0].Code, Equals, "Baz2")
+
+	cond3 := models.Condition{}
+	err = condCollection.FindId("56afe6b85cdc7ec329dfe6a3").One(&cond3)
+	util.CheckErr(err)
+	c.Assert(cond3.Code.Coding, HasLen, 1)
+	c.Assert(cond3.Code.Coding[0].Code, Equals, "Bat")
+}
+
+func (s *BatchControllerSuite) TestVersionedPutEntriesBatch200(c *C) {
+
+	s.addMongoRecords1()
+	responseBundle := &models.Bundle{}
+	s.sendRequest(c, "../fixtures/put_versioned_entries_batch_200.json", 200, responseBundle)
+
+	c.Assert(responseBundle.Type, Equals, "batch-response")
+	c.Assert(*responseBundle.Total, Equals, uint32(4))
+	c.Assert(responseBundle.Entry, HasLen, 4)
+
+	patEntry := responseBundle.Entry[0]
+
+	// response resource type should match request resource type
+	c.Assert(patEntry.Resource, FitsTypeOf, &models.Patient{})
+
+	// full URLs and IDs should contain correct ID in response
+	c.Assert(patEntry.FullUrl, Equals, s.Server.URL+"/Patient/56afe6b85cdc7ec329dfe6a0")
+	c.Assert(s.getResourceID(patEntry), Equals, "56afe6b85cdc7ec329dfe6a0")
+
+	// resource should have lastUpdatedTime
+	m := reflect.ValueOf(patEntry.Resource).Elem().FieldByName("Meta").Interface().(*models.Meta)
+	c.Assert(m, NotNil)
+	c.Assert(m.LastUpdated, NotNil)
+	c.Assert(m.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+	c.Assert(time.Since(m.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+	// response should not contain the request
+	c.Assert(patEntry.Request, IsNil)
+
+	// response should have 200 status and location
+	c.Assert(patEntry.Response.Status, Equals, "200")
+	c.Assert(patEntry.Response.Location, Equals, patEntry.FullUrl)
+
+	// Now check other entries
+	expectedIDs := []string{"56afe6b85cdc7ec329dfe6a2", "56afe6b85cdc7ec329dfe6a3", "56afe6b85cdc7ec329dfe6a1"}
+	for i := 1; i < len(responseBundle.Entry); i++ {
+		resEntry := responseBundle.Entry[i]
+
+		// response resource type should be a condition
+		c.Assert(resEntry.Resource, FitsTypeOf, &models.Condition{})
+
+		// Reference to patient should be to upserted patient
+		s.checkReference(c, resEntry.Resource.(*models.Condition).Subject, "56afe6b85cdc7ec329dfe6a0", "Patient")
+
+		// check full URL and ID match expected values
+		c.Assert(resEntry.FullUrl, Equals, s.Server.URL+"/Condition/"+expectedIDs[i-1])
+		c.Assert(s.getResourceID(resEntry), Equals, expectedIDs[i-1])
+
+		// resource should have lastUpdatedTime
+		m := reflect.ValueOf(resEntry.Resource).Elem().FieldByName("Meta").Interface().(*models.Meta)
+		c.Assert(m, NotNil)
+		c.Assert(m.LastUpdated, NotNil)
+		c.Assert(m.LastUpdated.Precision, Equals, models.Precision(models.Timestamp))
+		c.Assert(time.Since(m.LastUpdated.Time).Minutes() < float64(1), Equals, true)
+
+		// response should not contain the request
+		c.Assert(resEntry.Request, IsNil)
+
+		// response should have 200 or 201 status and location
+		switch i {
+		case 1, 3:
+			c.Assert(resEntry.Response.Status, Equals, "200")
+		case 2:
+			c.Assert(resEntry.Response.Status, Equals, "201")
+		}
+		c.Assert(resEntry.Response.Location, Equals, resEntry.FullUrl)
+	}
+
+	// Now do a quick content check
+	worker := s.MasterSession.GetWorkerSession()
+	condCollection := worker.DB().C("conditions")
+	patCollection := worker.DB().C("patients")
+	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 3)
