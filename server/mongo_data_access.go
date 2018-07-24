@@ -501,7 +501,7 @@ func (dal *mongoDataAccessLayer) Put(id string, conditionalVersionId string, res
 			updated = info.Updated
 		}
 	} else {
-		// atomic chec-then-update
+		// atomic check-then-update
 		selector := bson.M{
 			"_id":            bsonID.Hex(),
 			"meta.versionId": strconv.Itoa(*curVersionId),

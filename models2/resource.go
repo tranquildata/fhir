@@ -130,7 +130,7 @@ func (r *Resource) MarshalJSON() ([]byte, error) {
 
 	json, _, err := ConvertGoFhirBSONToJSON(*r.cachedBson)
 	if err != nil {
-		err = errors.Wrap(err, "Resource.MarshalJSON: ConvertGoFhirBSONToJSON failed")
+		err = errors.Wrapf(err, "Resource.MarshalJSON: ConvertGoFhirBSONToJSON failed (%s/%s/%s)", r.resourceType, r.id, r.versionId)
 	}
 	return json, err
 

@@ -278,6 +278,9 @@ func processExtensionsArray(out *bytes.Buffer, value interface{}) error {
 		array = *v
 	case []interface{}:
 		array = v
+	case nil:
+		out.WriteString("null")
+		return nil
 	// case []bson.DocElem:
 	// array = v
 	default:
