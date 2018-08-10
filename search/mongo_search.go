@@ -1216,25 +1216,56 @@ func (m *MongoSearcher) createStringQueryObject(s *StringParam) bson.M {
 }
 
 func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
+
+	var systemCriteria interface{}
+	var codeCriteria interface{}
+	if t.Code == "" {
+		// [parameter]=[system]|
+		systemCriteria = m.ci(t.System)
+	} else if t.System == "" {
+		if t.AnySystem {
+			// [parameter]=[code]
+			codeCriteria = m.ci(t.Code)
+		} else {
+			// [parameter]=|[code]
+			codeCriteria = m.ci(t.Code)
+			systemCriteria = bson.M{"$exists": false}
+		}
+	} else {
+		// [parameter]=[system]|[code]
+		codeCriteria = m.ci(t.Code)
+		systemCriteria = m.ci(t.System)
+	}
+
+
 	single := func(p SearchParamPath) bson.M {
 		criteria := bson.M{}
 		switch p.Type {
 		case "Coding":
-			criteria = bson.M{}
-			criteria["code"] = t.Code
-			if !t.AnySystem {
-				criteria["system"] = m.ci(t.System)
+			if systemCriteria != nil {
+				criteria["system"] = systemCriteria
+			}
+			if codeCriteria != nil {
+				criteria["code"] = codeCriteria
 			}
 		case "CodeableConcept":
-			if t.AnySystem {
-				criteria["coding.code"] = m.ci(t.Code)
+			if systemCriteria != nil && codeCriteria != nil{
+				criteria["coding"] = bson.M{"$elemMatch": bson.M{"system": systemCriteria, "code": codeCriteria}}
 			} else {
-				criteria["coding"] = bson.M{"$elemMatch": bson.M{"system": m.ci(t.System), "code": m.ci(t.Code)}}
+				if systemCriteria != nil {
+					criteria["coding.system"] = systemCriteria
+				}
+				if codeCriteria != nil {
+					criteria["coding.code"] = codeCriteria
+				}
 			}
+
 		case "Identifier":
-			criteria["value"] = m.ci(t.Code)
-			if !t.AnySystem {
-				criteria["system"] = m.ci(t.System)
+			if systemCriteria != nil {
+				criteria["system"] = systemCriteria
+			}
+			if codeCriteria != nil {
+				criteria["value"] = codeCriteria
 			}
 		case "ContactPoint":
 			criteria["value"] = m.ci(t.Code)

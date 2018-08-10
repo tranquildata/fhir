@@ -1013,14 +1013,24 @@ func (t *TokenParam) getQueryParamAndValue() (string, string) {
 // ParseTokenParam parses a token-based query string and returns a pointer to
 // a TokenParam based on the query and the parameter definition.
 func ParseTokenParam(paramString string, info SearchParamInfo) *TokenParam {
+	if paramString == "" {
+		panic(createInternalServerError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", info.Name)))
+	}
+
 	t := &TokenParam{SearchParamInfo: info}
+
 	splitCode := escapeFriendlySplit(paramString, '|')
-	if len(splitCode) > 1 {
+	if len(splitCode) == 2 {
 		t.System = unescape(splitCode[0])
 		t.Code = unescape(splitCode[1])
-	} else {
+		if t.System == "" && t.Code == "" {
+			panic(createInternalServerError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", info.Name)))
+		}
+	} else if len(splitCode) == 1 {
 		t.AnySystem = true
 		t.Code = unescape(splitCode[0])
+	} else {
+		panic(createInternalServerError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", info.Name)))
 	}
 	return t
 }

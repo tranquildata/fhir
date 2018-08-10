@@ -239,7 +239,7 @@ func (m *MongoSearchSuite) TestImagingStudyBodySiteQueryObjectBySystemAndCode(c 
 		"series": bson.M{
 			"$elemMatch": bson.M{
 				"bodySite.system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-				"bodySite.code":   "67734004",
+				"bodySite.code": bson.RegEx{Pattern: "^67734004$", Options: "i"},
 			},
 		},
 	})
@@ -2181,7 +2181,7 @@ func (m *MongoSearchSuite) TestConditionTagQueryObject(c *C) {
 		"meta.tag": bson.M{
 			"$elemMatch": bson.M{
 				"system": bson.RegEx{Pattern: "^foo$", Options: "i"},
-				"code":   "bar",
+				"code": bson.RegEx{Pattern: "^bar$", Options: "i"},
 			}},
 	})
 }
