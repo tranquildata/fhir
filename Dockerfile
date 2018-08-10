@@ -20,8 +20,8 @@ COPY . ./
 
 # Build
 WORKDIR /go/src/github.com/eug48/fhir/fhir-server
-RUN CGO_ENABLED=0 GOOS=linux go build
-
+ARG GIT_COMMIT=dev
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.gitCommit=$GIT_COMMIT"
 
 # Copy to light-weight runtime image
 FROM alpine:3.7

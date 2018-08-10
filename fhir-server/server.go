@@ -12,13 +12,16 @@ import (
 	"github.com/eug48/fhir/server"
 )
 
+var gitCommit string
+
 func main() {
 	port := flag.Int("port", 3001, "Port to listen on")
-	reqLog := flag.Bool("reqlog", false, "Enables request logging -- do NOT use in production")
+	reqLog := flag.Bool("reqlog", false, "Enables request logging -- use with caution in production")
 	mongodbHostPort := flag.String("mongodbHostPort", "localhost:27017", "MongoDB host:port")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
+	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
 	flag.Parse()
 
 	if *startMongod {
@@ -43,6 +46,9 @@ func main() {
 		fmt.Println("XML support is disabled (use --enableXML to enable)")
 	}
 
+	if gitCommit != "" {
+		fmt.Printf("GoFHIR version %s\n", gitCommit)
+	}
 	fmt.Printf("MongoDB: host is %s\n", *mongodbHostPort)
 
 	var MyConfig = server.Config{
@@ -60,6 +66,7 @@ func main() {
 		EnableXML:             *enableXML,
 		EnableHistory:         true,
 		Debug:                 true,
+		ValidatorURL:          *validatorURL,
 	}
 	s := server.NewServer(MyConfig)
 	if *reqLog {

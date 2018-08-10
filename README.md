@@ -47,7 +47,7 @@ Users are strongly encouraged to test thoroughly and contributions (including mo
 Transactions
 --------------
 
-MongoDB is used as the underlying database and has recently acquired multi-document transaction features in version 4.0. This can be supported by this project once implemented in the new offcially-supported Go driver - see https://github.com/mongodb/mongo-go-driver.
+MongoDB is used as the underlying database and has recently acquired multi-document transaction features in version 4.0. This can be supported by this project once implemented in the new officially-supported Go driver - see https://github.com/mongodb/mongo-go-driver.
 
 Another approach would be to create an alternative backend, perhaps using PostgreSQL, ArangoDB or Dgraph.
 
