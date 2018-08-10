@@ -1,6 +1,7 @@
 package models2
 
 import (
+	"github.com/pkg/errors"
 	"time"
 	"encoding/json"
 	"github.com/eug48/fhir/models"
@@ -34,6 +35,21 @@ func (r *ShallowBundle) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(*r)
+}
+
+func (r *ShallowBundle) ToResource() (*Resource, error) {
+
+	json, err := r.MarshalJSON()
+	if err != nil {
+		return nil, errors.Wrap(err, "ShallowBundle.ToResource MarshalJSON failed")
+	}
+
+	resource, err := NewResourceFromJsonBytes(json)
+	if err != nil {
+		return nil, errors.Wrap(err, "ShallowBundle.ToResource NewResourceFromJsonBytes failed")
+	}
+
+	return resource, nil
 }
 
 func (b *ShallowBundle) SetTransformReferencesMap(transformReferencesMap map[string]string) {

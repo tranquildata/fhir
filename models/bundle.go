@@ -30,6 +30,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -147,6 +149,24 @@ type BundleEntryRequestComponent struct {
 	IfNoneExist     string        `bson:"ifNoneExist,omitempty" json:"ifNoneExist,omitempty"`
 }
 
+func (r *BundleEntryRequestComponent) DebugString() string {
+	var str strings.Builder
+	str.WriteString(fmt.Sprintf("%s %s", r.Method, r.Url))
+	if r.IfNoneMatch != "" {
+		str.WriteString(fmt.Sprintf(" | If-None-Match: %s", r.IfNoneMatch))
+	}
+	if r.IfModifiedSince != nil {
+		str.WriteString(fmt.Sprintf(" | If-Modified-Since: %s", r.IfModifiedSince.Time.UTC().Format(http.TimeFormat)))
+	}
+	if r.IfMatch != "" {
+		str.WriteString(fmt.Sprintf(" | If-Match: %s", r.IfMatch))
+	}
+	if r.IfNoneExist != "" {
+		str.WriteString(fmt.Sprintf(" | If-None-Exist: %s", r.IfNoneExist))
+	}
+	return str.String()
+}
+
 type BundleEntryResponseComponent struct {
 	BackboneElement `bson:",inline"`
 	Status          string        `bson:"status,omitempty" json:"status,omitempty"`
@@ -154,6 +174,24 @@ type BundleEntryResponseComponent struct {
 	Etag            string        `bson:"etag,omitempty" json:"etag,omitempty"`
 	LastModified    *FHIRDateTime `bson:"lastModified,omitempty" json:"lastModified,omitempty"`
 	Outcome         interface{}   `bson:"outcome,omitempty" json:"outcome,omitempty"`
+}
+
+func (r *BundleEntryResponseComponent) DebugString() string {
+	var str strings.Builder
+	str.WriteString(fmt.Sprintf("%s", r.Status))
+	if r.Location != "" {
+		str.WriteString(fmt.Sprintf(" | Location: %s", r.Location))
+	}
+	if r.Etag != "" {
+		str.WriteString(fmt.Sprintf(" | Etag: %s", r.Etag))
+	}
+	if r.LastModified != nil {
+		str.WriteString(fmt.Sprintf(" | Last-Modified: %s", r.LastModified.Time.UTC().Format(http.TimeFormat)))
+	}
+	if r.Outcome != nil {
+		str.WriteString(fmt.Sprintf(" | Outcome: %+v", r.Outcome))
+	}
+	return str.String()
 }
 
 // The "bundleEntryResponseComponent" sub-type is needed to avoid infinite recursion in UnmarshalJSON

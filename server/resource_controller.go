@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"mime"
-	"net/url"
-	"strings"
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
@@ -74,7 +72,7 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 
 
 	searchQuery := search.Query{Resource: rc.Name, Query: rawQuery }
-	baseURL := responseURL(c.Request, rc.Config, rc.Name)
+	baseURL := rc.Config.responseURL(c.Request, rc.Name)
 	bundle, err := rc.DAL.Search(*baseURL, searchQuery)
 	if err != nil {
 		panic(errors.Wrap(err, "Search failed"))
@@ -134,11 +132,11 @@ func (rc *ResourceController) HistoryHandler(c *gin.Context) {
 	defer handlePanics(c)
 	c.Set("Action", "history")
 
-	baseURL := responseURL(c.Request, rc.Config, rc.Name)
+	baseURL := rc.Config.responseURL(c.Request, rc.Name)
 	resourceId := c.Param("id")
 	bundle, err := rc.DAL.History(*baseURL, rc.Name, resourceId)
 	if err != nil && err != ErrNotFound {
-		panic(errors.Wrap(err, "History failed"))
+		panic(errors.Wrap(err, "History request failed"))
 	}
 
 	if err == ErrNotFound {
@@ -156,7 +154,7 @@ func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 	query := fmt.Sprintf("_id=%s&_include=*&_revinclude=*", c.Param("id"))
 
 	searchQuery := search.Query{Resource: rc.Name, Query: query}
-	baseURL := responseURL(c.Request, rc.Config, rc.Name)
+	baseURL := rc.Config.responseURL(c.Request, rc.Name)
 	bundle, err := rc.DAL.Search(*baseURL, searchQuery)
 	if err != nil {
 		panic(errors.Wrap(err, "Search (everything) failed"))
@@ -339,30 +337,6 @@ func (rc *ResourceController) ConditionalDeleteHandler(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func responseURL(r *http.Request, config Config, paths ...string) *url.URL {
-
-	if config.ServerURL != "" {
-		theURL := fmt.Sprintf("%s/%s", strings.TrimSuffix(config.ServerURL, "/"), strings.Join(paths, "/"))
-		responseURL, err := url.Parse(theURL)
-
-		if err == nil {
-			return responseURL
-		}
-	}
-
-	responseURL := url.URL{}
-
-	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-		responseURL.Scheme = "https"
-	} else {
-		responseURL.Scheme = "http"
-	}
-	responseURL.Host = r.Host
-	responseURL.Path = fmt.Sprintf("/%s", strings.Join(paths, "/"))
-
-	return &responseURL
-}
-
 func setHeaders(c *gin.Context, rc *ResourceController, setLocationHeader bool, resource *models2.Resource, id string) error {
 	lastUpdated := resource.LastUpdated()
 	if lastUpdated != "" {
@@ -376,9 +350,9 @@ func setHeaders(c *gin.Context, rc *ResourceController, setLocationHeader bool, 
 
 	if setLocationHeader {
 		if rc.Config.EnableHistory && versionId != "" {
-			c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id, "_history", versionId).String())
+			c.Header("Location", rc.Config.responseURL(c.Request, rc.Name, id, "_history", versionId).String())
 		} else {
-			c.Header("Location", responseURL(c.Request, rc.Config, rc.Name, id).String())
+			c.Header("Location", rc.Config.responseURL(c.Request, rc.Name, id).String())
 		}
 	}
 

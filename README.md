@@ -37,7 +37,6 @@ The following relatively basic items are next in line for development:
 
 - Conditional reads (`If-Modified-Since` and `If-None-Match`)
 - History support for paging, `_since`, `_at` and `_count`
-- GET entries in transactions
 - Batch interdependency validation
 - Search for quantities with the system unspecified (i.e. by both unit and code)
 

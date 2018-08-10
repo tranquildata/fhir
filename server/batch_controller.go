@@ -94,6 +94,11 @@ func (b *BatchController) Post(c *gin.Context) {
 				c.AbortWithError(http.StatusBadRequest, errors.New("Batch PUT url must have an id or a condition"))
 				return
 			}
+		case "GET":
+			if bundle.Entry[i].Request.Url == "" {
+				c.AbortWithError(http.StatusBadRequest, errors.New("Batch GET must have a URL"))
+				return
+			}
 		}
 		entries[i] = &bundle.Entry[i]
 	}
@@ -142,7 +147,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				// Add id to the reference map
 				refMap[entry.FullUrl] = entry.Request.Url + "/" + id
 				// Rewrite the FullUrl using the new ID
-				entry.FullUrl = responseURL(c.Request, b.Config, entry.Request.Url, id).String()
+				entry.FullUrl = b.Config.responseURL(c.Request, entry.Request.Url, id).String()
 			}
 
 		} else if entry.Request.Method == "PUT" && isConditional(entry) {
@@ -239,10 +244,23 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	}
 
-	// Then make the changes in the database and update the entry responses
+	// Make the changes in the database and update the entry responses
 	if (proceed) {
 		for i, entry := range entries {
-			err = b.makeUpdates(c, i, entry, createStatus, newIDs)
+			err = b.doRequest(c, i, entry, createStatus, newIDs)
+			if err != nil {
+				debug("  --> ERROR %+v", err)
+			}
+			if entry.Response != nil {
+				debug("  --> %s", entry.Response.DebugString())
+			} else {
+				debug("  --> nil Response")
+			}
+			if entry.Resource != nil {
+				debug("  --> %s", entry.Resource.JsonBytes())
+			} else {
+				debug("  --> nil Resource")
+			}
 			if err != nil {
 				statusCode, outcome := ErrorToOpOutcome(err)
 				if bundle.Type == "transaction" {
@@ -298,9 +316,11 @@ func sendReply(c *gin.Context, httpStatus int, reply interface{}) {
 	}
 }
 
-func (b *BatchController) makeUpdates(c *gin.Context, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
+func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
+	debug("doRequest %s %s", entry.Request.Method, entry.Request.Url)
 	if entry.Response != nil {
 		// already handled (e.g. conditional update returned 409)
+		debug("  already handled (%s)", entry.Response.DebugString())
 		return nil
 	}
 
@@ -361,7 +381,7 @@ func (b *BatchController) makeUpdates(c *gin.Context, i int, entry *models2.Shal
 
 	case "PUT":
 		// Because we pre-process conditional PUTs, we know this is always a normal PUT operation
-		entry.FullUrl = responseURL(c.Request, b.Config, entry.Request.Url).String()
+		entry.FullUrl = b.Config.responseURL(c.Request, entry.Request.Url).String()
 		parts := strings.SplitN(entry.Request.Url, "/", 2)
 		if len(parts) != 2 {
 			return fmt.Errorf("Couldn't identify resource and id to put from %s", entry.Request.Url)
@@ -383,6 +403,136 @@ func (b *BatchController) makeUpdates(c *gin.Context, i int, entry *models2.Shal
 			entry.Response.Status = "200"
 		}
 		updateEntryMeta(entry)
+	case "GET":
+		/*
+		examples
+			1 /Patient
+			2 /Patient/_search
+			2 /Patient/12345
+			3 /Patient/12345/_history
+			4 /Patient/12345/_history/55
+		*/
+
+		pathAndQuery := strings.SplitN(entry.Request.Url, "?", 2)
+		path := pathAndQuery[0]
+		var queryString string
+		var err error
+		if len(pathAndQuery) == 2 {
+			queryString = pathAndQuery[1]
+			// queryValues, err = url.ParseQuery(query)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse query string: %s", entry.Request.Url)
+			}
+		}
+
+		// remove leading /
+		path = strings.TrimPrefix(path, "/")
+		segments := strings.Split(path, "/")
+		var id, vid string
+		var historyRequest bool
+		resourceType := segments [0]
+		debug("  segments: %q (%d)", segments, len(segments))
+		if len(segments) >= 2 {
+			id = segments[1]
+			if id == "_search" {
+				id = ""
+			}
+			if id == "_history" {
+				return errors.Errorf("resource-level history not supported in request: %s", entry.Request.Url)
+			}
+			
+			if len(segments) >= 3 {
+				op := segments[2]
+				debug("  op = %s", op)
+				if op != "_history" {
+					return errors.Errorf("operation not supported in request: %s", entry.Request.Url)
+				}
+
+				if len(segments) == 3 {
+					historyRequest = true
+				} else if len(segments) == 4 {
+					vid = segments[3]
+				} else {
+					return errors.Errorf("failed to parse request path: %s", entry.Request.Url)
+				}
+			}
+		}
+
+		if historyRequest {
+			baseURL := b.Config.responseURL(c.Request, resourceType)
+			bundle, err := b.DAL.History(*baseURL, resourceType, id)
+			debug("  history request (%s/%s) --> err %+v", resourceType, id, err)
+			if err != nil && err != ErrNotFound {
+				return errors.Wrapf(err, "History request failed: %s", entry.Request.Url)
+			}
+
+			if err == ErrNotFound {
+				entry.Response = &models.BundleEntryResponseComponent{
+					Status: "404",
+				}
+			} else {
+				entry.Response = &models.BundleEntryResponseComponent{
+					Status: "200",
+				}
+				entry.Resource, err = bundle.ToResource()
+				if err != nil {
+					return errors.Wrapf(err, "bundle.ToResource failed for request: %s", entry.Request.Url)
+				}
+			}
+		} else if id != "" {
+			// /Patient/12345
+			// /Patient/12345/_history/55
+
+			entry.Response = &models.BundleEntryResponseComponent{}
+			if vid == "" {
+				entry.Resource, err = b.DAL.Get(id, resourceType)
+			} else {
+				entry.Resource, err = b.DAL.GetVersion(id, vid, resourceType)
+			}
+			debug("  get resource request (%s id=%s vid=%s) --> err %+v", resourceType, id, vid, err)
+
+			switch (err) {
+			case nil:
+				lastUpdated := entry.Resource.LastUpdated()
+				if lastUpdated != "" {
+					// entry.Response.LastModified = entry.Resource.LastUpdatedTime().UTC().Format(http.TimeFormat)
+					entry.Response.LastModified = &models.FHIRDateTime {
+						Time: entry.Resource.LastUpdatedTime(),
+						Precision: models.Timestamp,
+					}
+				}
+				versionId := entry.Resource.VersionId()
+				if versionId != "" {
+					entry.Response.Etag = "W/\"" + versionId + "\""
+				}
+			case ErrNotFound:
+				entry.Response.Status = "404"
+			case ErrDeleted:
+				entry.Response.Status = "410"
+			default:
+				return errors.Wrapf(err, "Get/GetVersion failed for %s", entry.Request.Url)
+			}
+
+		} else {
+			// Search:
+			// /Patient
+			// /Patient/_search
+			searchQuery := search.Query{Resource: resourceType, Query: queryString }
+			baseURL := b.Config.responseURL(c.Request, resourceType)
+			bundle, err := b.DAL.Search(*baseURL, searchQuery)
+			debug("  search request (%s %s) --> err %#v", resourceType, queryString, err)
+			if err != nil {
+				return errors.Wrapf(err, "Search failed for %s", entry.Request.Url)
+			}
+			entry.Response = &models.BundleEntryResponseComponent{
+				Status: "200",
+			}
+			entry.Resource, err = bundle.ToResource()
+			if err != nil {
+				return errors.Wrapf(err, "bundle.ToResource failed for request: %s", entry.Request.Url)
+			}
+		}
+		entry.Request = nil
 	}
 	return nil
 }
@@ -433,7 +583,7 @@ func (b *BatchController) resolveConditionalPut(request *http.Request, entryInde
 	refMap[entry.FullUrl] = entry.Request.Url
 
 	// Rewrite the FullUrl using the new ID
-	entry.FullUrl = responseURL(request, b.Config, query.Resource, id).String()
+	entry.FullUrl = b.Config.responseURL(request, query.Resource, id).String()
 
 	return nil
 }

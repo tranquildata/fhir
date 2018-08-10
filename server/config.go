@@ -1,7 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"time"
+	"strings"
+	"net/http"
+	"net/url"
 
 	"github.com/eug48/fhir/auth"
 	"gopkg.in/mgo.v2"
@@ -90,4 +94,28 @@ var DefaultConfig = Config{
 	CountTotalResults:     true,
 	ReadOnly:              false,
 	Debug:                 false,
+}
+
+func (config *Config) responseURL(r *http.Request, paths ...string) *url.URL {
+
+	if config.ServerURL != "" {
+		theURL := fmt.Sprintf("%s/%s", strings.TrimSuffix(config.ServerURL, "/"), strings.Join(paths, "/"))
+		responseURL, err := url.Parse(theURL)
+
+		if err == nil {
+			return responseURL
+		}
+	}
+
+	responseURL := url.URL{}
+
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		responseURL.Scheme = "https"
+	} else {
+		responseURL.Scheme = "http"
+	}
+	responseURL.Host = r.Host
+	responseURL.Path = fmt.Sprintf("/%s", strings.Join(paths, "/"))
+
+	return &responseURL
 }
