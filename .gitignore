@@ -4,16 +4,20 @@ vendor
 /fhir
 /fhir-server/fhir-server
 /test/test
+fsharp-fhir-tools/packages
 
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
 *.so
+*.user
 
 # Folders
 .vscode
+.vs
 _obj
 _test
+bin
+obj
 
 # Architecture specific extensions/prefixes
 *.[568vq]
