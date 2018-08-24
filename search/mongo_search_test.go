@@ -28,6 +28,7 @@ func Test(t *testing.T) { TestingT(t) }
 type MongoSearchSuite struct {
 	DBServer      *dbtest.DBServer
 	Session       *mgo.Session
+	MongoUri      string
 	MongoSearcher *MongoSearcher
 	EST           *time.Location
 	Local         *time.Location
@@ -49,12 +50,13 @@ func (m *MongoSearchSuite) SetUpSuite(c *C) {
 	m.DBServer.SetPath(c.MkDir())
 
 	// m.Session = m.DBServer.Session()
+	m.MongoUri = "mongodb://localhost"
 	m.Session, err = mgo.Dial("localhost")
 	util.CheckErr(err)
 	m.Session.SetSafe(&mgo.Safe{})
 	db := m.Session.DB("fhir-test")
 	db.DropDatabase()
-	m.MongoSearcher = NewMongoSearcher(db, true, true, false) // enableCISearches = true, readonly = false
+	m.MongoSearcher = NewMongoSearcherForUri("mongodb://localhost", "fhir-test", true, true, false) // enableCISearches = true, readonly = false
 
 	// Read in the data in FHIR format
 	data, err := ioutil.ReadFile("../fixtures/search_test_data.json")
@@ -74,6 +76,7 @@ func (m *MongoSearchSuite) SetUpSuite(c *C) {
 
 func (m *MongoSearchSuite) TearDownSuite(c *C) {
 	// m.MongoSearcher.db.DropDatabase()
+	m.MongoSearcher.Close()
 	m.Session.Close()
 	m.DBServer.Wipe()
 	m.DBServer.Stop()
@@ -2832,7 +2835,8 @@ func (m *MongoSearchSuite) TestUsupportedGlobalSearchParameterPanics(c *C) {
 
 func (m *MongoSearchSuite) TestDisableTotalCount(c *C) {
 	db := m.Session.DB("fhir-test")
-	searcher := NewMongoSearcher(db, false, true, false) // countTotalResults = false, enableCISearches = true, readonly = false
+	searcher := NewMongoSearcherForUri(m.MongoUri, db.Name, false, true, false) // countTotalResults = false, enableCISearches = true, readonly = false
+	defer searcher.Close()
 	q := Query{"Patient", ""}
 
 	// Get the total we expect for this search.
@@ -2848,7 +2852,8 @@ func (m *MongoSearchSuite) TestDisableTotalCount(c *C) {
 
 func (m *MongoSearchSuite) TestDisableCISearch(c *C) {
 	db := m.Session.DB("fhir-test")
-	searcher := NewMongoSearcher(db, true, false, false) // countTotalResults = true, enableCISearches = false, readonly = false
+	searcher := NewMongoSearcherForUri(m.MongoUri, db.Name, true, false, false) // countTotalResults = true, enableCISearches = false, readonly = false
+	defer searcher.Close()
 
 	q := Query{"Condition", "code=http://hl7.org/fhir/sid/icd-9|428.0,http://snomed.info/sct|981000124106,http://hl7.org/fhir/sid/icd-10|I20.0"}
 
@@ -2882,7 +2887,8 @@ func (m *MongoSearchSuite) TestDisableCISearch(c *C) {
 
 func (m *MongoSearchSuite) TestCacheSearchCount(c *C) {
 	db := m.Session.DB("fhir-test")
-	searcher := NewMongoSearcher(db, true, true, true) // countTotalResults = true, enableCISearches = true, readonly = true
+	searcher := NewMongoSearcherForUri(m.MongoUri, db.Name, true, true, true) // countTotalResults = true, enableCISearches = true, readonly = true
+	defer searcher.Close()
 
 	q := Query{"Device", "manufacturer=Acme"}
 	expectedHash := fmt.Sprintf("%x", md5.Sum([]byte("Device?manufacturer=Acme")))
@@ -2911,7 +2917,8 @@ func (m *MongoSearchSuite) TestSummaryCount(c *C) {
 func (m *MongoSearchSuite) TestSummaryCountWithCountsDisabled(c *C) {
 	// The count should still be returned when requesting _summary=count, even if counts are disabled.
 	db := m.Session.DB("fhir-test")
-	searcher := NewMongoSearcher(db, false, true, false) // countTotalResults = false, enableCISearches = true, readonly = false
+	searcher := NewMongoSearcherForUri(m.MongoUri, db.Name, false, true, false) // countTotalResults = false, enableCISearches = true, readonly = false
+	defer searcher.Close()
 
 	q := Query{"Patient", "_summary=count"}
 	results, total, err := searcher.Search(q)

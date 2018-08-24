@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"io"
 	"bytes"
 	"encoding/json"
@@ -18,11 +19,16 @@ import (
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type BatchControllerSuite struct {
 	initialSession *mgo.Session
 	MasterSession  *MasterSession
+
+	MongoClient    *mongo.Client
+	DbName         string
+
 	Engine         *gin.Engine
 	Server         *httptest.Server
 	Interceptors   map[string]InterceptorList
@@ -40,7 +46,12 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	s.initialSession, err = mgo.Dial("localhost")
 	s.initialSession.SetSafe(&mgo.Safe{})
 	util.CheckErr(err)
-	s.MasterSession = NewMasterSession(s.initialSession, "fhir-test")
+	s.DbName = "fhir-test"
+	s.MongoClient, err = mongo.Connect(context.TODO(), "mongodb://localhost")
+	if err != nil {
+		panic(err)
+	}
+	s.MasterSession = NewMasterSession(s.MongoClient, s.DbName)
 
 	// Build routes for testing
 	s.Engine = gin.New()
@@ -51,9 +62,13 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	s.Server = httptest.NewServer(s.Engine)
 }
 
+func (s *BatchControllerSuite) MgoDB() *mgo.Database {
+	return s.initialSession.DB(s.DbName)
+}
+
 func (s *BatchControllerSuite) TearDownTest(c *C) {
 	worker := s.MasterSession.GetWorkerSession()
-	worker.DB().DropDatabase()
+	worker.DB().Drop(nil)
 	worker.Close()
 }
 
@@ -63,9 +78,6 @@ func (s *BatchControllerSuite) TearDownSuite(c *C) {
 }
 
 func (s *BatchControllerSuite) TestDeleteEntriesBundle(c *C) {
-
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
 
 	// Put some records in the database to delete
 	condition := &models.Condition{
@@ -98,10 +110,10 @@ func (s *BatchControllerSuite) TestDeleteEntriesBundle(c *C) {
 	encounter2.Id = "56afe6b85cdc7ec329dfe6a4"
 
 	// Insert the conditions and encounters into the db
-	condCollection := worker.DB().C("conditions")
+	condCollection := s.MgoDB().C("conditions")
 	err := condCollection.Insert(condition, condition2)
 	util.CheckErr(err)
-	encCollection := worker.DB().C("encounters")
+	encCollection := s.MgoDB().C("encounters")
 	err = encCollection.Insert(encounter, encounter2)
 	util.CheckErr(err)
 
@@ -132,7 +144,7 @@ func (s *BatchControllerSuite) TestDeleteEntriesBundle(c *C) {
 	// Successful bundle processing should return a 200
 	c.Assert(res.StatusCode, Equals, 200)
 
-	decoder := json.NewDecoder(res.Body)
+	decoder := json.NewDecoder(logBody(res))
 	responseBundle := &models.Bundle{}
 	err = decoder.Decode(responseBundle)
 	util.CheckErr(err)
@@ -176,9 +188,6 @@ func (s *BatchControllerSuite) TestDeleteEntriesBundle(c *C) {
 
 func (s *BatchControllerSuite) TestConditionalDeleteEntriesBundle(c *C) {
 
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
-
 	// Put some records in the database to delete
 	encounter := &models.Encounter{
 		Status: "finished",
@@ -198,7 +207,7 @@ func (s *BatchControllerSuite) TestConditionalDeleteEntriesBundle(c *C) {
 	encounter4.Id = "56afe6b85cdc7ec329dfe6b4"
 
 	// Insert the encounters into the db
-	encCollection := worker.DB().C("encounters")
+	encCollection := s.MgoDB().C("encounters")
 	err := encCollection.Insert(encounter, encounter2, encounter3, encounter4)
 	util.CheckErr(err)
 
@@ -281,9 +290,6 @@ func (s *BatchControllerSuite) TestConditionalDeleteEntriesBundle(c *C) {
 
 func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
-
 	data, err := os.Open("../fixtures/john_peters_bundle.json")
 	util.CheckErr(err)
 	defer data.Close()
@@ -341,7 +347,7 @@ func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 
 		// make sure it was stored to the DB
 		rName := reflect.TypeOf(resEntry.Resource).Elem().Name()
-		coll := worker.DB().C(models.PluralizeLowerResourceName(rName))
+		coll := s.MgoDB().C(models.PluralizeLowerResourceName(rName))
 		num, err := coll.Find(bson.M{"_id": s.getResourceID(resEntry)}).Count()
 		util.CheckErr(err)
 		c.Assert(num, Equals, 1)
@@ -393,8 +399,6 @@ func (s *BatchControllerSuite) TestPostPatientBundle(c *C) {
 }
 
 func (s *BatchControllerSuite) addMongoRecords1() {
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
 
 	// Put some records in the database to update
 	patient := &models.Patient{
@@ -460,10 +464,10 @@ func (s *BatchControllerSuite) addMongoRecords1() {
 	condition2.Id = "56afe6b85cdc7ec329dfe6a2"
 
 	// Insert into the db
-	patCollection := worker.DB().C("patients")
+	patCollection := s.MgoDB().C("patients")
 	err := patCollection.Insert(patient)
 	util.CheckErr(err)
-	condCollection := worker.DB().C("conditions")
+	condCollection := s.MgoDB().C("conditions")
 	err = condCollection.Insert(condition, condition2)
 	util.CheckErr(err)
 }
@@ -557,8 +561,8 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 
 	// Now do a quick content check
 	worker := s.MasterSession.GetWorkerSession()
-	condCollection := worker.DB().C("conditions")
-	patCollection := worker.DB().C("patients")
+	condCollection := s.MgoDB().C("conditions")
+	patCollection := s.MgoDB().C("patients")
 	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
@@ -600,8 +604,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction409(c *C) {
 
 	// Now do a quick content check
 	worker := s.MasterSession.GetWorkerSession()
-	condCollection := worker.DB().C("conditions")
-	patCollection := worker.DB().C("patients")
+	condCollection := s.MgoDB().C("conditions")
+	patCollection := s.MgoDB().C("patients")
 	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
@@ -699,8 +703,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction200(c *C) {
 
 	// Now do a quick content check
 	worker := s.MasterSession.GetWorkerSession()
-	condCollection := worker.DB().C("conditions")
-	patCollection := worker.DB().C("patients")
+	condCollection := s.MgoDB().C("conditions")
+	patCollection := s.MgoDB().C("patients")
 	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
@@ -792,8 +796,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesBatch409(c *C) {
 
 	// Now do a quick content check
 	worker := s.MasterSession.GetWorkerSession()
-	condCollection := worker.DB().C("conditions")
-	patCollection := worker.DB().C("patients")
+	condCollection := s.MgoDB().C("conditions")
+	patCollection := s.MgoDB().C("patients")
 	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
@@ -893,8 +897,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesBatch200(c *C) {
 
 	// Now do a quick content check
 	worker := s.MasterSession.GetWorkerSession()
-	condCollection := worker.DB().C("conditions")
-	patCollection := worker.DB().C("patients")
+	condCollection := s.MgoDB().C("conditions")
+	patCollection := s.MgoDB().C("patients")
 	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
@@ -945,7 +949,7 @@ func (s *BatchControllerSuite) TestConditionalUpdatesBundle(c *C) {
 
 	c.Assert(res.StatusCode, Equals, 200)
 
-	decoder = json.NewDecoder(res.Body)
+	decoder = json.NewDecoder(logBody(res))
 	responseBundle := &models.Bundle{}
 	err = decoder.Decode(responseBundle)
 	util.CheckErr(err)
@@ -1013,10 +1017,10 @@ func (s *BatchControllerSuite) TestAllSupportedMethodsBundle(c *C) {
 	encounter2.Id = "56afe6b85cdc7ec329dfe6a7"
 
 	// Put those records in the db to delete or update
-	encCollection := worker.DB().C("encounters")
+	encCollection := s.MgoDB().C("encounters")
 	err := encCollection.Insert(encounter, encounter2)
 	util.CheckErr(err)
-	condCollection := worker.DB().C("conditions")
+	condCollection := s.MgoDB().C("conditions")
 	err = condCollection.Insert(condition)
 	util.CheckErr(err)
 
@@ -1114,7 +1118,7 @@ func (s *BatchControllerSuite) TestAllSupportedMethodsBundle(c *C) {
 
 		// make sure it was stored to the DB
 		rName := reflect.TypeOf(resEntry.Resource).Elem().Name()
-		coll := worker.DB().C(models.PluralizeLowerResourceName(rName))
+		coll := s.MgoDB().C(models.PluralizeLowerResourceName(rName))
 		num, err := coll.Find(bson.M{"_id": s.getResourceID(resEntry)}).Count()
 		util.CheckErr(err)
 		c.Assert(num, Equals, 1)

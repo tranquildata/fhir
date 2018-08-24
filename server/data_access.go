@@ -30,7 +30,7 @@ type DataAccessLayer interface {
 	Delete(id, resourceType string) (newVersionId string, err error)
 	// ConditionalDelete removes zero or more resources matching the passed in search criteria.  This operation cannot
 	// be undone.
-	ConditionalDelete(query search.Query) (count int, err error)
+	ConditionalDelete(query search.Query) (count int64, err error)
 	// Search executes a search given the baseURL and searchQuery.
 	Search(baseURL url.URL, searchQuery search.Query) (bundle *models2.ShallowBundle, err error)
 	// FindIDs executes a search given the searchQuery and returns only the matching IDs.  This function ignores

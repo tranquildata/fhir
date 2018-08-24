@@ -308,7 +308,6 @@ func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 	newVersionId, err := rc.DAL.Delete(id, rc.Name)
 	if err != nil && err != ErrNotFound {
 		panic(errors.Wrap(err, "Delete failed"))
-		return
 	}
 
 	c.Set(rc.Name, id)

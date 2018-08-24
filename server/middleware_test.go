@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
+	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type MiddlewareTestSuite struct {
@@ -35,16 +37,23 @@ func (m *MiddlewareTestSuite) SetupSuite() {
 	// setup the mongo database
 	m.DBServer = &dbtest.DBServer{}
 	m.DBServer.SetPath(testDbDir)
-	m.MasterSession = NewMasterSession(m.DBServer.Session(), "fhir-test")
+	mgoSession := m.DBServer.Session()
+	defer mgoSession.Close()
+	serverUri := mgoSession.LiveServers()[0]
+	client, err := mongo.Connect(context.TODO(), "mongodb://" + serverUri)
+	if err != nil {
+		panic(err)
+	}
+	m.MasterSession = NewMasterSession(client, "fhir-test")
 
 	// Set gin to release mode (less verbose output)
 	gin.SetMode(gin.ReleaseMode)
 }
 
 func (m *MiddlewareTestSuite) TearDownSuite() {
-	m.MasterSession.session.Close()
-	m.DBServer.Wipe()
+	m.MasterSession.client.Disconnect(context.TODO())
 	m.DBServer.Stop()
+	m.DBServer.Wipe()
 
 	// remove the temporary database directory
 	testDbDir := mongoTestDbDir()

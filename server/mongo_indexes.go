@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"context"
 	"strings"
-	"time"
+	// "time"
 
-	"gopkg.in/mgo.v2"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/bson"
 )
 
 // Indexer is the top-level interface for managing MongoDB indexes.
@@ -29,8 +31,8 @@ func NewIndexer(config Config) *Indexer {
 }
 
 // IndexMap is a map of index arrays with the collection name as the key. Each index array
-// contains one or more *mgo.Index indexes.
-type IndexMap map[string][]*mgo.Index
+// contains one or more indexes.
+type IndexMap map[string][]mongo.IndexModel
 
 // ConfigureIndexes ensures that all indexes listed in the provided indexes.conf file
 // are part of the Mongodb fhir database. If an index does not exist yet ConfigureIndexes
@@ -44,7 +46,8 @@ func (i *Indexer) ConfigureIndexes(ms *MasterSession) {
 
 	worker := ms.GetWorkerSession()
 	defer worker.Close()
-	worker.SetTimeout(5 * time.Minute) // Some indexes take a long time to build
+	// TODO?
+	// worker.SetTimeout(5 * time.Minute) // Some indexes take a long time to build
 
 	// Read the config file
 	f, err := os.Open(i.idxPath)
@@ -67,26 +70,28 @@ func (i *Indexer) ConfigureIndexes(ms *MasterSession) {
 			collectionName, index, err := parseIndex(line)
 
 			if err != nil {
-				i.log(fmt.Sprintf("[WARNING] %s\n", err.Error()))
-				continue
+				i.log(fmt.Sprintf("[ERROR] %s\n", err.Error()))
+				panic(err)
 			}
 
-			indexMap[collectionName] = append(indexMap[collectionName], index)
+			indexMap[collectionName] = append(indexMap[collectionName], *index)
 		}
 	}
 
 	// ensure all indexes in the config file
 	for k := range indexMap {
-		collection := worker.DB().C(k)
+		collection := worker.DB().Collection(k)
 
-		for _, index := range indexMap[k] {
-			i.log(fmt.Sprintf("Ensuring index: %s.%s: %s\n", i.dbName, k, sprintIndexKeys(index)))
-			err = collection.EnsureIndex(*index)
-
-			if err != nil {
-				i.log(fmt.Sprintf("[WARNING] Could not ensure index: %s.%s: %s\n", i.dbName, k, sprintIndexKeys(index)))
-			}
+		indexes := indexMap[k]
+		for _, index := range indexes {
+			i.log(fmt.Sprintf("Ensuring index: %s.%s: %s\n", i.dbName, k, sprintIndexKeys(&index)))
 		}
+
+		_, err = collection.Indexes().CreateMany(context.Background(), indexes)
+		if err != nil {
+			i.log(fmt.Sprintf("[WARNING] Could not ensure indexes for: %s.%s\n", i.dbName, k))
+		}
+
 	}
 }
 
@@ -96,8 +101,8 @@ func (i *Indexer) log(msg string) {
 	}
 }
 
-// parseIndex parses a line from the index config file and returns a new *mgo.Index struct
-func parseIndex(line string) (collectionName string, newIndex *mgo.Index, err error) {
+// parseIndex parses a line from the index config file and returns a new *mongo.IndexModel struct
+func parseIndex(line string) (collectionName string, newIndex *mongo.IndexModel, err error) {
 
 	// Begin parsing new index from next line of file
 	// format: <collection_name>.<index(es)>
@@ -132,29 +137,29 @@ func parseIndex(line string) (collectionName string, newIndex *mgo.Index, err er
 	}
 
 	// build the index in the background; do not block other connections
-	newIndex.Background = true
+	newIndex.Options = bson.NewDocument(bson.EC.Boolean("background", true))
 	return collectionName, newIndex, nil
 }
 
 // parseStandardIndex parses an index of the form:
 // <db_name>.<collection_name>.<key>_(-)1
-func parseStandardIndex(indexSpec string) (*mgo.Index, error) {
+func parseStandardIndex(indexSpec string) (*mongo.IndexModel, error) {
 
-	key := parseIndexKey(indexSpec)
+	key, direction := parseIndexKey(indexSpec)
 
 	if key == "" {
 		// invalid key format, was not parsed successfully
 		return nil, errors.New("Standard key not of format: <key>_(-)1")
 	}
 
-	return &mgo.Index{
-		Key: []string{key},
+	return &mongo.IndexModel{
+		Keys: bson.NewDocument(bson.EC.Int32(key, direction)),
 	}, nil
 }
 
 // parseCompoundIndex parses an index of the form:
 // <db_name>.<collection_name>.(<key1>_(-)1, <key2>_(-)1, ...)
-func parseCompoundIndex(indexSpec string) (*mgo.Index, error) {
+func parseCompoundIndex(indexSpec string) (*mongo.IndexModel, error) {
 
 	// Check that the compound indexes are listed inside parentheses
 	if !strings.HasPrefix(indexSpec, "(") || !strings.HasSuffix(indexSpec, ")") {
@@ -165,63 +170,43 @@ func parseCompoundIndex(indexSpec string) (*mgo.Index, error) {
 	// Note: if only one key is specified in the compound format a standard (not compound) key will be returned
 	specs := strings.Split(indexSpec[1:len(indexSpec)-1], ",")
 
-	var keys []string
+	var keys bson.Document
 
 	for _, spec := range specs {
-		key := parseIndexKey(strings.Trim(spec, " ")) // trim leading and trailing whitespace before parsing
+		key, direction := parseIndexKey(strings.Trim(spec, " ")) // trim leading and trailing whitespace before parsing
 		if key == "" {
 			return nil, errors.New("Compound key sub-key not of format: <key>_(-)1")
 		}
-		keys = append(keys, key)
+		keys.Set(bson.EC.Int32(key, direction))
 	}
-	return &mgo.Index{
-		Key: keys,
+	return &mongo.IndexModel{
+		Keys: &keys,
 	}, nil
 }
 
 // parseIndexKey converts the standard mongo index key format: "<key>_(-)1"
-// to the format used by mgo.Index: "(-)<key>"
-func parseIndexKey(spec string) string {
+// to the format used by mongo.IndexModel: "(-)<key>"
+func parseIndexKey(spec string) (key string, direction int32) {
 
-	direction := ""
-	key := ""
 	if strings.HasSuffix(spec, "_1") {
 		// ascending
+		direction = 1
 		key = strings.TrimSuffix(spec, "_1")
 	} else if strings.HasSuffix(spec, "_-1") {
 		// descending
-		direction = "-"
+		direction = -1
 		key = strings.TrimSuffix(spec, "_-1")
 	} else {
-		return "" // error
+		return "", 0 // error
 	}
 
-	return fmt.Sprintf("%s%s", direction, key)
+	return
 }
 
 func newParseIndexError(indexName, reason string) error {
 	return fmt.Errorf("Index '%s' is invalid: %s", indexName, reason)
 }
 
-func sprintIndexKeys(index *mgo.Index) string {
-
-	var keystr string
-	keys := index.Key
-
-	if len(keys) == 0 {
-		return ""
-	}
-
-	if len(keys) > 1 {
-		keystr = "("
-
-		for i := 0; i < len(keys)-1; i++ {
-			keystr += keys[i] + ", "
-		}
-		keystr += keys[len(keys)-1] + ")"
-	} else {
-		keystr = keys[0]
-	}
-
-	return keystr
+func sprintIndexKeys(index *mongo.IndexModel) string {
+	return fmt.Sprintf("IndexModel: %s, options %s", index.Keys.String(), index.Options.String())
 }

@@ -269,8 +269,10 @@ func (b *BatchController) Post(c *gin.Context) {
 				} else {
 					entry.Resource = nil
 					entry.Request = nil
-					entry.Response.Status = strconv.Itoa(statusCode)
-					entry.Response.Outcome = outcome
+					entry.Response = &models.BundleEntryResponseComponent{
+						Status: strconv.Itoa(statusCode),
+						Outcome: outcome,
+					}
 				}
 			}
 		}

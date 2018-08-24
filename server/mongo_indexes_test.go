@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"os"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/dbtest"
 )
@@ -60,7 +62,14 @@ func (s *MongoIndexesTestSuite) SetupSuite() {
 	s.DBServer = &dbtest.DBServer{}
 	s.DBServer.SetPath(testDbDir)
 	s.initialSession = s.DBServer.Session()
-	s.MasterSession = NewMasterSession(s.initialSession, s.Config.DatabaseName)
+	mgoSession := s.DBServer.Session()
+	defer mgoSession.Close()
+	serverUri := mgoSession.LiveServers()[0]
+	client, err := mongo.Connect(context.TODO(), "mongodb://" + serverUri)
+	if err != nil {
+		panic(err)
+	}
+	s.MasterSession = NewMasterSession(client, s.Config.DatabaseName)
 
 	// Set gin to release mode (less verbose output)
 	gin.SetMode(gin.ReleaseMode)
@@ -106,11 +115,12 @@ func (s *MongoIndexesTestSuite) TestParseIndexStandardIndexAsc() {
 
 	s.Nil(err, "Should return without error")
 	s.Equal(collectionName, "testcollection", "Collection name should be 'testcollection'")
-	s.Equal(len(index.Key), 1, "The created index should contain one key")
-	s.Equal(index.Key[0], "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.Len(), 1, "The created index should contain one key")
+	s.Equal(index.Keys.ElementAt(0).Key(), "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(0).Value().Int32(), int32(1), "The index key should be 1")
 
 	// We only need to check this once, since it's done for all successful indexes
-	s.True(index.Background, "The index should be set to build in the background")
+	s.True(index.Options.Lookup("background").Boolean(), "The index should be set to build in the background")
 }
 
 func (s *MongoIndexesTestSuite) TestParseIndexStandardIndexDesc() {
@@ -120,8 +130,9 @@ func (s *MongoIndexesTestSuite) TestParseIndexStandardIndexDesc() {
 
 	s.Nil(err, "Should return without error")
 	s.Equal(collectionName, "testcollection", "Collection name should be 'testcollection'")
-	s.Equal(len(index.Key), 1, "The created index should contain one key")
-	s.Equal(index.Key[0], "-foo", "The index key should be '-foo'")
+	s.Equal(index.Keys.Len(), 1, "The created index should contain one key")
+	s.Equal(index.Keys.ElementAt(0).Key(), "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(0).Value().Int32(), int32(-1), "The index key should be -1")
 }
 
 func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexAsc() {
@@ -131,9 +142,12 @@ func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexAsc() {
 
 	s.Nil(err, "Should return without error")
 	s.Equal(collectionName, "testcollection", "Collection name should be 'testcollection'")
-	s.Equal(len(index.Key), 2, "The created index should contain 2 keys")
-	s.Equal(index.Key[0], "foo", "The prefix index key should be 'foo'")
-	s.Equal(index.Key[1], "bar", "The second index key should be 'bar'")
+
+	s.Equal(index.Keys.Len(), 2, "The created index should contain two keys")
+	s.Equal(index.Keys.ElementAt(0).Key(), "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(0).Value().Int32(), int32(1), "The index key should be 1")
+	s.Equal(index.Keys.ElementAt(1).Key(), "bar", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(1).Value().Int32(), int32(1), "The index key should be 1")
 }
 
 func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexDesc() {
@@ -143,9 +157,11 @@ func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexDesc() {
 
 	s.Nil(err, "Should return without error")
 	s.Equal(collectionName, "testcollection", "Collection name should be 'testcollection'")
-	s.Equal(len(index.Key), 2, "The created index should contain 2 keys")
-	s.Equal(index.Key[0], "-foo", "The prefix index key should be '-foo'")
-	s.Equal(index.Key[1], "-bar", "The second index key should be '-bar'")
+	s.Equal(index.Keys.Len(), 2, "The created index should contain two keys")
+	s.Equal(index.Keys.ElementAt(0).Key(), "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(0).Value().Int32(), int32(-1), "The index key should be -1")
+	s.Equal(index.Keys.ElementAt(1).Key(), "bar", "The index key should be 'bar'")
+	s.Equal(index.Keys.ElementAt(1).Value().Int32(), int32(-1), "The index key should be -1")
 }
 
 func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexMixed() {
@@ -155,9 +171,11 @@ func (s *MongoIndexesTestSuite) TestParseIndexCompoundIndexMixed() {
 
 	s.Nil(err, "Should return without error")
 	s.Equal(collectionName, "testcollection", "Collection name should be 'testcollection'")
-	s.Equal(len(index.Key), 2, "The created index should contain 2 keys")
-	s.Equal(index.Key[0], "-foo", "The prefix index key should be '-foo'")
-	s.Equal(index.Key[1], "bar", "The second index key should be 'bar'")
+	s.Equal(index.Keys.Len(), 2, "The created index should contain two keys")
+	s.Equal(index.Keys.ElementAt(0).Key(), "foo", "The index key should be 'foo'")
+	s.Equal(index.Keys.ElementAt(0).Value().Int32(), int32(-1), "The index key should be -1")
+	s.Equal(index.Keys.ElementAt(1).Key(), "bar", "The index key should be 'bar'")
+	s.Equal(index.Keys.ElementAt(1).Value().Int32(), int32(1), "The index key should be 1")
 }
 
 func (s *MongoIndexesTestSuite) TestParseIndexNoIndex() {
@@ -243,9 +261,7 @@ func (s *MongoIndexesTestSuite) TestConfigureIndexes() {
 
 	// get the "testcollection" collection. This should have been auto-magically
 	// created by ConfigureIndexes
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
-	c := worker.DB().C("testcollection")
+	c := s.initialSession.DB(s.Config.DatabaseName).C("testcollection")
 
 	// get the indexes for this collection
 	indexes, err := c.Indexes()

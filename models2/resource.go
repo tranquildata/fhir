@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
+	bson2 "github.com/mongodb/mongo-go-driver/bson"
 
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
@@ -159,6 +160,15 @@ func (r *Resource) MarshalJSON() ([]byte, error) {
 	// return json, nil
 }
 
+// Implements bson2.Marshaler
+func (r *Resource) MarshalBSON() ([]byte, error) {
+	bson1, err := r.GetBSON()
+	if err != nil {
+		return nil, err
+	}
+	return bson.Marshal(bson1)
+}
+
 func (r *Resource) GetBSON() (interface{}, error) {
 	// debug("GetBSON: transformReferencesMap: %#v", r.transformReferencesMap)
 	bsonDoc, err := ConvertJsonToGoFhirBSON(r.jsonBytes, r.transformReferencesMap)
@@ -247,6 +257,23 @@ func min(x int, y int) int {
 	} else {
 		return y
 	}
+}
+
+
+func NewResourceFromBSON2(bsonDoc2 *bson2.Document) (resource *Resource, err error) {
+	bytes, err := bsonDoc2.MarshalBSON()
+	if err != nil {
+		return nil, errors.Wrap(err, "NewResourceFromBSON2 --> MarshalBSON")
+	}
+
+	var bsonDoc bson.D
+	err = bson.Unmarshal(bytes, &bsonDoc)
+	if err != nil {
+		return nil, errors.Wrap(err, "NewResourceFromBSON2 --> Unmarshal")
+	}
+
+	// TODO: migrate fully to mongo-go-driver
+	return NewResourceFromBSON(bsonDoc)
 }
 
 func NewResourceFromBSON(bsonDoc []bson.DocElem) (resource *Resource, err error) {

@@ -1,14 +1,16 @@
 package server
 
 import (
+	"github.com/pkg/errors"
 	"net/url"
 	"fmt"
 	"log"
 	"time"
+	"context"
 
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
-	"gopkg.in/mgo.v2"
+	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type AfterRoutes func(*gin.Engine)
@@ -85,26 +87,23 @@ func (f *FHIRServer) Run() {
 	var err error
 
 	// Establish initial connection to mongo
-	session, err := mgo.Dial(f.Config.DatabaseHost)
+	client, err := mongo.Connect(context.Background(), fmt.Sprintf("mongodb://%s", f.Config.DatabaseHost))
 	if err != nil {
-		panic(err)
+		panic(errors.Wrap(err, "connecting to MongoDB"))
 	}
-	defer session.Close()
 
-	session.SetSocketTimeout(f.Config.DatabaseSocketTimeout)
-	session.SetSafe(&mgo.Safe{}) // makes the session check for errors such as ErrNotFound
+	// session.SetSafe(&mgo.Safe{}) // makes the session check for errors such as ErrNotFound
 
-	Database = session.DB(f.Config.DatabaseName)
 	log.Println("MongoDB: Connected")
 
 	// Establish fhir database session
-	masterSession := NewMasterSession(session, f.Config.DatabaseName)
+	masterSession := NewMasterSession(client, f.Config.DatabaseName)
 
 	// Ensure all indexes
 	NewIndexer(f.Config).ConfigureIndexes(masterSession)
 
 	// Establish admin session
-	masterAdminSession := NewMasterSession(session, "admin")
+	masterAdminSession := NewMasterSession(client, "admin")
 
 	// Kick off the database op monitoring routine. This periodically checks db.currentOp() and
 	// kills client-initiated operations exceeding the configurable timeout. Do this AFTER the index
@@ -123,9 +122,9 @@ func (f *FHIRServer) Run() {
 	if !f.Config.ReadOnly {
 		worker := masterSession.GetWorkerSession()
 		defer worker.Close()
-		count, err := worker.DB().C("countcache").Count()
+		count, err := worker.DB().Collection("countcache").Count(context.Background(), nil)
 		if count > 0 || err != nil {
-			err = worker.DB().C("countcache").DropCollection()
+			err = worker.DB().Collection("countcache").Drop(context.Background())
 			if err != nil {
 				panic(fmt.Sprintf("Server: Failed to clear count cache (%+v)", err))
 			}

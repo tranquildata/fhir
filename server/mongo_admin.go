@@ -53,9 +53,13 @@ type Reply struct {
 // 2. https://dzone.com/articles/finding-and-terminating-long
 func killLongRunningOps(ticker *time.Ticker, masterAdminSession *MasterSession, config Config) {
 	logKLRO(nil, fmt.Sprintf("Monitoring database %s for long-running operations", config.DatabaseName))
-	workerSession := masterAdminSession.GetWorkerSession()
-	defer workerSession.Close()
-	adminDB := workerSession.DB()
+
+	session, err := mgo.Dial(masterAdminSession.client.ConnectionString())
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+	adminDB := session.DB(masterAdminSession.dbname)
 
 	for now := range ticker.C {
 		var err error
