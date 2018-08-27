@@ -59,3 +59,19 @@ func (b *ShallowBundle) SetTransformReferencesMap(transformReferencesMap map[str
 		}
 	}
 }
+
+func (b *ShallowBundle) GetAllReferences() (references []string, err error) {
+
+	visitor := NewFhirVisitorCollectReferences()
+
+	for _, e := range b.Entry {
+		if e.Resource != nil {
+			err = WalkFHIRjson(e.Resource.JsonBytes(), visitor)
+			if err != nil {
+				return nil, errors.Wrap(err, "WalkFHIRjson error")
+			}
+		}
+	}
+
+	return visitor.GetReferences(), nil
+}

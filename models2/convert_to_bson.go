@@ -27,8 +27,8 @@ const Gofhir__to = "__to"
 //   - re-writes references (for transactions)
 //   - converts id to _id and puts first (_id converted to __id)
 //   - converts extensions from { url, value } to { url: { value } } to enable better MongoDB queries
-//   - converts decimal numbers to { __from, __to, __num, __strNum }
-//   - converts dates to { __from, __to, __strDate }
+//   - converts decimal numbers to { __from, __to, __num, __strNum } for FHIR conformance
+//   - converts dates to { __from, __to, __strDate } for FHIR conformance
 func ConvertJsonToGoFhirBSON(jsonBytes []byte, transformReferencesMap map[string]string) (out bson.D, err error) {
 
 	debug("=== ConvertJsonToGoFhirBSON ===")

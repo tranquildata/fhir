@@ -187,7 +187,50 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	}
 
-	// When being converted to BSON references will be updated to reflect newly assigned IDs
+	// Process references
+	references, err := bundle.GetAllReferences()
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	for _, reference := range references {
+		
+		if _, alreadyMapped := refMap[reference]; alreadyMapped {
+			continue
+		}
+
+		// Conditional references
+		// TODO: as per spec this needs to include in-bundle resources..
+		queryPos := strings.Index(reference, "?")
+		if queryPos >= 0 {
+
+			if bundle.Type != "transaction" {
+				c.AbortWithError(http.StatusBadRequest, errors.New("conditional references are only allowed in transactions, not batches"))
+				return
+			}
+
+			resourceType := reference[0:queryPos]
+			queryString := reference[queryPos+1:]
+			searchQuery := search.Query{Resource: resourceType, Query: queryString }
+			ids, err := session.FindIDs(searchQuery)
+			if err != nil {
+				c.AbortWithError(http.StatusBadRequest, errors.Wrapf(err, "lookup of conditional reference failed (%s)", reference))
+				return
+			}
+
+			if len(ids) == 1 {
+				refMap[reference] = resourceType + "/" + ids[0]
+			} else if len(ids) == 0 {
+				c.AbortWithError(http.StatusBadRequest, errors.Errorf("no matches for conditional reference (%s)", reference))
+				return
+			} else {
+				c.AbortWithError(http.StatusBadRequest, errors.Errorf("multiple matches for conditional reference (%s)", reference))
+				return
+			}
+		}
+	}
+
+	// When being converted to BSON references will be updated to reflect newly assigned or conditional IDs
 	bundle.SetTransformReferencesMap(refMap)
 
 	// Handle If-Match
