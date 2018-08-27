@@ -1,36 +1,37 @@
 package server
 
 import (
-	"context"
-	"io"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"runtime"
-	"path"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/gin-gonic/gin"
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/search"
+	"github.com/gin-gonic/gin"
+	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/pebbe/util"
+	"github.com/pkg/errors"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type ServerSuite struct {
 	initialSession *mgo.Session
-	MasterSession  *MasterSession
+	client         *mongo.Client
+	dbname         string
 	Engine         *gin.Engine
 	Server         *httptest.Server
 	Interceptors   map[string]InterceptorList
@@ -44,7 +45,8 @@ var _ = Suite(&ServerSuite{})
 func (s *ServerSuite) SetUpSuite(c *C) {
 	// Server configuration
 	config := DefaultConfig
-	config.DatabaseName = "fhir-test"
+	s.dbname = "fhir-test"
+	config.DatabaseName = s.dbname
 	config.IndexConfigPath = "../fixtures/test_indexes.conf"
 	config.AllowResourcesWithoutMeta = true
 
@@ -52,9 +54,8 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	var err error
 	s.initialSession, err = mgo.Dial("localhost")
 	util.CheckErr(err)
-	client, err := mongo.Connect(context.TODO(), "mongodb://localhost")
+	s.client, err = mongo.Connect(context.TODO(), "mongodb://localhost")
 	util.CheckErr(err)
-	s.MasterSession = NewMasterSession(client, "fhir-test")
 
 	// Set gin to release mode (less verbose output)
 	gin.SetMode(gin.ReleaseMode)
@@ -63,13 +64,13 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	s.Engine = gin.New()
 	s.Engine.Use(gin.Logger())
 	s.Engine.Use(gin.ErrorLogger())
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, config), config)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.client, s.dbname, s.Interceptors, config), config)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)
 }
 
-func (s *ServerSuite) DB() (*mgo.Database) {
+func (s *ServerSuite) DB() *mgo.Database {
 	return s.initialSession.DB("fhir-test")
 }
 
@@ -77,6 +78,9 @@ func (s *ServerSuite) SetUpTest(c *C) {
 	// Add patient fixture
 	p := s.insertPatientFromFixture("../fixtures/patient-example-a.json")
 	s.FixtureID = p.Id
+
+	db := s.client.Database(s.dbname)
+	CreateCollections(db)
 }
 
 func (s *ServerSuite) TearDownTest(c *C) {
@@ -214,7 +218,7 @@ func (s *ServerSuite) TestGetPatientsPaging(c *C) {
 func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 	config := DefaultConfig
 	config.CountTotalResults = false
-	dal, ok := NewMongoDataAccessLayer(s.MasterSession, nil, config).(*mongoDataAccessLayer)
+	dal, ok := NewMongoDataAccessLayer(s.client, s.dbname, nil, config).(*mongoDataAccessLayer)
 	c.Assert(ok, Equals, true)
 
 	// numResults is equal to the default query count of 100, so we should get a next link here
@@ -223,7 +227,9 @@ func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 		Host:   "fhir.example.com",
 		Path:   "fhir/Patient",
 	}
-	links := dal.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 100)
+	session := dal.StartSession().(*mongoSession)
+	defer session.Finish()
+	links := session.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 100)
 	c.Assert(len(links), Equals, 3)
 	c.Assert(links[0].Relation, Equals, "self")
 	c.Assert(links[1].Relation, Equals, "first")
@@ -234,7 +240,7 @@ func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 	c.Assert(next.Url, Equals, "https://fhir.example.com/fhir/Patient?_offset=100&_count=100")
 
 	// There should be no next link if numResults < count
-	links = dal.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 75)
+	links = session.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 75)
 	c.Assert(len(links), Equals, 2)
 	c.Assert(links[0].Relation, Equals, "self")
 	c.Assert(links[1].Relation, Equals, "first")
@@ -358,10 +364,12 @@ func (s *ServerSuite) TestCreatePatientConditionalCreated(c *C) {
 	defer data.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data); util.CheckErr(err)
+	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data)
+	util.CheckErr(err)
 	req.Header.Add("If-None-Exist", "identifier=urn:oid:0.1.2.3.4.5.6.7|123")
 	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req); util.CheckErr(err)
+	res, err := client.Do(req)
+	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
 	createdPatientID := resourceIdFromLocation(res)
@@ -378,10 +386,12 @@ func (s *ServerSuite) TestCreatePatientConditionalCreated2(c *C) {
 	defer data.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data); util.CheckErr(err)
+	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data)
+	util.CheckErr(err)
 	req.Header.Add("If-None-Exist", "identifier=urn:oid:0.1.2.3.4.5.6.7|123")
 	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req); util.CheckErr(err)
+	res, err := client.Do(req)
+	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 201)
 	createdPatientID := resourceIdFromLocation(res)
@@ -401,10 +411,12 @@ func (s *ServerSuite) TestCreatePatientConditionalExists(c *C) {
 	defer data.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data); util.CheckErr(err)
+	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data)
+	util.CheckErr(err)
 	req.Header.Add("If-None-Exist", "identifier=urn:oid:0.1.2.3.4.5.6.7|987")
 	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req); util.CheckErr(err)
+	res, err := client.Do(req)
+	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 200)
 	createdPatientID := resourceIdFromLocation(res)
@@ -422,10 +434,12 @@ func (s *ServerSuite) TestCreatePatientConditionalMultiple(c *C) {
 	defer data.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data); util.CheckErr(err)
+	req, err := http.NewRequest("POST", s.Server.URL+"/Patient", data)
+	util.CheckErr(err)
 	req.Header.Add("If-None-Exist", "identifier=urn:oid:0.1.2.3.4.5.6.7|987")
 	req.Header.Add("Content-Type", "application/json")
-	res, err := client.Do(req); util.CheckErr(err)
+	res, err := client.Do(req)
+	util.CheckErr(err)
 
 	c.Assert(res.StatusCode, Equals, 412)
 	c.Assert(res.Header["Location"], IsNil)
@@ -662,7 +676,7 @@ func (s *ServerSuite) TestVersionedUpdatePatientOneMatch200(c *C) {
 	util.CheckErr(err)
 	defer data.Close()
 
-	req, err := http.NewRequest("PUT", s.Server.URL + "/Patient/" + s.FixtureID, data)
+	req, err := http.NewRequest("PUT", s.Server.URL+"/Patient/"+s.FixtureID, data)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("If-Match", "W/\"1\"")
 	util.CheckErr(err)
@@ -690,7 +704,7 @@ func (s *ServerSuite) TestVersionedUpdatePatientOneMatch409(c *C) {
 	util.CheckErr(err)
 	defer data.Close()
 
-	req, err := http.NewRequest("PUT", s.Server.URL + "/Patient/" + s.FixtureID, data)
+	req, err := http.NewRequest("PUT", s.Server.URL+"/Patient/"+s.FixtureID, data)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("If-Match", "W/\"5\"")
 	util.CheckErr(err)
@@ -709,10 +723,6 @@ func (s *ServerSuite) TestVersionedUpdatePatientOneMatch409(c *C) {
 	c.Assert(patient.Name[0].Given[0], Equals, "Donald") // unchanged
 	c.Assert(patient.Meta, NotNil)
 }
-
-
-
-
 
 func (s *ServerSuite) TestBatchConditionalUpdatePatientUUIDIdentifier(c *C) {
 
@@ -744,10 +754,11 @@ func (s *ServerSuite) TestBatchConditionalUpdatePatientUUIDIdentifier(c *C) {
 
 	// check prev version stored with versionId of 0 (as fixture didn't have an initial versionId of 1)
 	prevCollection := s.DB().C("patients_prev")
-	count, err = prevCollection.Count(); util.CheckErr(err)
+	count, err = prevCollection.Count()
+	util.CheckErr(err)
 	c.Assert(count, Equals, 1)
 	prevQuery := bson.M{
-		"_id._id": testPatient.Id,
+		"_id._id":      testPatient.Id,
 		"_id._version": 0,
 	}
 	patient = models.Patient{}
@@ -1162,8 +1173,6 @@ func (s *ServerSuite) TestSummaryCount(c *C) {
 }
 
 func (s *ServerSuite) TestPatientEverything(c *C) {
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
 
 	data, err := os.Open("../fixtures/patient-example-d.json")
 	util.CheckErr(err)

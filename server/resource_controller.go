@@ -70,10 +70,12 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 		}
 	}
 
+	session := rc.DAL.StartSession()
+	defer session.Finish()
 
 	searchQuery := search.Query{Resource: rc.Name, Query: rawQuery }
 	baseURL := rc.Config.responseURL(c.Request, rc.Name)
-	bundle, err := rc.DAL.Search(*baseURL, searchQuery)
+	bundle, err := session.Search(*baseURL, searchQuery)
 	if err != nil {
 		panic(errors.Wrap(err, "Search failed"))
 	}
@@ -88,13 +90,16 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 // LoadResource uses the resource id in the request to get a resource from the DataAccessLayer and store it in the
 // context.
 func (rc *ResourceController) LoadResource(c *gin.Context) (resourceId string, resource *models2.Resource, err error) {
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	resourceId = c.Param("id")
 	resourceVersionId := c.Param("vid")
 
 	if resourceVersionId == "" {
-		resource, err = rc.DAL.Get(resourceId, rc.Name)
+		resource, err = session.Get(resourceId, rc.Name)
 	} else {
-		resource, err = rc.DAL.GetVersion(resourceId, resourceVersionId, rc.Name)
+		resource, err = session.GetVersion(resourceId, resourceVersionId, rc.Name)
 	}
 	if err != nil {
 		return "", nil, err
@@ -130,11 +135,14 @@ func (rc *ResourceController) ShowHandler(c *gin.Context) {
 
 func (rc *ResourceController) HistoryHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	c.Set("Action", "history")
 
 	baseURL := rc.Config.responseURL(c.Request, rc.Name)
 	resourceId := c.Param("id")
-	bundle, err := rc.DAL.History(*baseURL, rc.Name, resourceId)
+	bundle, err := session.History(*baseURL, rc.Name, resourceId)
 	if err != nil && err != ErrNotFound {
 		panic(errors.Wrap(err, "History request failed"))
 	}
@@ -149,13 +157,15 @@ func (rc *ResourceController) HistoryHandler(c *gin.Context) {
 // EverythingHandler handles requests for everything related to a Patient or Encounter resource.
 func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
 
 	// For now we interpret $everything as the union of _include and _revinclude
 	query := fmt.Sprintf("_id=%s&_include=*&_revinclude=*", c.Param("id"))
 
 	searchQuery := search.Query{Resource: rc.Name, Query: query}
 	baseURL := rc.Config.responseURL(c.Request, rc.Name)
-	bundle, err := rc.DAL.Search(*baseURL, searchQuery)
+	bundle, err := session.Search(*baseURL, searchQuery)
 	if err != nil {
 		panic(errors.Wrap(err, "Search (everything) failed"))
 	}
@@ -170,6 +180,9 @@ func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 // CreateHandler handles requests to create a new resource instance, assigning it a new ID.
 func (rc *ResourceController) CreateHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
 	if err != nil {
 		oo := models.NewOperationOutcome("fatal", "structure", err.Error())
@@ -183,10 +196,10 @@ func (rc *ResourceController) CreateHandler(c *gin.Context) {
 	var resourceId string
 	if len(ifNoneExist) > 0 {
 		query := search.Query{Resource: rc.Name, Query: ifNoneExist}
-		httpStatus, resourceId, resource, err = rc.DAL.ConditionalPost(query, resource)
+		httpStatus, resourceId, resource, err = session.ConditionalPost(query, resource)
 	} else {
 		httpStatus = http.StatusCreated
-		resourceId, err = rc.DAL.Post(resource)
+		resourceId, err = session.Post(resource)
 	}
 	if err != nil {
 		panic(errors.Wrap(err, "CreateHandler Post/ConditionalPost failed"))
@@ -210,6 +223,9 @@ func (rc *ResourceController) CreateHandler(c *gin.Context) {
 // exist, a new resource is created with that ID.
 func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
 	if err != nil {
 		oo := models.NewOperationOutcome("fatal", "structure", err.Error())
@@ -231,7 +247,7 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 
 	// Perform update
 	resourceId := c.Param("id")
-	createdNew, err := rc.DAL.Put(resourceId, conditionalVersionId, resource)
+	createdNew, err := session.Put(resourceId, conditionalVersionId, resource)
 	if err != nil {
 		panic(errors.Wrap(err, "Put failed"))
 	}
@@ -258,6 +274,9 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 // is considered an error.
 func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
 	if err != nil {
 		oo := models.NewOperationOutcome("fatal", "structure", err.Error())
@@ -279,7 +298,7 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 
 	// Perform update
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}
-	resourceId, createdNew, err := rc.DAL.ConditionalPut(query, conditionalVersionId, resource)
+	resourceId, createdNew, err := session.ConditionalPut(query, conditionalVersionId, resource)
 	if err == ErrMultipleMatches {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
@@ -303,9 +322,12 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 // DeleteHandler handles requests to delete a resource instance identified by its ID.
 func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	id := c.Param("id")
 
-	newVersionId, err := rc.DAL.Delete(id, rc.Name)
+	newVersionId, err := session.Delete(id, rc.Name)
 	if err != nil && err != ErrNotFound {
 		panic(errors.Wrap(err, "Delete failed"))
 	}
@@ -324,8 +346,11 @@ func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 // matching the search criteria will be deleted.
 func (rc *ResourceController) ConditionalDeleteHandler(c *gin.Context) {
 	defer handlePanics(c)
+	session := rc.DAL.StartSession()
+	defer session.Finish()
+
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}
-	_, err := rc.DAL.ConditionalDelete(query)
+	_, err := session.ConditionalDelete(query)
 	if err != nil {
 		panic(errors.Wrap(err, "ConditionalDelete failed"))
 	}

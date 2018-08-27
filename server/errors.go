@@ -27,13 +27,13 @@ func ErrorToOpOutcome(err interface{}) (statusCode int, outcome *models.Operatio
 			return http.StatusConflict, outcome // TODO (FHIR R4): changed to 412
 		} else {
 			stacktrace := "    " + string(runtime_debug.Stack())
-			fmt.Fprintf(os.Stderr, "handlePanics: recovered %+v\n%s", x, stacktrace)
+			fmt.Fprintf(os.Stderr, "handlePanics: recovered: %+v\n%s", x, stacktrace)
 
 			outcome := models.NewOperationOutcome("fatal", "exception", x.Error() + stacktrace)
 			return http.StatusInternalServerError, outcome
 		}
 	default:
-		fmt.Printf("handlePanics: recovered %+v\n", x)
+		fmt.Printf("handlePanics: recovered: %+v\n", x)
 		runtime_debug.PrintStack()
 
 		str := fmt.Sprintf("%#v", err)

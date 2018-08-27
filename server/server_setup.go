@@ -1,16 +1,19 @@
 package server
 
 import (
-	"github.com/pkg/errors"
-	"net/url"
+	"context"
 	"fmt"
 	"log"
+	"net/url"
+	"strings"
 	"time"
-	"context"
 
+	"github.com/eug48/fhir/models2"
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/pkg/errors"
 )
 
 type AfterRoutes func(*gin.Engine)
@@ -87,32 +90,41 @@ func (f *FHIRServer) Run() {
 	var err error
 
 	// Establish initial connection to mongo
-	client, err := mongo.Connect(context.Background(), fmt.Sprintf("mongodb://%s", f.Config.DatabaseHost))
+	client, err := mongo.Connect(context.Background(), f.Config.DatabaseURI)
 	if err != nil {
 		panic(errors.Wrap(err, "connecting to MongoDB"))
 	}
 
-	// session.SetSafe(&mgo.Safe{}) // makes the session check for errors such as ErrNotFound
+	getFCV := bson.NewDocument(
+		bson.EC.Int32("getParameter", 1),
+		bson.EC.Int32("featureCompatibilityVersion", 1),
+	)
+	fcvReader, err := client.Database("admin").RunCommand(context.TODO(), getFCV)
+	if err != nil {
+		panic(errors.Wrap(err, "reading featureCompatibilityVersion"))
+	}
+	fcv, err := fcvReader.Lookup("featureCompatibilityVersion", "version")
+	if err != nil {
+		panic(errors.Wrap(err, "loading featureCompatibilityVersion"))
+	}
+	fmt.Printf("MongoDB featureCompatibilityVersion %s\n", fcv.Value().StringValue())
+	log.Printf("MongoDB: Connected (database %s)\n", f.Config.DatabaseName)
 
-	log.Println("MongoDB: Connected")
-
-	// Establish fhir database session
-	masterSession := NewMasterSession(client, f.Config.DatabaseName)
+	// Pre-create collections for transactions
+	db := client.Database(f.Config.DatabaseName)
+	CreateCollections(db)
 
 	// Ensure all indexes
-	NewIndexer(f.Config).ConfigureIndexes(masterSession)
-
-	// Establish admin session
-	masterAdminSession := NewMasterSession(client, "admin")
+	NewIndexer(f.Config).ConfigureIndexes(db)
 
 	// Kick off the database op monitoring routine. This periodically checks db.currentOp() and
 	// kills client-initiated operations exceeding the configurable timeout. Do this AFTER the index
 	// build to ensure no index build processes are killed unintentionally.
 	ticker := time.NewTicker(f.Config.DatabaseKillOpPeriod)
-	go killLongRunningOps(ticker, masterAdminSession, f.Config)
+	go killLongRunningOps(ticker, client.ConnectionString(), "admin", f.Config)
 
 	// Register all API routes
-	RegisterRoutes(f.Engine, f.MiddlewareConfig, NewMongoDataAccessLayer(masterSession, f.Interceptors, f.Config), f.Config)
+	RegisterRoutes(f.Engine, f.MiddlewareConfig, NewMongoDataAccessLayer(client, f.Config.DatabaseName, f.Interceptors, f.Config), f.Config)
 
 	for _, ar := range f.AfterRoutes {
 		ar(f.Engine)
@@ -120,11 +132,9 @@ func (f *FHIRServer) Run() {
 
 	// If not in -readonly mode, clear the count cache
 	if !f.Config.ReadOnly {
-		worker := masterSession.GetWorkerSession()
-		defer worker.Close()
-		count, err := worker.DB().Collection("countcache").Count(context.Background(), nil)
+		count, err := db.Collection("countcache").Count(context.Background(), nil)
 		if count > 0 || err != nil {
-			err = worker.DB().Collection("countcache").Drop(context.Background())
+			err = db.Collection("countcache").Drop(context.Background())
 			if err != nil {
 				panic(fmt.Sprintf("Server: Failed to clear count cache (%+v)", err))
 			}
@@ -133,10 +143,25 @@ func (f *FHIRServer) Run() {
 		log.Println("Server: Running in read-only mode")
 	}
 
-
 	url, err := url.Parse(f.Config.ServerURL)
 	if err != nil {
 		panic("Server: Failed to parse ServerURL: " + f.Config.ServerURL)
 	}
 	f.Engine.Run(":" + url.Port())
+}
+
+func CreateCollections(db *mongo.Database) {
+	// MongoDB transactions require that collections be pre-created
+	var err error
+	for _, name := range models2.AllFhirResourceCollectionNames() {
+		fmt.Printf("pre-creating collection %s, %s\n", name, name+"_prev")
+		_, err = db.RunCommand(context.Background(), bson.NewDocument(bson.EC.String("create", name+"_prev")))
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			panic(err)
+		}
+		_, err = db.RunCommand(context.Background(), bson.NewDocument(bson.EC.String("create", name)))
+		if err != nil && !strings.Contains(err.Error(), "already exists") {
+			panic(err)
+		}
+	}
 }

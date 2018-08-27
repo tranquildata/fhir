@@ -301,6 +301,8 @@ func NewResourceFromBSON(bsonDoc []bson.DocElem) (resource *Resource, err error)
 
 func NewResourceFromJsonBytes(jsonBytes []byte) (resource *Resource, err error) {
 
+	// debug("NewResourceFromJsonBytes: %s", string(jsonBytes))
+
 	paths := [][]string{
 		[]string{"resourceType"},
 		[]string{"id"},

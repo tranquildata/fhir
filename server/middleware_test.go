@@ -10,14 +10,15 @@ import (
 	"gopkg.in/mgo.v2/dbtest"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/suite"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/stretchr/testify/suite"
 )
 
 type MiddlewareTestSuite struct {
 	suite.Suite
-	DBServer      *dbtest.DBServer
-	MasterSession *MasterSession
+	DBServer *dbtest.DBServer
+	client   *mongo.Client
+	dbname   string
 }
 
 func TestMiddlewareTestSuite(t *testing.T) {
@@ -40,18 +41,18 @@ func (m *MiddlewareTestSuite) SetupSuite() {
 	mgoSession := m.DBServer.Session()
 	defer mgoSession.Close()
 	serverUri := mgoSession.LiveServers()[0]
-	client, err := mongo.Connect(context.TODO(), "mongodb://" + serverUri)
+	m.client, err = mongo.Connect(context.TODO(), "mongodb://"+serverUri)
+	m.dbname = "fhir-test"
 	if err != nil {
 		panic(err)
 	}
-	m.MasterSession = NewMasterSession(client, "fhir-test")
 
 	// Set gin to release mode (less verbose output)
 	gin.SetMode(gin.ReleaseMode)
 }
 
 func (m *MiddlewareTestSuite) TearDownSuite() {
-	m.MasterSession.client.Disconnect(context.TODO())
+	m.client.Disconnect(context.TODO())
 	m.DBServer.Stop()
 	m.DBServer.Wipe()
 
@@ -74,7 +75,7 @@ func (m *MiddlewareTestSuite) TearDownSuite() {
 func (m *MiddlewareTestSuite) TestRejectXML() {
 	e := gin.New()
 	e.Use(AbortNonJSONRequestsMiddleware)
-	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.MasterSession, nil, DefaultConfig), DefaultConfig)
+	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, nil, DefaultConfig), DefaultConfig)
 	server := httptest.NewServer(e)
 
 	req, err := http.NewRequest("GET", server.URL+"/Patient", nil)
@@ -89,7 +90,7 @@ func (m *MiddlewareTestSuite) TestReadOnlyMode() {
 	e.Use(ReadOnlyMiddleware)
 	config := DefaultConfig
 	config.ReadOnly = true
-	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.MasterSession, nil, config), config)
+	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, nil, config), config)
 	server := httptest.NewServer(e)
 
 	req, err := http.NewRequest("POST", server.URL+"/Patient", nil)

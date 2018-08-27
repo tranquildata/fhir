@@ -65,6 +65,7 @@
     <Compile Include="Requests.fs" />
     <Compile Include="Search.fs" />
     <Compile Include="History.fs" />
+    <Compile Include="Transactions.fs" />
     <Compile Include="Benchmark.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

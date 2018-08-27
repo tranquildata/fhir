@@ -95,7 +95,7 @@ module Search =
                 Entry = L [
                     Bundle.EntryComponent(
                         Request = Bundle.RequestComponent(
-                            Url =  url.Uri.PathAndQuery,
+                            Url =  resource + url.Uri.Query,
                             Method = N Bundle.HTTPVerb.GET
                         )
                     )

@@ -31,6 +31,12 @@ let private waitForFhirServer (runner: IFhirRunner) =
             Thread.Sleep(1000)
             eprintf "."
     eprintfn ""
+
+let private startProcess cmd args =
+    let argString = String.concat " " args
+    printfn "Starting %s %s" cmd argString
+    let proc = Process.Start(ProcessStartInfo(cmd, argString))
+    proc
             
 
 type GoFhirMongoRunner() as this =
@@ -41,8 +47,8 @@ type GoFhirMongoRunner() as this =
     // Run gofhir
     //let path = """C:\Users\eug\go\src\github.com\eug48\fhir\fhir-server\fhir-server.exe"""
     let path = Path.Combine("..", "..", "..", "..", "fhir-server", "fhir-server.exe")
-    let proc = Process.Start(ProcessStartInfo(path, "-port 5001 -mongodbHostPort localhost:27017 -enableXML -databaseName fhir-bench"))
-    let fhirBase = "http://localhost:5001"
+    let proc = startProcess path ["-port 5001 -mongodbHostPort localhost:27017 -enableXML -databaseName fhir-bench"]
+    let fhirBase = "http://localhost:5002"
     //let fhirBase = "http://localhost:3002"
     let fhirClient() =
         new FhirClient(fhirBase,
@@ -61,10 +67,11 @@ type GoFhirMongoRunner() as this =
             proc.WaitForExit()
 
 
-type HapiMongoRunner() as this =
+type HapiDerbyRunner() as this =
     // delete HAPI data directory
     let dirPath = """C:\Users\eug\Downloads\hapi-fhir-3.4.0-cli"""
-    do Directory.Delete(Path.Combine(dirPath, "target"), recursive = true)
+    let dataDir = Path.Combine(dirPath, "target")
+    do if Directory.Exists(dataDir) then Directory.Delete(dataDir, recursive = true)
 
     // run HAPI
     let hapiCmdPath = Path.Combine(dirPath, "hapi-fhir-cli.cmd")
@@ -75,8 +82,8 @@ type HapiMongoRunner() as this =
         "--disable-referential-integrity"
         "-p 6001"
     ]
-    let proc = Process.Start(ProcessStartInfo(hapiCmdPath, String.concat " " hapiArgs))
-    let fhirBase = "http://localhost:6001/baseDstu3"
+    let proc = startProcess hapiCmdPath hapiArgs
+    let fhirBase = "http://localhost:6002/baseDstu3/"
     let fhirClient() = new FhirClient(fhirBase, verifyFhirVersion = false, PreferredFormat = ResourceFormat.Json)
     do waitForFhirServer this
 
@@ -88,6 +95,39 @@ type HapiMongoRunner() as this =
         member __.Dispose() =
             proc.Kill()
             proc.WaitForExit()
+
+
+
+
+type PyroRunner() as this =
+    // delete HAPI data directory
+    let dirPath = """C:\Users\eug\Downloads\hapi-fhir-3.4.0-cli"""
+    let dataDir = Path.Combine(dirPath, "target")
+    //do if Directory.Exists(dataDir) then Directory.Delete(dataDir, recursive = true)
+
+    // run HAPI
+    let hapiCmdPath = Path.Combine(dirPath, "hapi-fhir-cli.cmd")
+    let hapiArgs = [
+        "run-server"
+        "--reuse-search-results-milliseconds off"
+        "-v dstu3"
+        "--disable-referential-integrity"
+        "-p 6001"
+    ]
+    //let proc = Process.Start(ProcessStartInfo(hapiCmdPath, String.concat " " hapiArgs))
+    let fhirBase = "http://localhost:8888/fhir/"
+    let fhirClient() = new FhirClient(fhirBase, verifyFhirVersion = false, PreferredFormat = ResourceFormat.Json)
+    do waitForFhirServer this
+
+    interface IFhirRunner with
+        member __.FhirClient() = fhirClient()
+        member __.Name() = "Pyro"
+
+    interface IDisposable with
+        member __.Dispose() =
+            ()
+            //proc.Kill()
+            //proc.WaitForExit()
 
 
 

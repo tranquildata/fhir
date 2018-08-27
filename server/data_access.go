@@ -4,12 +4,23 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/eug48/fhir/search"
 	"github.com/eug48/fhir/models2"
+	"github.com/eug48/fhir/search"
 )
 
-// DataAccessLayer is an interface for the various interactions that can occur on a FHIR data store.
 type DataAccessLayer interface {
+	StartSession() DataAccessSession
+}
+
+// DataAccessLayer is an interface for the various interactions that can occur on a FHIR data store.
+type DataAccessSession interface {
+	// Starts a transaction
+	StartTransaction() error
+	// Commits a transaction
+	CommmitIfTransaction() error
+	// Ends the session (aborts any running transactions) - for use in defer statements after StartSession
+	Finish()
+
 	// Get retrieves a single resource instance identified by its resource type and ID
 	Get(id, resourceType string) (resource *models2.Resource, err error)
 	// GetVersion retrieves a single resource instance identified by its resource type, ID and versionId
@@ -54,8 +65,9 @@ var ErrMultipleMatches = errors.New("Multiple Matches")
 var ErrOpInterrupted = errors.New("Operation Interrupted")
 
 type ErrConflict struct {
-	msg   string
+	msg string
 }
+
 func (e ErrConflict) Error() string {
 	return e.msg
 }

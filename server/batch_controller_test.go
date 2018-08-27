@@ -24,7 +24,6 @@ import (
 
 type BatchControllerSuite struct {
 	initialSession *mgo.Session
-	MasterSession  *MasterSession
 
 	MongoClient    *mongo.Client
 	DbName         string
@@ -51,12 +50,11 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	if err != nil {
 		panic(err)
 	}
-	s.MasterSession = NewMasterSession(s.MongoClient, s.DbName)
 
 	// Build routes for testing
 	s.Engine = gin.New()
 	s.Engine.Use(gin.Logger())
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MasterSession, s.Interceptors, DefaultConfig), DefaultConfig)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MongoClient, s.DbName, s.Interceptors, DefaultConfig), DefaultConfig)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)
@@ -66,10 +64,13 @@ func (s *BatchControllerSuite) MgoDB() *mgo.Database {
 	return s.initialSession.DB(s.DbName)
 }
 
+func (s *BatchControllerSuite) SetUpTest(c *C) {
+	db := s.MongoClient.Database(s.DbName)
+	CreateCollections(db)
+}
+
 func (s *BatchControllerSuite) TearDownTest(c *C) {
-	worker := s.MasterSession.GetWorkerSession()
-	worker.DB().Drop(nil)
-	worker.Close()
+	s.MgoDB().DropDatabase()
 }
 
 func (s *BatchControllerSuite) TearDownSuite(c *C) {
@@ -560,10 +561,8 @@ func (s *BatchControllerSuite) TestPutEntriesBundle(c *C) {
 	}
 
 	// Now do a quick content check
-	worker := s.MasterSession.GetWorkerSession()
 	condCollection := s.MgoDB().C("conditions")
 	patCollection := s.MgoDB().C("patients")
-	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 3)
@@ -603,10 +602,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction409(c *C) {
 	c.Assert(oo.Issue[0].Details.Text, Equals, "Version mismatch when handling If-Match (current=1 wanted=5)")
 
 	// Now do a quick content check
-	worker := s.MasterSession.GetWorkerSession()
 	condCollection := s.MgoDB().C("conditions")
 	patCollection := s.MgoDB().C("patients")
-	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 2) // transaction failed so nothing added
@@ -702,10 +699,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesTransaction200(c *C) {
 	}
 
 	// Now do a quick content check
-	worker := s.MasterSession.GetWorkerSession()
 	condCollection := s.MgoDB().C("conditions")
 	patCollection := s.MgoDB().C("patients")
-	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 3)
@@ -795,10 +790,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesBatch409(c *C) {
 	}
 
 	// Now do a quick content check
-	worker := s.MasterSession.GetWorkerSession()
 	condCollection := s.MgoDB().C("conditions")
 	patCollection := s.MgoDB().C("patients")
-	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 3)
@@ -896,10 +889,8 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesBatch200(c *C) {
 	}
 
 	// Now do a quick content check
-	worker := s.MasterSession.GetWorkerSession()
 	condCollection := s.MgoDB().C("conditions")
 	patCollection := s.MgoDB().C("patients")
-	defer worker.Close()
 	count, err := condCollection.Count()
 	util.CheckErr(err)
 	c.Assert(count, Equals, 3)
@@ -929,9 +920,6 @@ func (s *BatchControllerSuite) TestVersionedPutEntriesBatch200(c *C) {
 }
 
 func (s *BatchControllerSuite) TestConditionalUpdatesBundle(c *C) {
-
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
 
 	data, err := os.Open("../fixtures/conditional_update_bundle.json")
 	util.CheckErr(err)
@@ -992,9 +980,6 @@ func (s *BatchControllerSuite) TestConditionalUpdatesBundle(c *C) {
 }
 
 func (s *BatchControllerSuite) TestAllSupportedMethodsBundle(c *C) {
-
-	worker := s.MasterSession.GetWorkerSession()
-	defer worker.Close()
 
 	// Create some records to delete or update
 	condition := &models.Condition{

@@ -11,6 +11,7 @@ Currently this server should be considered experimental, with preliminary suppor
 
 -	JSON representations of all resources
 -	XML representations of all resources via [FHIR.js](https://github.com/lantanagroup/FHIR.js) (except for primitive extensions)
+-	Transaction bundles (requires a MongoDB 4.0 replica set)
 -	Create/Read/Update/Delete (CRUD) operations with versioning
 -	Conditional update and delete
 -	Resource-level history (basic support - lacks paging and filtering)
@@ -24,8 +25,7 @@ Currently this server should be considered experimental, with preliminary suppor
 
 Currently this server does *not* support the following major features:
 
--	Transactional isolation (see workaround below)
--	Validation (work in progress)
+-	Validation
 -	Resource summaries
 -	Advanced search features
 	-	Custom search parameters
@@ -38,33 +38,27 @@ The following relatively basic items are next in line for development:
 - Conditional reads (`If-Modified-Since` and `If-None-Match`)
 - History support for paging, `_since`, `_at` and `_count`
 - Batch interdependency validation
+- Validation (probably by proxying the request to a reference FHIR server)
 - Search for quantities with the system unspecified (i.e. by both unit and code)
 
-Users are strongly encouraged to test thoroughly and contributions (including more tests) would be most welcome.
 
+Users are strongly encouraged to test thoroughly and contributions (including more tests) would be most welcome. Please note that MongoDB 4.0 is quite new and the [MongoDB Go Driver](https://github.com/mongodb/mongo-go-driver) is still in its alpha stage.
 
-Transactions
---------------
-
-MongoDB is used as the underlying database and has recently acquired multi-document transaction features in version 4.0. This can be supported by this project once implemented in the new officially-supported Go driver - see https://github.com/mongodb/mongo-go-driver.
-
-Another approach would be to create an alternative backend, perhaps using PostgreSQL, ArangoDB or Dgraph.
-
-In the meantime this project implements a partial workaround. Clients can send a `X-Mutex-Name` header and two requests with the same value of this header will execute serially (provided there is only one active instance of this server). Please note that this won't give you the all-or-nothing behaviour of real transactions.
 
 Getting started using Docker
 -------------------------------
 
 1. Install Docker
-2. Run an image of this FHIR server that includes MongoDB, deleting all data after exiting:
+2. Run an image of this FHIR server that includes MongoDB (`--rm` means all data will be deleted after the container exits):
 		
 		docker run --rm -it -p 3001:3001 gcr.io/eug48-fhir/fhir-server-with-mongo
 
 
 3. You can also run MongoDB and this FHIR server in separate containers:
 
-		docker run --name fhir-mongo -v /my/own/datadir:/data/db -d mongo
-		docker run --rm -it --link fhir-mongo:mongo -e GIN_MODE=release -e MONGO_HOSTPORT=fhir-mongo:27017 -p 3001:3001 gcr.io/eug48-fhir/fhir-server
+		docker run --name fhir-mongo -v /my/own/datadir:/data/db -d mongo --replSet rs0
+		docker run --rm --link fhir-mongo:mongo mongo mongo --host mongo --eval "rs.initiate()"
+		docker run --rm -it --link fhir-mongo:mongo -e GIN_MODE=release -e "MONGODB_URI=mongodb://fhir-mongo:27017/?replicaSet=rs0" -p 3001:3001 gcr.io/eug48-fhir/fhir-server
 
 
 See MongoDB's Docker image documentation for more information, including how to persist data: https://hub.docker.com/_/mongo/
@@ -98,6 +92,10 @@ Building and running from source
 				Run mongod (for 'getting started' docker images - development only)
 
 
+MongoDB 4.0 only supports transactions when run as a replica set. To create a single-node replica set:
+
+1. Add the `--replSet` option to the MongoDB daemon: e.g. `mongod --replSet rs0`
+2. Run `rs.initiate()` from the MongoDB shell (`mongo`)
 
 If you wish to test the server with synthetic patient data, please reference [Generate and Upload Synthetic Patient Data](https://github.com/intervention-engine/ie/blob/master/docs/dev_install.md#generate-and-upload-synthetic-patient-data).
 
@@ -118,10 +116,10 @@ To build using Google Container Builder (after setting up the gcloud tool):
 
 ```
 # The main Dockerfile
-$ gcloud container builds submit -t gcr.io/your-project-id/fhir-server:2018-07-12a
+$ gcloud builds submit -t gcr.io/your-project-id/fhir-server:2018-07-12a
 
 # Both Dockerfiles
-$ gcloud container builds submit --config=cloudBuild.json  --substitutions=COMMIT_SHA=2018-07-12a
+$ gcloud builds submit --config=cloudBuild.json  --substitutions=COMMIT_SHA=yyyy-mm-dd
 ```
 
 You can also set up a trigger via https://console.cloud.google.com/gcr/triggers 

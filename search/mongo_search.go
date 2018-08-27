@@ -129,7 +129,7 @@ func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTota
 // Close a MongoDB session opened by NewMongoSearcherForUri
 func (m *MongoSearcher) Close() {
 	if m.client != nil {
-		m.session.EndSession()
+		m.session.EndSession(context.TODO())
 		m.client.Disconnect(context.TODO())
 	}
 }
@@ -345,7 +345,8 @@ func (m *MongoSearcher) find(bsonQuery *BSONQuery, options *QueryOptions, doCoun
 
 	// First get a count of the total results (doesn't apply any options)
 	if doCount || options.Summary == "count" {
-		intTotal, err := c.Count(context.TODO(), bson1ToBytes(bsonQuery.Query), m.session)
+		// c.CountDocuments rather than c.Count works in transactions
+		intTotal, err := c.CountDocuments(context.TODO(), bson1ToBytes(bsonQuery.Query), m.session)
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "search count operation failed")
 		}

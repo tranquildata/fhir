@@ -39,13 +39,16 @@ func abortWithErr(c *gin.Context, err error) {
 	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
 }
 
-// Post processes and incoming batch request
+// Handles batch and transaction requests
 func (b *BatchController) Post(c *gin.Context) {
 	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
 		abortWithErr(c, err)
 		return
 	}
+
+	session := b.DAL.StartSession()
+	defer session.Finish()
 
 	bundle, err := bundleResource.AsShallowBundle()
 	if err != nil {
@@ -55,10 +58,16 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	switch bundle.Type {
 	case "transaction":
+		err := session.StartTransaction()
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "error starting MongoDB transaction"))
+			return
+		}
 	case "batch":
 		// TODO: If type is batch, ensure there are no interdependent resources
 	default:
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"))
+		return
 	}
 
 	// Loop through the entries, ensuring they have a request and that we support the method,
@@ -118,7 +127,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			if len(entry.Request.IfNoneExist) > 0 {
 				// Conditional Create
 				query := search.Query{Resource: entry.Request.Url, Query: entry.Request.IfNoneExist}
-				existingIds, err := b.DAL.FindIDs(query)
+				existingIds, err := session.FindIDs(query)
 				if err != nil {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
@@ -156,7 +165,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				continue
 			}
 
-			if err := b.resolveConditionalPut(c.Request, i, entry, newIDs, refMap); err != nil {
+			if err := b.resolveConditionalPut(c.Request, session, i, entry, newIDs, refMap); err != nil {
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
@@ -180,7 +189,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				return
 			}
 
-			if err := b.resolveConditionalPut(c.Request, i, entry, newIDs, refMap); err != nil {
+			if err := b.resolveConditionalPut(c.Request, session, i, entry, newIDs, refMap); err != nil {
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
@@ -252,7 +261,7 @@ func (b *BatchController) Post(c *gin.Context) {
 					return
 				}
 
-				currentResource, err := b.DAL.Get(id, entry.Resource.ResourceType())
+				currentResource, err := session.Get(id, entry.Resource.ResourceType())
 				if err == ErrNotFound {
 					entry.Response = &models.BundleEntryResponseComponent{
 						Status: "404",
@@ -290,7 +299,7 @@ func (b *BatchController) Post(c *gin.Context) {
 	// Make the changes in the database and update the entry responses
 	if (proceed) {
 		for i, entry := range entries {
-			err = b.doRequest(c, i, entry, createStatus, newIDs)
+			err = b.doRequest(c, session, i, entry, createStatus, newIDs)
 			if err != nil {
 				debug("  --> ERROR %+v", err)
 			}
@@ -336,6 +345,8 @@ func (b *BatchController) Post(c *gin.Context) {
 				return
 			}
 		}
+
+		session.CommmitIfTransaction()
 	}
 
 	if proceed {
@@ -361,7 +372,7 @@ func sendReply(c *gin.Context, httpStatus int, reply interface{}) {
 	}
 }
 
-func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
+func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
 	debug("doRequest %s %s", entry.Request.Method, entry.Request.Url)
 	if entry.Response != nil {
 		// already handled (e.g. conditional update returned 409)
@@ -377,14 +388,14 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 			if len(parts) != 2 {
 				return fmt.Errorf("Couldn't identify resource and id to delete from %s", entry.Request.Url)
 			}
-			if _, err := b.DAL.Delete(parts[1], parts[0]); err != nil && err != ErrNotFound {
+			if _, err := session.Delete(parts[1], parts[0]); err != nil && err != ErrNotFound {
 				return errors.Wrapf(err, "failed to delete %s", entry.Request.Url)
 			}
 		} else {
 			// It's a conditional (query-based) delete
 			parts := strings.SplitN(entry.Request.Url, "?", 2)
 			query := search.Query{Resource: parts[0], Query: parts[1]}
-			if _, err := b.DAL.ConditionalDelete(query); err != nil {
+			if _, err := session.ConditionalDelete(query); err != nil {
 				return errors.Wrapf(err, "failed to conditional-delete %s", entry.Request.Url)
 			}
 		}
@@ -402,7 +413,7 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 
 		if createStatus[i] == "201" {
 			// creating
-			err := b.DAL.PostWithID(newIDs[i], entry.Resource)
+			err := session.PostWithID(newIDs[i], entry.Resource)
 			if err != nil {
 				return errors.Wrapf(err, "failed to create %s", entry.Request.Url)
 			}
@@ -412,7 +423,7 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 			components := strings.Split(entry.FullUrl, "/")
 			existingId := components[len(components)-1]
 
-			existingResource, err := b.DAL.Get(existingId, entry.Request.Url)
+			existingResource, err := session.Get(existingId, entry.Request.Url)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get existing resource during conditional create of %s", entry.Request.Url)
 			}
@@ -433,7 +444,7 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 		}
 
 		// Write
-		createdNew, err := b.DAL.Put(parts[1], "", entry.Resource)
+		createdNew, err := session.Put(parts[1], "", entry.Resource)
 		if err != nil {
 			return errors.Wrapf(err, "failed to update %s", entry.Request.Url)
 		}
@@ -464,7 +475,6 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 		var err error
 		if len(pathAndQuery) == 2 {
 			queryString = pathAndQuery[1]
-			// queryValues, err = url.ParseQuery(query)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse query string: %s", entry.Request.Url)
 			}
@@ -505,7 +515,7 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 
 		if historyRequest {
 			baseURL := b.Config.responseURL(c.Request, resourceType)
-			bundle, err := b.DAL.History(*baseURL, resourceType, id)
+			bundle, err := session.History(*baseURL, resourceType, id)
 			debug("  history request (%s/%s) --> err %+v", resourceType, id, err)
 			if err != nil && err != ErrNotFound {
 				return errors.Wrapf(err, "History request failed: %s", entry.Request.Url)
@@ -530,9 +540,9 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 
 			entry.Response = &models.BundleEntryResponseComponent{}
 			if vid == "" {
-				entry.Resource, err = b.DAL.Get(id, resourceType)
+				entry.Resource, err = session.Get(id, resourceType)
 			} else {
-				entry.Resource, err = b.DAL.GetVersion(id, vid, resourceType)
+				entry.Resource, err = session.GetVersion(id, vid, resourceType)
 			}
 			debug("  get resource request (%s id=%s vid=%s) --> err %+v", resourceType, id, vid, err)
 
@@ -564,7 +574,7 @@ func (b *BatchController) doRequest(c *gin.Context, i int, entry *models2.Shallo
 			// /Patient/_search
 			searchQuery := search.Query{Resource: resourceType, Query: queryString }
 			baseURL := b.Config.responseURL(c.Request, resourceType)
-			bundle, err := b.DAL.Search(*baseURL, searchQuery)
+			bundle, err := session.Search(*baseURL, searchQuery)
 			debug("  search request (%s %s) --> err %#v", resourceType, queryString, err)
 			if err != nil {
 				return errors.Wrapf(err, "Search failed for %s", entry.Request.Url)
@@ -601,13 +611,13 @@ func updateEntryMeta(entry *models2.ShallowBundleEntryComponent) {
 	}
 }
 
-func (b *BatchController) resolveConditionalPut(request *http.Request, entryIndex int, entry *models2.ShallowBundleEntryComponent, newIDs []string, refMap map[string]string) error {
+func (b *BatchController) resolveConditionalPut(request *http.Request, session DataAccessSession, entryIndex int, entry *models2.ShallowBundleEntryComponent, newIDs []string, refMap map[string]string) error {
 	// Do a preflight to either get the existing ID, get a new ID, or detect multiple matches (not allowed)
 	parts := strings.SplitN(entry.Request.Url, "?", 2)
 	query := search.Query{Resource: parts[0], Query: parts[1]}
 
 	var id string
-	if IDs, err := b.DAL.FindIDs(query); err == nil {
+	if IDs, err := session.FindIDs(query); err == nil {
 		switch len(IDs) {
 		case 0:
 			id = bson.NewObjectId().Hex()

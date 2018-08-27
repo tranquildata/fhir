@@ -51,15 +51,15 @@ type Reply struct {
 // This is a common approach, similarly applied here:
 // 1. https://blog.mlab.com/2014/02/mongodb-currentop-killop
 // 2. https://dzone.com/articles/finding-and-terminating-long
-func killLongRunningOps(ticker *time.Ticker, masterAdminSession *MasterSession, config Config) {
+func killLongRunningOps(ticker *time.Ticker, connectionString string, dbname string, config Config) {
 	logKLRO(nil, fmt.Sprintf("Monitoring database %s for long-running operations", config.DatabaseName))
 
-	session, err := mgo.Dial(masterAdminSession.client.ConnectionString())
+	session, err := mgo.Dial(connectionString)
 	if err != nil {
 		panic(err)
 	}
 	defer session.Close()
-	adminDB := session.DB(masterAdminSession.dbname)
+	adminDB := session.DB(dbname)
 
 	for now := range ticker.C {
 		var err error

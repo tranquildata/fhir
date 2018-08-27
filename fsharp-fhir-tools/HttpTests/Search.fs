@@ -45,7 +45,11 @@ let searchTests searchFuncStr = [
             let expectObservations query (obs: Observation list) =
                 let msg str = String.Join(";", [str] @ query)
                 let bundle = searchFunc fhirClient "Observation" query :> Bundle
-                Expect.equal bundle.Total.Value (Seq.length obs) (msg "bundle.Total")
+                match bundle.Total |> Option.ofNullable with
+                | Some total -> 
+                    Expect.equal total (Seq.length obs) (msg "bundle.Total")
+                | None ->
+                    ()
                 Expect.equal bundle.Entry.Count (Seq.length obs) (msg "bundle.Entry.Count")
                 let expectedIds = obs |> List.map (fun r -> r.Id)
                 let actualIds = bundle.Entry |> Seq.map (fun r -> (r.Resource :?> Observation).Id)

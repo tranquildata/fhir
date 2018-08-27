@@ -40,12 +40,10 @@ type IndexMap map[string][]mongo.IndexModel
 // on the size of the collection it may take some time before the index is created.
 // This will block the current thread until the indexing completes, but will not block
 // other connections to the mongo database.
-func (i *Indexer) ConfigureIndexes(ms *MasterSession) {
+func (i *Indexer) ConfigureIndexes(db *mongo.Database) {
 	var err error
 	fmt.Println("Indexer: Ensuring indexes")
 
-	worker := ms.GetWorkerSession()
-	defer worker.Close()
 	// TODO?
 	// worker.SetTimeout(5 * time.Minute) // Some indexes take a long time to build
 
@@ -80,11 +78,11 @@ func (i *Indexer) ConfigureIndexes(ms *MasterSession) {
 
 	// ensure all indexes in the config file
 	for k := range indexMap {
-		collection := worker.DB().Collection(k)
+		collection := db.Collection(k)
 
 		indexes := indexMap[k]
 		for _, index := range indexes {
-			i.log(fmt.Sprintf("Ensuring index: %s.%s: %s\n", i.dbName, k, sprintIndexKeys(&index)))
+			i.log(fmt.Sprintf("Ensuring index: %s.%s: %s", i.dbName, k, sprintIndexKeys(&index)))
 		}
 
 		_, err = collection.Indexes().CreateMany(context.Background(), indexes)
@@ -208,5 +206,5 @@ func newParseIndexError(indexName, reason string) error {
 }
 
 func sprintIndexKeys(index *mongo.IndexModel) string {
-	return fmt.Sprintf("IndexModel: %s, options %s", index.Keys.String(), index.Options.String())
+	return fmt.Sprintf("%s (%s)", index.Keys.ToExtJSON(false), index.Options.ToExtJSON(false))
 }

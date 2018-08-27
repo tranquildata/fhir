@@ -24,8 +24,10 @@ type Config struct {
 	// what mongo indexes the server should create (or verify) on startup
 	IndexConfigPath string
 
-	// DatabaseHost is the url of the running mongo instance to use for the fhir database.
-	DatabaseHost string
+	// DatabaseURI is the url of the mongo replica set to use for the FHIR database.
+	// A replica set is required for transactions support
+	// e.g. mongodb://db1:27017,db2:27017/?replicaSet=rs1
+	DatabaseURI string
 
 	// DatabaseName is the name of the mongo database used for the fhir database.
 	// Typically this will be the default DatabaseName "fhir".
@@ -77,7 +79,7 @@ type Config struct {
 var DefaultConfig = Config{
 	ServerURL:             "",
 	IndexConfigPath:       "config/indexes.conf",
-	DatabaseHost:          "localhost:27017",
+	DatabaseURI:           "mongodb://localhost:27017/?replicaSet=rs0",
 	DatabaseName:          "fhir",
 	DatabaseSocketTimeout: 2 * time.Minute,
 	DatabaseOpTimeout:     90 * time.Second,

@@ -104,9 +104,18 @@ let historyTests getFuncStr = [
             
             assertResourcesEqual cp2_read_vid cp2_from_his3
             assertResourcesEqual cp1_read_vid cp1_from_his3
-            Expect.equal history3.Entry.[0].Resource null "DELETE history null"
+            // resource is null or only contains meta.lastUpdated
+            match history3.Entry.[0].Resource with
+            | null -> ()
+            | :? CarePlan as resource ->
+                Expect.equal resource.Category.Count 0 "DELETEd history resource categories empty"
+            | _ -> failwith "??"
             Expect.equal history3.Entry.[0].Request.Method (N Bundle.HTTPVerb.DELETE) "DELETE history method"
-            Expect.equal history3.Entry.[0].Request.Url (sprintf "CarePlan/%s" cp1_from_his3.Id) "DELETE history method"
+            do
+                let url = history3.Entry.[0].Request.Url
+                let ending = sprintf "CarePlan/%s" cp1_from_his3.Id
+                // TODO: need to have version-specific url ???
+                Expect.stringContains url ending "DELETE history url"
 
 
 

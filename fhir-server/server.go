@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"time"
+	"net"
 	"os"
 	"os/exec"
+	"time"
 
-	"github.com/eug48/fhir/fhir-server/middleware"
 	"github.com/eug48/fhir/auth"
+	"github.com/eug48/fhir/fhir-server/middleware"
 	"github.com/eug48/fhir/server"
 )
 
@@ -17,7 +18,7 @@ var gitCommit string
 func main() {
 	port := flag.Int("port", 3001, "Port to listen on")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- use with caution in production")
-	mongodbHostPort := flag.String("mongodbHostPort", "localhost:27017", "MongoDB host:port")
+	mongodbURI := flag.String("mongodbURI", "mongodb://localhost:27017/?replicaSet=rs0", "MongoDB connection URI - a replica set is required for transactions support")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
@@ -25,21 +26,46 @@ func main() {
 	flag.Parse()
 
 	if *startMongod {
-		mongod := exec.Command("mongod")
+		// this is for the fhir-server-with-mongo docker image
+		mongod := exec.Command("mongod", "--replSet", "rs0")
 		err := mongod.Start()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "[server.go] ERROR: failed to start mongod: %#v", err)
+			fmt.Fprintf(os.Stderr, "[server.go] ERROR: failed to start mongod: %#v\n", err)
 			os.Exit(1)
 		}
 		go func() {
 			err := mongod.Wait()
-			fmt.Fprintf(os.Stdout, "[server.go] mongod has exited with %#v, also exiting", err)
+			fmt.Fprintf(os.Stdout, "[server.go] mongod has exited with %#v, also exiting\n", err)
 			if err == nil {
 				os.Exit(0)
 			} else {
 				os.Exit(1)
 			}
 		}()
+
+		// wait for MongoDB
+		fmt.Println("Waiting for MongoDB")
+		for {
+			conn, err := net.Dial("tcp", "127.0.0.1:27017")
+			if err == nil {
+				conn.Close()
+				break
+			} else {
+				time.Sleep(1 * time.Second)
+				fmt.Print(".")
+			}
+		}
+		fmt.Println()
+
+		// initiate the replica set
+		time.Sleep(2 * time.Second)
+		mongoShell := exec.Command("mongo", "--eval", "rs.initiate()")
+		err = mongoShell.Start()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[server.go] ERROR: failed to start mongo shell: %#v", err)
+			os.Exit(1)
+		}
+		time.Sleep(2 * time.Second)
 	}
 
 	if *enableXML == false {
@@ -49,12 +75,12 @@ func main() {
 	if gitCommit != "" {
 		fmt.Printf("GoFHIR version %s\n", gitCommit)
 	}
-	fmt.Printf("MongoDB: host is %s\n", *mongodbHostPort)
+	fmt.Printf("MongoDB URI is %s\n", *mongodbURI)
 
 	var MyConfig = server.Config{
 		ServerURL:             fmt.Sprintf("http://localhost:%d", *port),
 		IndexConfigPath:       "config/indexes.conf",
-		DatabaseHost:          *mongodbHostPort,
+		DatabaseURI:           *mongodbURI,
 		DatabaseName:          *databaseName,
 		DatabaseSocketTimeout: 2 * time.Minute,
 		DatabaseOpTimeout:     90 * time.Second,
