@@ -2618,66 +2618,6 @@ func (m *MongoSearchSuite) TestObservationCodeQueryOptionsForInclude(c *C) {
 	c.Assert(opt.Include[1].Parameter.Name, Equals, "context")
 }
 
-func (m *MongoSearchSuite) TestObservationCodeQueryForInclude(c *C) {
-	q := Query{"Observation", "code=http://loinc.org|17856-6&_include=Observation:patient&_include=Observation:encounter"}
-
-	results, _, err := m.MongoSearcher.Search(q)
-	util.CheckErr(err)
-	c.Assert(len(results), Equals, 1)
-
-	var obs models.ObservationPlus
-	util.CheckErr(results[0].Unmarshal(&obs))
-	c.Assert(obs.Code.Coding, HasLen, 1)
-	c.Assert(obs.Code.Text, Equals, "Laboratory Test, Result: HbA1c Laboratory Test")
-	c.Assert(obs.Subject.ReferencedID, Equals, "4954037118555241963")
-	c.Assert(obs.Context.ReferencedID, Equals, "6648204100111387580")
-
-	incl := results[0].SearchIncludes()
-	c.Assert(incl, HasLen, 2)
-
-	var patient models.Patient
-	util.CheckErr(incl[0].Unmarshal(&patient))
-	c.Assert(patient.Id, Equals, "4954037118555241963")
-	c.Assert(patient.Name[0].Given[0], Equals, "John")
-	c.Assert(patient.Name[0].Family, Equals, "Peters")
-
-	var encounter models.Encounter
-	util.CheckErr(incl[1].Unmarshal(&encounter))
-	c.Assert(encounter.Id, Equals, "6648204100111387580")
-	c.Assert(encounter.Type, HasLen, 1)
-	c.Assert(encounter.Type[0].Coding, HasLen, 1)
-	c.Assert(encounter.Type[0].Text, Equals, "Encounter, Performed: Office Visit (Code List: 2.16.840.1.113883.3.464.1003.101.12.1001)")
-}
-
-func (m *MongoSearchSuite) TestObservationQueryForIncludeWithArrayFieldAndTargets(c *C) {
-	// https://jira.mongodb.org/browse/SERVER-21469
-	// http://stackoverflow.com/questions/34967482/lookup-on-objectids-in-an-array
-	c.Skip("Joining on fields that are arrays is currently not supported")
-	q := Query{"Observation", "_id=5637152931209212154,5433989216383325950&_include=Observation:performer:Practitioner"}
-
-	results, _, err := m.MongoSearcher.Search(q)
-	util.CheckErr(err)
-	c.Assert(len(results), Equals, 2)
-
-
-	var obs models.ObservationPlus
-	util.CheckErr(results[0].Unmarshal(&obs))
-	incl := obs.GetIncludedResources()
-	c.Assert(incl, HasLen, 1)
-	practitioners, err := obs.GetIncludedPractitionerResourcesReferencedByPerformer()
-	util.CheckErr(err)
-	c.Assert(practitioners, HasLen, 1)
-	c.Assert(practitioners[0].Id, Equals, "7045606679745586371")
-
-	util.CheckErr(results[1].Unmarshal(&obs))
-	incl = obs.GetIncludedResources()
-	c.Assert(incl, HasLen, 1)
-	organizations, err := obs.GetIncludedOrganizationResourcesReferencedByPerformer()
-	util.CheckErr(err)
-	c.Assert(organizations, HasLen, 1)
-	c.Assert(organizations[0].Id, Equals, "7045605384245533352")
-}
-
 func (m *MongoSearchSuite) TestConditionQueryForIncludeWithTargets(c *C) {
 	q := Query{"Condition", "_id=8664777288161060797,4072118967138896162&_include=Condition:asserter"}
 
