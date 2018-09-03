@@ -23,14 +23,17 @@ Currently this server should be considered experimental, with preliminary suppor
 	-	Reverse chained searches using `_has`
 	-	`_include` and `_revinclude` searches (*without* `_recurse`)
 
-Currently this server does *not* support the following major features:
+Currently this server does *not* support the following features:
 
 -	Validation
+-	Terminology
 -	Resource summaries
--	Advanced search features
+-	Whole-system and whole-resource history
+-	Advanced search
 	-	Custom search parameters
 	-	Full-text search
 	-	Filter expressions
+	-	Whole-system search
 -	GraphQL
 
 The following relatively basic items are next in line for development:
@@ -43,6 +46,15 @@ The following relatively basic items are next in line for development:
 
 
 Users are strongly encouraged to test thoroughly and contributions (including more tests) would be most welcome. Please note that MongoDB 4.0 is quite new and the [MongoDB Go Driver](https://github.com/mongodb/mongo-go-driver) is still in its alpha stage.
+
+
+Future work
+-------------------------------
+
+In addition to the unimplemented parts of the FHIR spec above major topics to consider are:
+
+1. Improvements to indexing. Currently MongoDB searches & indexes "look inside" the resources for each path which is inefficient for parameters like `Observation.combo-code-value-quantity` since several paths/indexes need to be checked. Solutions to investigate would be to create compound indexes or extract search parameters into a sub-document and index that.
+2. PostgreSQL support - [see here for some ideas](./docs/PostgreSQL_ideas.md).
 
 
 Getting started using Docker
