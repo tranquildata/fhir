@@ -299,7 +299,10 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 	// Perform update
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}
 	resourceId, createdNew, err := session.ConditionalPut(query, conditionalVersionId, resource)
-	if err == ErrMultipleMatches {
+	
+	_, isErrMultipleMatches1 := err.(ErrMultipleMatches)
+	_, isErrMultipleMatches2 := err.(*ErrMultipleMatches)
+	if isErrMultipleMatches1 || isErrMultipleMatches2 {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	} else if err != nil {

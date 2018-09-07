@@ -1,14 +1,11 @@
 package server
 
 import (
-	"fmt"
+	// "fmt"
 )
 
 func debug(format string, a ...interface{}) {
 	// if !strings.Contains(format, "setBson") {
-		return
 	// }
-	fmt.Print("[server] ")
-	fmt.Printf(format, a...)
-	fmt.Println()
+	// fmt.Printf("[server] " + format + "\n", a...)
 }

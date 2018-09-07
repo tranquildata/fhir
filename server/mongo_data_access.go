@@ -118,10 +118,7 @@ func NewMongoDataAccessLayer(client *mongo.Client, dbname string, interceptors m
 }
 
 func (ms *mongoSession) debug(format string, a ...interface{}) {
-	return
-	fmt.Print("[mongo] ")
-	fmt.Printf(format, a...)
-	fmt.Println()
+	// fmt.Printf("[mongo] " + format + "\n", a...)
 }
 
 // InterceptorList is a list of interceptors registered for a given database operation
@@ -606,7 +603,7 @@ func (ms *mongoSession) ConditionalPut(query search.Query, conditionalVersionId 
 		case 1:
 			id = IDs[0]
 		default:
-			return "", false, ErrMultipleMatches
+			return "", false, &ErrMultipleMatches{msg: fmt.Sprintf("Multiple matches for %s?%s", query.Resource, query.Query)}
 		}
 	} else {
 		return "", false, err

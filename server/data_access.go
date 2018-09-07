@@ -59,7 +59,12 @@ var ErrNotFound = errors.New("Resource Not Found")
 var ErrDeleted = errors.New("Resource deleted")
 
 // ErrMultipleMatches indicates that the conditional update query returned multiple matches
-var ErrMultipleMatches = errors.New("Multiple Matches")
+type ErrMultipleMatches struct {
+	msg string
+}
+func (e ErrMultipleMatches) Error() string {
+	return e.msg
+}
 
 // ErrOpInterrupted indicates that the query was interrupted by a killOp() operation
 var ErrOpInterrupted = errors.New("Operation Interrupted")
@@ -67,7 +72,6 @@ var ErrOpInterrupted = errors.New("Operation Interrupted")
 type ErrConflict struct {
 	msg string
 }
-
 func (e ErrConflict) Error() string {
 	return e.msg
 }

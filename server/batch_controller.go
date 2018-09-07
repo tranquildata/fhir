@@ -624,7 +624,7 @@ func (b *BatchController) resolveConditionalPut(request *http.Request, session D
 		case 1:
 			id = IDs[0]
 		default:
-			return ErrMultipleMatches
+			return &ErrMultipleMatches{msg: fmt.Sprintf("Multiple matches for %s (%v)", entry.Request.Url, IDs)}
 		}
 	} else {
 		return err
