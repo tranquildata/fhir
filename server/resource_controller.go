@@ -70,7 +70,7 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 		}
 	}
 
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	searchQuery := search.Query{Resource: rc.Name, Query: rawQuery }
@@ -90,7 +90,7 @@ func (rc *ResourceController) IndexHandler(c *gin.Context) {
 // LoadResource uses the resource id in the request to get a resource from the DataAccessLayer and store it in the
 // context.
 func (rc *ResourceController) LoadResource(c *gin.Context) (resourceId string, resource *models2.Resource, err error) {
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	resourceId = c.Param("id")
@@ -135,7 +135,7 @@ func (rc *ResourceController) ShowHandler(c *gin.Context) {
 
 func (rc *ResourceController) HistoryHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	c.Set("Action", "history")
@@ -157,7 +157,7 @@ func (rc *ResourceController) HistoryHandler(c *gin.Context) {
 // EverythingHandler handles requests for everything related to a Patient or Encounter resource.
 func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	// For now we interpret $everything as the union of _include and _revinclude
@@ -180,7 +180,7 @@ func (rc *ResourceController) EverythingHandler(c *gin.Context) {
 // CreateHandler handles requests to create a new resource instance, assigning it a new ID.
 func (rc *ResourceController) CreateHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
@@ -223,7 +223,7 @@ func (rc *ResourceController) CreateHandler(c *gin.Context) {
 // exist, a new resource is created with that ID.
 func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
@@ -274,7 +274,7 @@ func (rc *ResourceController) UpdateHandler(c *gin.Context) {
 // is considered an error.
 func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	resource, err := FHIRBind(c, rc.Config.ValidatorURL)
@@ -325,7 +325,7 @@ func (rc *ResourceController) ConditionalUpdateHandler(c *gin.Context) {
 // DeleteHandler handles requests to delete a resource instance identified by its ID.
 func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	id := c.Param("id")
@@ -349,7 +349,7 @@ func (rc *ResourceController) DeleteHandler(c *gin.Context) {
 // matching the search criteria will be deleted.
 func (rc *ResourceController) ConditionalDeleteHandler(c *gin.Context) {
 	defer handlePanics(c)
-	session := rc.DAL.StartSession()
+	session := rc.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
 	query := search.Query{Resource: rc.Name, Query: c.Request.URL.RawQuery}

@@ -9,7 +9,7 @@ import (
 )
 
 type DataAccessLayer interface {
-	StartSession() DataAccessSession
+	StartSession(dbname string) DataAccessSession
 }
 
 // DataAccessLayer is an interface for the various interactions that can occur on a FHIR data store.

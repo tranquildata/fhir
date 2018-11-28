@@ -46,7 +46,8 @@ func (s *MongoIndexesTestSuite) SetupSuite() {
 
 	// Server configuration
 	s.Config = DefaultConfig
-	s.Config.DatabaseName = "fhir-test"
+	s.Config.DefaultDatabaseName = "fhir-test"
+	s.Config.DatabaseSuffix = "-test"
 	s.Config.IndexConfigPath = "../fixtures/test_indexes.conf"
 
 	// Create a temporary directory for the test database
@@ -75,7 +76,7 @@ func (s *MongoIndexesTestSuite) SetupSuite() {
 
 	// Build routes for testing
 	s.Engine = gin.New()
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.client, s.Config.DatabaseName, s.Interceptors, s.Config), s.Config)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.client, s.Config.DefaultDatabaseName, true, s.Config.DatabaseSuffix, s.Interceptors, s.Config), s.Config)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)
@@ -256,11 +257,11 @@ func (s *MongoIndexesTestSuite) TestParseIndexBadCompoundKeySubKeyFormat() {
 
 func (s *MongoIndexesTestSuite) TestConfigureIndexes() {
 	// Configure test indexes
-	NewIndexer(s.Config).ConfigureIndexes(s.client.Database(s.Config.DatabaseName))
+	NewIndexer("fhir", s.Config).ConfigureIndexes(s.client.Database("fhir"))
 
 	// get the "testcollection" collection. This should have been auto-magically
 	// created by ConfigureIndexes
-	c := s.initialSession.DB(s.Config.DatabaseName).C("testcollection")
+	c := s.initialSession.DB("fhir").C("testcollection")
 
 	// get the indexes for this collection
 	indexes, err := c.Indexes()
@@ -277,7 +278,7 @@ func (s *MongoIndexesTestSuite) TestConfigureIndexes() {
 func (s *MongoIndexesTestSuite) TestConfigureIndexesNoConfigFile() {
 
 	s.Config.IndexConfigPath = "./does_not_exist.conf"
-	s.NotPanics(func() { NewIndexer(s.Config).ConfigureIndexes(s.client.Database(s.Config.DatabaseName)) }, "Should not panic if no config file is found")
+	s.NotPanics(func() { NewIndexer("fhir", s.Config).ConfigureIndexes(s.client.Database("fhir")) }, "Should not panic if no config file is found")
 }
 
 func (s *MongoIndexesTestSuite) compareIndexes(expected, actual []mgo.Index) {

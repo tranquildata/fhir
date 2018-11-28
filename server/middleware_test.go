@@ -75,7 +75,7 @@ func (m *MiddlewareTestSuite) TearDownSuite() {
 func (m *MiddlewareTestSuite) TestRejectXML() {
 	e := gin.New()
 	e.Use(AbortNonJSONRequestsMiddleware)
-	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, nil, DefaultConfig), DefaultConfig)
+	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, true, "", nil, DefaultConfig), DefaultConfig)
 	server := httptest.NewServer(e)
 
 	req, err := http.NewRequest("GET", server.URL+"/Patient", nil)
@@ -90,7 +90,7 @@ func (m *MiddlewareTestSuite) TestReadOnlyMode() {
 	e.Use(ReadOnlyMiddleware)
 	config := DefaultConfig
 	config.ReadOnly = true
-	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, nil, config), config)
+	RegisterRoutes(e, nil, NewMongoDataAccessLayer(m.client, m.dbname, true, "", nil, config), config)
 	server := httptest.NewServer(e)
 
 	req, err := http.NewRequest("POST", server.URL+"/Patient", nil)

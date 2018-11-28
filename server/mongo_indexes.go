@@ -22,10 +22,10 @@ type Indexer struct {
 }
 
 // NewIndexer returns a pointer to a newly configured Indexer.
-func NewIndexer(config Config) *Indexer {
+func NewIndexer(dbName string, config Config) *Indexer {
 	return &Indexer{
 		idxPath: config.IndexConfigPath,
-		dbName:  config.DatabaseName,
+		dbName:  dbName,
 		debug:   config.Debug,
 	}
 }

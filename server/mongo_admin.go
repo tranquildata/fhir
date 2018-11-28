@@ -52,7 +52,7 @@ type Reply struct {
 // 1. https://blog.mlab.com/2014/02/mongodb-currentop-killop
 // 2. https://dzone.com/articles/finding-and-terminating-long
 func killLongRunningOps(ticker *time.Ticker, connectionString string, dbname string, config Config) {
-	logKLRO(nil, fmt.Sprintf("Monitoring database %s for long-running operations", config.DatabaseName))
+	logKLRO(nil, fmt.Sprintf("Monitoring databases %s for long-running operations", config.DatabaseSuffix))
 
 	session, err := mgo.Dial(connectionString)
 	if err != nil {
@@ -97,7 +97,7 @@ func killLongRunningOps(ticker *time.Ticker, connectionString string, dbname str
 			}
 
 			// Only interfere with operations on our database (e.g. "fhir").
-			if !strings.Contains(op.Namespace, config.DatabaseName) {
+			if !strings.HasSuffix(op.Namespace, config.DatabaseSuffix) {
 				continue
 			}
 

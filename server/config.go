@@ -29,9 +29,16 @@ type Config struct {
 	// e.g. mongodb://db1:27017,db2:27017/?replicaSet=rs1
 	DatabaseURI string
 
-	// DatabaseName is the name of the mongo database used for the fhir database.
-	// Typically this will be the default DatabaseName "fhir".
-	DatabaseName string
+	// DatabaseName is the name of the mongo database used for the fhir database by default.
+	// Typically this will be the "fhir".
+	DefaultDatabaseName string
+
+	// EnableMultiDB allows requests to specify a specific Mongo database instead of the default
+	// e.g. to use test4_fhir http://fhir-server/db/test4_fhir/Patient?name=alex
+	EnableMultiDB bool
+
+	// All custom database names should end with this suffix (default is "_fhir")
+	DatabaseSuffix string
 
 	// DatabaseSocketTimeout is the amount of time the mgo driver will wait for a response
 	// from mongo before timing out.
@@ -80,7 +87,7 @@ var DefaultConfig = Config{
 	ServerURL:             "",
 	IndexConfigPath:       "config/indexes.conf",
 	DatabaseURI:           "mongodb://localhost:27017/?replicaSet=rs0",
-	DatabaseName:          "fhir",
+	DatabaseSuffix:        "_fhir",
 	DatabaseSocketTimeout: 2 * time.Minute,
 	DatabaseOpTimeout:     90 * time.Second,
 	DatabaseKillOpPeriod:  10 * time.Second,

@@ -3,8 +3,9 @@ Ideas for FHIR on PostgreSQL
 
 
 1. A table for every type of resource
-   1. An indexed column for most search parameters - can use arrays, range types, full-text indexes
-   2. NULLs are apparently stored very efficiently
+   1. An indexed column for most search parameters
+   2. Can use arrays, structs, range types, full-text indexes
+   3. NULLs are apparently stored very efficiently
 1. Store resources as JSON BLOBs
    1. Every blob is immutable & identified by (_id, _versionId) → can be cached in some highly scalable non-ACID system with PostgreSQL handling cache misses
    2. JSONB is problematic as “jsonb will reject numbers that are outside the range of the PostgreSQL numeric data type” (link) but FHIR requires arbitrary-precision decimals..

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/eug48/fhir/auth"
-	"github.com/eug48/fhir/fhir-server/middleware"
+	// "github.com/eug48/fhir/fhir-server/middleware"
 	"github.com/eug48/fhir/server"
 )
 
@@ -18,11 +18,13 @@ var gitCommit string
 func main() {
 	port := flag.Int("port", 3001, "Port to listen on")
 	reqLog := flag.Bool("reqlog", false, "Enables request logging -- use with caution in production")
-	mongodbURI := flag.String("mongodbURI", "mongodb://localhost:27017/?replicaSet=rs0", "MongoDB connection URI - a replica set is required for transactions support")
-	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
-	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use")
+	mongodbURI := flag.String("mongodbURI", "mongodb://mongo:27017/?replicaSet=rs0", "MongoDB connection URI - a replica set is required for transactions support")
+	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use by default")
+	enableMultiDB := flag.Bool("enableMultiDB", false, "Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex")
+	databaseSuffix := flag.String("databaseSuffix", "", "Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
 	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
+	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	flag.Parse()
 
 	if *startMongod {
@@ -81,7 +83,9 @@ func main() {
 		ServerURL:             fmt.Sprintf("http://localhost:%d", *port),
 		IndexConfigPath:       "config/indexes.conf",
 		DatabaseURI:           *mongodbURI,
-		DatabaseName:          *databaseName,
+		DefaultDatabaseName:   *databaseName,
+		EnableMultiDB:         *enableMultiDB,
+		DatabaseSuffix:        *databaseSuffix,
 		DatabaseSocketTimeout: 2 * time.Minute,
 		DatabaseOpTimeout:     90 * time.Second,
 		DatabaseKillOpPeriod:  10 * time.Second,
@@ -100,7 +104,7 @@ func main() {
 	}
 
 	// Mutex middleware to work around the lack of proper transactions in MongoDB (at least until MongoDB 4.0)
-	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
+	// s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
 
 	s.Run()
 }

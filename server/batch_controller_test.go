@@ -54,7 +54,7 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	// Build routes for testing
 	s.Engine = gin.New()
 	s.Engine.Use(gin.Logger())
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MongoClient, s.DbName, s.Interceptors, DefaultConfig), DefaultConfig)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.MongoClient, s.DbName, true, "", s.Interceptors, DefaultConfig), DefaultConfig)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)

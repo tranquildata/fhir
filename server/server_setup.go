@@ -108,14 +108,14 @@ func (f *FHIRServer) Run() {
 		panic(errors.Wrap(err, "loading featureCompatibilityVersion"))
 	}
 	fmt.Printf("MongoDB featureCompatibilityVersion %s\n", fcv.Value().StringValue())
-	log.Printf("MongoDB: Connected (database %s)\n", f.Config.DatabaseName)
+	log.Printf("MongoDB: Connected (default database %s)\n", f.Config.DefaultDatabaseName)
 
 	// Pre-create collections for transactions
-	db := client.Database(f.Config.DatabaseName)
+	db := client.Database(f.Config.DefaultDatabaseName)
 	CreateCollections(db)
 
 	// Ensure all indexes
-	NewIndexer(f.Config).ConfigureIndexes(db)
+	NewIndexer(f.Config.DefaultDatabaseName, f.Config).ConfigureIndexes(db)
 
 	// Kick off the database op monitoring routine. This periodically checks db.currentOp() and
 	// kills client-initiated operations exceeding the configurable timeout. Do this AFTER the index
@@ -124,7 +124,7 @@ func (f *FHIRServer) Run() {
 	go killLongRunningOps(ticker, client.ConnectionString(), "admin", f.Config)
 
 	// Register all API routes
-	RegisterRoutes(f.Engine, f.MiddlewareConfig, NewMongoDataAccessLayer(client, f.Config.DatabaseName, f.Interceptors, f.Config), f.Config)
+	RegisterRoutes(f.Engine, f.MiddlewareConfig, NewMongoDataAccessLayer(client, f.Config.DefaultDatabaseName, f.Config.EnableMultiDB, f.Config.DatabaseSuffix, f.Interceptors, f.Config), f.Config)
 
 	for _, ar := range f.AfterRoutes {
 		ar(f.Engine)
@@ -132,11 +132,22 @@ func (f *FHIRServer) Run() {
 
 	// If not in -readonly mode, clear the count cache
 	if !f.Config.ReadOnly {
-		count, err := db.Collection("countcache").Count(context.Background(), nil)
-		if count > 0 || err != nil {
-			err = db.Collection("countcache").Drop(context.Background())
-			if err != nil {
-				panic(fmt.Sprintf("Server: Failed to clear count cache (%+v)", err))
+		dbNames, err := client.ListDatabaseNames(context.TODO(), nil)
+		if err != nil {
+			panic(fmt.Sprint("Server: Failed to call ListDatabaseNames", err))
+		}
+		dbNames = append(dbNames, f.Config.DefaultDatabaseName)
+
+		for _, databaseName := range dbNames {
+			if strings.HasSuffix(databaseName, f.Config.DatabaseSuffix) {
+				db := client.Database(databaseName)
+				count, err := db.Collection("countcache").Count(context.Background(), nil)
+				if count > 0 || err != nil {
+					err = db.Collection("countcache").Drop(context.Background())
+					if err != nil {
+						panic(fmt.Sprintf("Server: Failed to clear count cache (%+v)", err))
+					}
+				}
 			}
 		}
 	} else {
@@ -150,11 +161,26 @@ func (f *FHIRServer) Run() {
 	f.Engine.Run(":" + url.Port())
 }
 
+func (f *FHIRServer) InitDB(databaseName string) {
+	// Connect
+	client, err := mongo.Connect(context.Background(), f.Config.DatabaseURI)
+	if err != nil {
+		panic(errors.Wrap(err, "connecting to MongoDB"))
+	}
+
+	// Pre-create collections for transactions
+	db := client.Database(databaseName)
+	CreateCollections(db)
+
+	// Ensure all indexes
+	NewIndexer(databaseName, f.Config).ConfigureIndexes(db)
+}
+
 func CreateCollections(db *mongo.Database) {
 	// MongoDB transactions require that collections be pre-created
 	var err error
 	for _, name := range models2.AllFhirResourceCollectionNames() {
-		fmt.Printf("pre-creating collection %s, %s\n", name, name+"_prev")
+		// fmt.Printf("pre-creating collection %s, %s\n", name, name+"_prev")
 		_, err = db.RunCommand(context.Background(), bson.NewDocument(bson.EC.String("create", name+"_prev")))
 		if err != nil && !strings.Contains(err.Error(), "already exists") {
 			panic(err)

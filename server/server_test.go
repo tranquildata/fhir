@@ -46,7 +46,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	// Server configuration
 	config := DefaultConfig
 	s.dbname = "fhir-test"
-	config.DatabaseName = s.dbname
+	config.DatabaseSuffix = "-test"
 	config.IndexConfigPath = "../fixtures/test_indexes.conf"
 	config.AllowResourcesWithoutMeta = true
 
@@ -64,7 +64,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	s.Engine = gin.New()
 	s.Engine.Use(gin.Logger())
 	s.Engine.Use(gin.ErrorLogger())
-	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.client, s.dbname, s.Interceptors, config), config)
+	RegisterRoutes(s.Engine, make(map[string][]gin.HandlerFunc), NewMongoDataAccessLayer(s.client, s.dbname, true, "_fhir", s.Interceptors, config), config)
 
 	// Create httptest server
 	s.Server = httptest.NewServer(s.Engine)
@@ -218,7 +218,7 @@ func (s *ServerSuite) TestGetPatientsPaging(c *C) {
 func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 	config := DefaultConfig
 	config.CountTotalResults = false
-	dal, ok := NewMongoDataAccessLayer(s.client, s.dbname, nil, config).(*mongoDataAccessLayer)
+	dal, ok := NewMongoDataAccessLayer(s.client, s.dbname, true, "_fhir", nil, config).(*mongoDataAccessLayer)
 	c.Assert(ok, Equals, true)
 
 	// numResults is equal to the default query count of 100, so we should get a next link here
@@ -227,7 +227,7 @@ func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 		Host:   "fhir.example.com",
 		Path:   "fhir/Patient",
 	}
-	session := dal.StartSession().(*mongoSession)
+	session := dal.StartSession(s.dbname).(*mongoSession)
 	defer session.Finish()
 	links := session.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 100)
 	c.Assert(len(links), Equals, 3)

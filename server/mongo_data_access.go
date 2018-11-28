@@ -23,7 +23,9 @@ import (
 
 type mongoDataAccessLayer struct {
 	client            *mongo.Client
-	dbname            string
+	defaultDbName     string
+	enableMultiDB     bool
+	dbSuffix          string
 	Interceptors      map[string]InterceptorList
 	countTotalResults bool
 	enableCISearches  bool
@@ -38,13 +40,23 @@ type mongoSession struct {
 	inTransaction bool
 }
 
-func (dal *mongoDataAccessLayer) StartSession() DataAccessSession {
+func (dal *mongoDataAccessLayer) StartSession(customDbName string) DataAccessSession {
 	session, err := dal.client.StartSession()
 	if err != nil {
 		panic(errors.Wrap(err, "StartSession failed"))
 	}
 
-	db := dal.client.Database(dal.dbname)
+	var dbName string
+	if dal.enableMultiDB && customDbName != "" {
+		if dal.dbSuffix != "" && !strings.HasSuffix(customDbName, dal.dbSuffix) {
+			panic(errors.Wrapf(err, "database name (%s) doesn't end with suffix (%s)", customDbName, dal.dbSuffix))
+		}
+		dbName = customDbName
+	} else {
+		dbName = dal.defaultDbName
+	}
+
+	db := dal.client.Database(dbName)
 	if db == nil {
 		panic(errors.Wrap(err, "client.Database failed"))
 	}
@@ -105,10 +117,12 @@ func (ms *mongoSession) Finish() {
 }
 
 // NewMongoDataAccessLayer returns an implementation of DataAccessLayer that is backed by a Mongo database
-func NewMongoDataAccessLayer(client *mongo.Client, dbname string, interceptors map[string]InterceptorList, config Config) DataAccessLayer {
+func NewMongoDataAccessLayer(client *mongo.Client, defaultDbName string, enableMultiDB bool, dbSuffix string, interceptors map[string]InterceptorList, config Config) DataAccessLayer {
 	return &mongoDataAccessLayer{
 		client:            client,
-		dbname:            dbname,
+		defaultDbName:     defaultDbName,
+		enableMultiDB:     enableMultiDB,
+		dbSuffix:          dbSuffix,
 		Interceptors:      interceptors,
 		countTotalResults: config.CountTotalResults,
 		enableCISearches:  config.EnableCISearches,
