@@ -162,7 +162,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		} else if entry.Request.Method == "PUT" && isConditional(entry) {
 			// We need to process conditionals referencing temp IDs in a second pass, so skip them here
 			if hasTempID(entry.Request.Url) {
-				fmt.Printf("hasTempID! %s\n", entry.Request.Url)
+				// fmt.Printf("hasTempID! %s\n", entry.Request.Url)
 				continue
 			}
 

@@ -94,19 +94,30 @@ func RegisterRoutes(e *gin.Engine, config map[string][]gin.HandlerFunc, dal Data
 
 	}
 
-	// Custom mongodb database support
+	// Custom MongoDB database support (e.g. http://fhir-server/db/customer123_fhir/Patient?name=alex)
 	if serverConfig.EnableMultiDB {
 		route := "/db/:db/*rest"
 		fmt.Println("MultiDB route enabled: " + route)
+		e.POST("/db/:db", func(c *gin.Context) {
+			db := c.Param("db")
+			c.Request.Header.Set("Db", db)
+			// save db parameter into a header
+			// cannot use routes like "/:db/Patient" etc since gin doesn't support even slightly overlapping routes..
+			// fmt.Printf("TRACE: in MultiDB route (db=%s) (rest=%s) (method=%s) (uri=%s)\n", db, rest, c.Request.Method, c.Request.RequestURI)
+
+			c.Request.URL.Path = "/"
+			e.HandleContext(c) // NB: must have fix from https://github.com/gin-gonic/gin/commit/e9f187f60a27477e54c177f314db00d6a1abf062
+		})
 		e.Any(route, func(c *gin.Context) {
 			db := c.Param("db")
 			rest := c.Param("rest")
 			// save db parameter into a header
 			// cannot use routes like "/:db/Patient" etc since gin doesn't support even slightly overlapping routes..
-			fmt.Printf("TRACE: in MultiDB route (db=%s) (rest=%s) (method=%s) (uri=%s)\n", db, rest, c.Request.Method, c.Request.RequestURI)
+			// fmt.Printf("TRACE: in MultiDB route (db=%s) (rest=%s) (method=%s) (uri=%s)\n", db, rest, c.Request.Method, c.Request.RequestURI)
+
 			c.Request.Header.Set("Db", db)
 			c.Request.URL.Path = rest
-			e.HandleContext(c)
+			e.HandleContext(c) // NB: must have fix from https://github.com/gin-gonic/gin/commit/e9f187f60a27477e54c177f314db00d6a1abf062
 		})
 	}
 
