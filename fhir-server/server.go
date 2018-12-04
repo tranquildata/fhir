@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/eug48/fhir/auth"
-	// "github.com/eug48/fhir/fhir-server/middleware"
+	"github.com/eug48/fhir/fhir-server/middleware"
 	"github.com/eug48/fhir/server"
 )
 
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	// Mutex middleware to work around the lack of proper transactions in MongoDB (at least until MongoDB 4.0)
-	// s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
+	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
 
 	s.Run()
 }
