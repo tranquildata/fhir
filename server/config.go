@@ -102,8 +102,13 @@ var DefaultConfig = Config{
 
 func (config *Config) responseURL(r *http.Request, paths ...string) *url.URL {
 
+	dbPrefix := r.Header.Get("db")
+	if dbPrefix != "" {
+		dbPrefix = "/db/" + dbPrefix
+	}
+
 	if config.ServerURL != "" {
-		theURL := fmt.Sprintf("%s/%s", strings.TrimSuffix(config.ServerURL, "/"), strings.Join(paths, "/"))
+		theURL := fmt.Sprintf("%s%s/%s", strings.TrimSuffix(config.ServerURL, "/"), dbPrefix, strings.Join(paths, "/"))
 		responseURL, err := url.Parse(theURL)
 
 		if err == nil {
@@ -119,7 +124,7 @@ func (config *Config) responseURL(r *http.Request, paths ...string) *url.URL {
 		responseURL.Scheme = "http"
 	}
 	responseURL.Host = r.Host
-	responseURL.Path = fmt.Sprintf("/%s", strings.Join(paths, "/"))
+	responseURL.Path = fmt.Sprintf("%s/%s", dbPrefix, strings.Join(paths, "/"))
 
 	return &responseURL
 }

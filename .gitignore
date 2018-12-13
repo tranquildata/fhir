@@ -3,6 +3,7 @@ vendor
 # Binary artifacts
 /fhir
 /fhir-server/fhir-server
+/fhir-server/fhir-server.exe
 /test/test
 fsharp-fhir-tools/packages
 
