@@ -103,7 +103,8 @@ func main() {
 		s.Engine.Use(server.RequestLoggerHandler)
 	}
 
-	// Mutex middleware to work around the lack of proper transactions in MongoDB (at least until MongoDB 4.0)
+	// Mutex middleware to work around the lack of proper transactions in MongoDB
+	// (unless using a MongoDB >= 4.0 replica set)
 	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
 
 	s.Run()

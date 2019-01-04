@@ -3,15 +3,18 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
+
+type lockId string
 
 type lockRequest struct {
 	mutexName string
-	gateChannel chan int
+	gateChannel chan lockId
 }
 type unlockRequest struct {
 	mutexName string
-	lockId int
+	lockId lockId
 }
 
 func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
@@ -19,7 +22,8 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 	var unlockRequests = make (chan *unlockRequest)
 
 	go func() {
-		mutexes := make(map[string]map[int]chan int)
+		// mutex name ---> map[lockId ---> 'gate channel' on which request awaits]
+		mutexes := make(map[string]map[lockId]chan lockId)
 
 		for {
 			select {
@@ -37,7 +41,7 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 				if len(locks) > 0 {
 					// pick an arbitrary waiter and tell them to proceed
 					for lockId, gateChannel := range locks {
-						fmt.Printf("[client_specified_mutexes] %s: unlocked & releasing lockId %d\n", unlockRequest.mutexName, lockId)
+						fmt.Printf("[client_specified_mutexes] %s: unlocked & releasing lockId %s\n", unlockRequest.mutexName, lockId)
 						gateChannel <- lockId
 						break
 					}
@@ -47,17 +51,17 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 				}
 
 			case lockRequest := <- lockRequests:
+				newLockId := lockId(uuid.Must(uuid.NewRandom()).String())
 				locks, present := mutexes[lockRequest.mutexName]
 				if present {
 					// add to 'queue'
-					newLockId := len(locks) + 1 // TODO: should worry about overflow? will very likely never have very many simultaneous requests on the same mutex..
 					locks[newLockId] = lockRequest.gateChannel
-					fmt.Printf("[client_specified_mutexes] %s: lock request: queued, newLockId: %d\n", lockRequest.mutexName, newLockId)
+					fmt.Printf("[client_specified_mutexes] %s: lock request: queued, newLockId: %s\n", lockRequest.mutexName, newLockId)
 				} else {
 					// save to a new queue and proceed
-					locks := make(map[int]chan int)
-					locks[0] = lockRequest.gateChannel
-					lockRequest.gateChannel <- 0
+					locks := make(map[lockId]chan lockId)
+					locks[newLockId] = lockRequest.gateChannel
+					lockRequest.gateChannel <- newLockId
 					mutexes[lockRequest.mutexName] = locks
 					fmt.Printf("[client_specified_mutexes] %s: lock request: proceeding (lockId 0)\n", lockRequest.mutexName)
 				}
@@ -76,7 +80,7 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 			// assume re-entrant call (via HandleContext() in routing.go)
 
 		} else if mutexName != "" {
-			lockRequest := &lockRequest{mutexName: mutexName, gateChannel: make(chan int) }
+			lockRequest := &lockRequest{mutexName: mutexName, gateChannel: make(chan lockId) }
 			lockRequests <- lockRequest
 			lockId := <- lockRequest.gateChannel
 			defer func() {
