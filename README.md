@@ -57,6 +57,22 @@ In addition to the unimplemented parts of the FHIR spec above major topics to co
 2. PostgreSQL support - [see here for some ideas](./docs/PostgreSQL_ideas.md).
 
 
+Transactions
+-------------------------------
+
+MongoDB is used as the underlying database and has recently acquired multi-document transaction features in version 4.0. Note that transactions are only supported when MongoDB is run as a replica set.
+
+This project also implements a partial workaround. Clients can send a `X-Mutex-Name` header and two requests with the same value of this header will execute serially (provided there is only one active instance of this server). Please note that this won't give you the all-or-nothing behaviour of real transactions.
+
+
+Multi-database mode
+-------------------------------
+
+A single server can store multiple datasets with the `--enableMultiDB` switch. This allows requests to specificy the name of a MongoDB database to use. This is done in the base URL, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex
+
+The database should already exist and indexes will not be created automatically. MongoDB transactions also require that collections are pre-created. An existing database can be copied with MongoDB's `copyDatabase` command.
+
+
 Getting started using Docker
 -------------------------------
 
@@ -91,11 +107,15 @@ Building and running from source
 		$ ./fhir-server --help
 		Usage of ./fhir-server:
 		-databaseName string
-				MongoDB database name to use (default "fhir")
+				MongoDB database name to use by default (default "fhir")
 		-enableXML
 				Enable support for the FHIR XML encoding
-		-mongodbHostPort string
-				MongoDB host:port (default "localhost:27017")
+		-databaseSuffix string
+				Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')
+		-enableMultiDB
+				Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex
+		-mongodbURI string
+				MongoDB connection URI - a replica set is required for transactions support (default "mongodb://mongo:27017/?replicaSet=rs0")
 		-port int
 				Port to listen on (default 3001)
 		-reqlog
