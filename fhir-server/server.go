@@ -22,6 +22,7 @@ func main() {
 	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use by default")
 	enableMultiDB := flag.Bool("enableMultiDB", false, "Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex")
 	databaseSuffix := flag.String("databaseSuffix", "", "Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')")
+	disableSearchTotals := flag.Bool("disableSearchTotals", false, "Don't query for all results of a search to return Bundle.total, only do paging")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
 	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
@@ -91,7 +92,7 @@ func main() {
 		DatabaseKillOpPeriod:  10 * time.Second,
 		Auth:                  auth.None(),
 		EnableCISearches:      true,
-		CountTotalResults:     true,
+		CountTotalResults:     *disableSearchTotals == false,
 		ReadOnly:              false,
 		EnableXML:             *enableXML,
 		EnableHistory:         true,

@@ -124,6 +124,8 @@ Building and running from source
 				Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')
 		-enableMultiDB
 				Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex
+		-disableSearchTotals
+				Don't query for all results of a search to return Bundle.total, only do paging
 		-mongodbURI string
 				MongoDB connection URI - a replica set is required for transactions support (default "mongodb://mongo:27017/?replicaSet=rs0")
 		-port int

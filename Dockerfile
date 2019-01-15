@@ -31,4 +31,4 @@ COPY --from=builder /go/src/github.com/eug48/fhir/fhir-server/config/ /config
 COPY --from=builder /go/src/github.com/eug48/fhir/conformance/ /conformance
 
 ENV MONGODB_URI mongodb://fhir-mongo:27017/?replicaSet=rs0
-CMD ["sh", "-c", "/fhir-server -port 3001 -enableXML -databaseName fhir -mongodbURI $MONGODB_URI"]
+CMD ["sh", "-c", "/fhir-server -port 3001 -disableSearchTotals -enableXML -databaseName fhir -mongodbURI $MONGODB_URI"]
