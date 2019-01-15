@@ -18,6 +18,10 @@ func ConvertGoFhirBSONToJSON(bsonDoc []bson.DocElem) (jsonBytes []byte, included
 	debug("=== ConvertGoFhirBSONToJSON ===")
 	debug("%+v", bsonDoc)
 
+	if err := decryptBSON(&bsonDoc); err != nil {
+		return nil, nil, errors.Wrap(err, "decryptBSON failed")
+	}
+
 	includedDocsJsons, err = processIncludedDocuments(bsonDoc)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "processIncludedDocuments failed")

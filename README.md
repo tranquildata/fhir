@@ -73,6 +73,16 @@ A single server can store multiple datasets with the `--enableMultiDB` switch. T
 The database should already exist and indexes will not be created automatically. MongoDB transactions also require that collections are pre-created. An existing database can be copied with MongoDB's `copyDatabase` command.
 
 
+Encryption
+-------------------------------
+
+To mitigate the effects of the database being compromised clients can request that
+Patient data be encrypted when stored (fields name, birthDate, telecom, address, photo, contact, communication, text) by setting an HTTP header `X-GoFHIR-Encrypt-Patient-Details: 1`. 
+However this currently prevents searches by these fields from working.
+
+Encryption is done using AES-GCM with a random nonce. The 32-byte key is specified in an environment variable `GOFHIR_ENCRYPTION_KEY_BASE64` and a name should be given to the key via `GOFHIR_ENCRYPTION_KEY_ID`.
+
+
 Getting started using Docker
 -------------------------------
 

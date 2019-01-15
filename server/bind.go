@@ -38,6 +38,8 @@ func FHIRBind(c *gin.Context, validatorURL string) (resource *models2.Resource, 
 	}
 	// fmt.Printf("FHIRBind: read %d bytes\n", len(bodyBytes))
 
+	encryptPatientDetails := shouldEncryptPatientDetails(c)
+
 	// validate
 	if validatorURL != "" {
 		if c.Request.Body != nil {
@@ -53,6 +55,9 @@ func FHIRBind(c *gin.Context, validatorURL string) (resource *models2.Resource, 
 	// JSON
 	if strings.Contains(contentType, "json") {
 		resource, err = models2.NewResourceFromJsonBytes(bodyBytes)
+		if encryptPatientDetails && resource != nil {
+			resource.SetWhatToEncrypt(models2.WhatToEncrypt { PatientDetails: true })
+		}
 		return
 	}
 
@@ -67,9 +72,24 @@ func FHIRBind(c *gin.Context, validatorURL string) (resource *models2.Resource, 
 				return nil, err
 			}
 			resource, err = models2.NewResourceFromJsonBytes([]byte(jsonStr))
+			if encryptPatientDetails && resource != nil {
+				resource.SetWhatToEncrypt(models2.WhatToEncrypt { PatientDetails: true })
+			}
 			return
 		}
 	}
 
 	return nil, fmt.Errorf("unknown content type")
+}
+
+
+func shouldEncryptPatientDetails(c *gin.Context) bool {
+	str := c.GetHeader("X-GoFHIR-Encrypt-Patient-Details")
+
+	switch strings.ToLower(str) {
+	case "1", "yes", "true":
+		return true
+	default:
+		return false
+	}
 }

@@ -29,7 +29,8 @@ const Gofhir__to = "__to"
 //   - converts extensions from { url, value } to { url: { value } } to enable better MongoDB queries
 //   - converts decimal numbers to { __from, __to, __num, __strNum } for FHIR conformance
 //   - converts dates to { __from, __to, __strDate } for FHIR conformance
-func ConvertJsonToGoFhirBSON(jsonBytes []byte, transformReferencesMap map[string]string) (out bson.D, err error) {
+//   - optionally encrypts certain fields
+func ConvertJsonToGoFhirBSON(jsonBytes []byte, whatToEncrypt WhatToEncrypt, transformReferencesMap map[string]string) (out bson.D, err error) {
 
 	debug("=== ConvertJsonToGoFhirBSON ===")
 
@@ -46,6 +47,13 @@ func ConvertJsonToGoFhirBSON(jsonBytes []byte, transformReferencesMap map[string
 			err4 := addToBSONdoc(&bsonRoot, pos, key, value, dataType, offset, refsMap)
 			return err4
 		})
+	}
+
+	if err == nil {
+		err = encryptBSON(&bsonRoot, resourceType, whatToEncrypt)
+		if err != nil {
+			err = errors.Wrapf(err, "encryptBSON failed")
+		}
 	}
 
 	if err == nil {

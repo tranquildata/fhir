@@ -27,6 +27,7 @@ type Resource struct {
 	lastUpdatedChanged     bool
 	transformReferencesMap map[string]string
 	cachedBson             *[]bson.DocElem
+	whatToEncrypt          WhatToEncrypt
 }
 
 func (r *Resource) JsonBytes() []byte {
@@ -95,9 +96,18 @@ func (r *Resource) SetTransformReferencesMap(transformReferencesMap map[string]s
 	r.cachedBson = nil
 }
 
+func (r *Resource) SetWhatToEncrypt(whatToEncrypt WhatToEncrypt) {
+	r.whatToEncrypt = whatToEncrypt
+}
+
 func (r *Resource) AsShallowBundle() (bundle *ShallowBundle, err error) {
 	bundle = &ShallowBundle{}
 	err = json.Unmarshal(r.jsonBytes, bundle)
+	for _, entry := range bundle.Entry {
+		if entry.Resource != nil {
+			entry.Resource.SetWhatToEncrypt(r.whatToEncrypt)
+		}
+	}
 	return
 }
 
@@ -171,7 +181,7 @@ func (r *Resource) MarshalBSON() ([]byte, error) {
 
 func (r *Resource) GetBSON() (interface{}, error) {
 	// debug("GetBSON: transformReferencesMap: %#v", r.transformReferencesMap)
-	bsonDoc, err := ConvertJsonToGoFhirBSON(r.jsonBytes, r.transformReferencesMap)
+	bsonDoc, err := ConvertJsonToGoFhirBSON(r.jsonBytes, r.whatToEncrypt, r.transformReferencesMap)
 	bsonDoc2 := []bson.DocElem(bsonDoc)
 	if err != nil {
 		return nil, errors.Wrap(err, "ConvertJsonToGoFhirBSON failed")
