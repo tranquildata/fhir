@@ -12,6 +12,25 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+func shouldEncryptField(name string) bool {
+	switch name {
+	case
+		"name",
+		"birthDate",
+		"telecom",
+		"address",
+		"photo",
+		"contact",
+		"communication",
+		"text":
+			return true
+	default:
+		return false
+	}
+}
+
+
+
 type WhatToEncrypt struct {
 	PatientDetails bool
 }
@@ -49,15 +68,6 @@ func getCipher() (cipher.Block, string, error) {
 	}
 
 	return _cachedCipher, _cachedKeyId, nil
-}
-
-func shouldEncryptField(name string) bool {
-	switch name {
-	case "name", "birthDate", "telecom", "address", "photo", "contact", "communication", "text":
-		return true
-	default:
-		return false
-	}
 }
 
 func encryptBSON(bsonRoot *[]bson.DocElem, resourceType string, whatToEncrypt WhatToEncrypt) error {
@@ -115,7 +125,6 @@ func encryptBSON(bsonRoot *[]bson.DocElem, resourceType string, whatToEncrypt Wh
 
 func decryptBSON(bsonRoot *[]bson.DocElem) error {
 
-	// new document
 	newBsonRoot := make([]bson.DocElem, 0, len(*bsonRoot))
 	var ciphertextB64 string
 	var expectedKeyId string
@@ -141,7 +150,7 @@ func decryptBSON(bsonRoot *[]bson.DocElem) error {
 	}
 
 	if ciphertextB64 == "" {
-		return nil // nothing to decrypt
+		return nil // nothing to decrypt so leave input BSON untouched
 	}
 
 	// decrypt -- based on https://github.com/gtank/cryptopasta/blob/master/encrypt.go
@@ -155,7 +164,7 @@ func decryptBSON(bsonRoot *[]bson.DocElem) error {
 
 	ciphertext, err := base64.StdEncoding.DecodeString(ciphertextB64)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode __gofhirEncryptedBSON")
+		return errors.Wrap(err, "failed to base64-decode __gofhirEncryptedBSON")
 	}
 
 	gcm, err := cipher.NewGCM(block)

@@ -23,7 +23,7 @@ Currently this server should be considered experimental, with preliminary suppor
 	-	Reverse chained searches using `_has`
 	-	`_include` and `_revinclude` searches (*without* `_recurse`)
 
-Currently this server does *not* support the following features:
+Currently this server does not support the following features:
 
 -	Validation
 -	Terminology
@@ -77,10 +77,10 @@ Encryption
 -------------------------------
 
 To mitigate the effects of the database being compromised clients can request that
-Patient data be encrypted when stored (fields name, birthDate, telecom, address, photo, contact, communication, text) by setting an HTTP header `X-GoFHIR-Encrypt-Patient-Details: 1`. 
+[some Patient data](https://github.com/eug48/fhir/blob/master/models2/encryption.go) be encrypted when stored by setting an HTTP header `X-GoFHIR-Encrypt-Patient-Details: 1`. 
 However this currently prevents searches by these fields from working.
 
-Encryption is done using AES-GCM with a random nonce. The 32-byte key is specified in an environment variable `GOFHIR_ENCRYPTION_KEY_BASE64` and a name should be given to the key via `GOFHIR_ENCRYPTION_KEY_ID`.
+Encryption is done using AES-GCM with a random nonce. The 32-byte key is specified in an environment variable `GOFHIR_ENCRYPTION_KEY_BASE64`. A name should be given to the key via `GOFHIR_ENCRYPTION_KEY_ID` and this is checked for consistency prior to decryption.
 
 
 Getting started using Docker
