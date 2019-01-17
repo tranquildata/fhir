@@ -7,12 +7,15 @@ import (
 	"encoding/base64"
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 )
 
-func shouldEncryptField(name string) bool {
+type retainPlaintextField func(interface{}) (bson.DocElem, error)
+
+func shouldEncryptField(name string) (bool, retainPlaintextField) {
 	switch name {
 	case
 		"name",
@@ -23,12 +26,53 @@ func shouldEncryptField(name string) bool {
 		"contact",
 		"communication",
 		"text":
-			return true
+			return true, nil
+	case "identifier":
+		return true, removeSensitiveIdentifiers
 	default:
-		return false
+		return false, nil
 	}
 }
 
+func removeSensitiveIdentifiers(identifiers interface{}) (bson.DocElem, error) {
+
+	/* Encrypt Australian Medicare numbers due to a list of numbers & names having been leaked.. */
+	/* Other identifiers remain unencrypted and searchable */
+
+	identifiersToKeepUnencrypted := make([]interface{}, 0, 4)
+
+	rvalue := reflect.ValueOf(identifiers)
+	for i := 0; i < rvalue.Len(); i++ {
+
+		ridentifier := rvalue.Index(i)
+		elem := ridentifier.Elem().Interface()
+		identifier := elem.([]bson.DocElem)
+        sensitive := false
+		for _, field := range identifier {
+
+			if field.Name == "system" {
+				value, ok := field.Value.(string)
+				if ok && value == "http://ns.electronichealth.net.au/id/hi/mc" {
+					sensitive = true
+					break
+				} else {
+					break
+				}
+			}
+		}
+
+		if !sensitive {
+			identifiersToKeepUnencrypted = append(identifiersToKeepUnencrypted, identifier)
+		}
+	}
+
+	output := bson.DocElem{
+		Name: "identifier",
+		Value: identifiersToKeepUnencrypted,
+	}
+	return output, nil
+
+}
 
 
 type WhatToEncrypt struct {
@@ -78,12 +122,21 @@ func encryptBSON(bsonRoot *[]bson.DocElem, resourceType string, whatToEncrypt Wh
 	// will be encrypted
 	plaintext := make([]bson.DocElem, 0, 4)
 
-	// new document (with plaintext fields removed)
+	// new document (with plaintext fields removed or adjusted)
 	newBsonRoot := make([]bson.DocElem, 0, len(*bsonRoot))
 
 	for _, elem := range *bsonRoot {
-		if shouldEncryptField(elem.Name) {
+		if shouldEncrypt, retainPlaintextFunc := shouldEncryptField(elem.Name); shouldEncrypt {
 			plaintext = append(plaintext, elem)
+
+			// some fields only partially encrypted (e.g. identifier)
+			if retainPlaintextFunc != nil {
+				retain, err := retainPlaintextFunc(elem.Value)
+				if err != nil {
+					return errors.Wrapf(err, "retainPlaintextFunc failed for field %s", elem.Name)
+				}
+				newBsonRoot = append(newBsonRoot, retain)
+			}
 		} else {
 			newBsonRoot = append(newBsonRoot, elem)
 		}
@@ -185,8 +238,22 @@ func decryptBSON(bsonRoot *[]bson.DocElem) error {
 		return errors.Wrap(err, "bson.Unmarshal of plaintext failed")
 	}
 
+	// add decrypted fields
 	for _, elem := range plaintextDoc {
-		newBsonRoot = append(newBsonRoot, elem)
+		
+		// replace existing fields (e.g. identifier is partially retained in the clear for searches)
+		replaced := false
+		for i, existingElem := range newBsonRoot {
+			if existingElem.Name == elem.Name {
+				existingElem.Value = elem.Value
+				newBsonRoot[i] = existingElem
+				replaced = true
+			}
+		}
+
+		if !replaced {
+			newBsonRoot = append(newBsonRoot, elem)
+		}
 	}
 
 	*bsonRoot = newBsonRoot

@@ -4,6 +4,7 @@ vendor
 /fhir
 /fhir-server/fhir-server
 /fhir-server/fhir-server.exe
+fhir-server/debug
 /test/test
 fsharp-fhir-tools/packages
 
