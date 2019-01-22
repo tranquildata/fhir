@@ -101,13 +101,15 @@ func (f *FHIRServer) Run() {
 	)
 	fcvReader, err := client.Database("admin").RunCommand(context.TODO(), getFCV)
 	if err != nil {
-		panic(errors.Wrap(err, "reading featureCompatibilityVersion"))
+		fmt.Printf("MongoDB: unable to read featureCompatibilityVersion: %s\n", err.Error())
+	} else {
+		fcv, err := fcvReader.Lookup("featureCompatibilityVersion", "version")
+		if err != nil {
+			panic(errors.Wrap(err, "loading featureCompatibilityVersion"))
+		}
+		fmt.Printf("MongoDB: featureCompatibilityVersion %s\n", fcv.Value().StringValue())
 	}
-	fcv, err := fcvReader.Lookup("featureCompatibilityVersion", "version")
-	if err != nil {
-		panic(errors.Wrap(err, "loading featureCompatibilityVersion"))
-	}
-	fmt.Printf("MongoDB featureCompatibilityVersion %s\n", fcv.Value().StringValue())
+
 	log.Printf("MongoDB: Connected (default database %s)\n", f.Config.DefaultDatabaseName)
 
 	// Pre-create collections for transactions
