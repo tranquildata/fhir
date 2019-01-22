@@ -7,8 +7,8 @@
 # RUN CGO_ENABLED=0 GOOS=linux go build
 
 # Build using Dep
-FROM golang:1.10.2 as builder
-RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && chmod +x /usr/local/bin/dep
+FROM golang:1.10.6 as builder
+RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && chmod +x /usr/local/bin/dep
 
 # Get dependencies first for docker caching
 WORKDIR /go/src/github.com/eug48/fhir/
