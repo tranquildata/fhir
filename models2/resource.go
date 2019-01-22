@@ -3,6 +3,7 @@ package models2
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -103,6 +104,10 @@ func (r *Resource) SetWhatToEncrypt(whatToEncrypt WhatToEncrypt) {
 func (r *Resource) AsShallowBundle() (bundle *ShallowBundle, err error) {
 	bundle = &ShallowBundle{}
 	err = json.Unmarshal(r.jsonBytes, bundle)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "json.Unmarshal failed: %s (%s)\n", err.Error(), r.jsonBytes)
+		return nil, errors.Wrap(err, "json.Unmarshal failed - see stderr for the culprit string")
+	}
 	for _, entry := range bundle.Entry {
 		if entry.Resource != nil {
 			entry.Resource.SetWhatToEncrypt(r.whatToEncrypt)
