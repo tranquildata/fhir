@@ -51,6 +51,8 @@ type Reply struct {
 // This is a common approach, similarly applied here:
 // 1. https://blog.mlab.com/2014/02/mongodb-currentop-killop
 // 2. https://dzone.com/articles/finding-and-terminating-long
+
+// TODO: disabled as requires high-grade permissions. Remove completely?
 func killLongRunningOps(ticker *time.Ticker, connectionString string, dbname string, config Config) {
 	logKLRO(nil, fmt.Sprintf("Monitoring databases %s for long-running operations", config.DatabaseSuffix))
 

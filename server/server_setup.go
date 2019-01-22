@@ -120,8 +120,10 @@ func (f *FHIRServer) Run() {
 	// Kick off the database op monitoring routine. This periodically checks db.currentOp() and
 	// kills client-initiated operations exceeding the configurable timeout. Do this AFTER the index
 	// build to ensure no index build processes are killed unintentionally.
-	ticker := time.NewTicker(f.Config.DatabaseKillOpPeriod)
-	go killLongRunningOps(ticker, client.ConnectionString(), "admin", f.Config)
+
+	// ticker := time.NewTicker(f.Config.DatabaseKillOpPeriod)
+	// TODO: disabled as requires high-grade permissions. Remove completely?
+	// go killLongRunningOps(ticker, client.ConnectionString(), "admin", f.Config)
 
 	// Register all API routes
 	RegisterRoutes(f.Engine, f.MiddlewareConfig, NewMongoDataAccessLayer(client, f.Config.DefaultDatabaseName, f.Config.EnableMultiDB, f.Config.DatabaseSuffix, f.Interceptors, f.Config), f.Config)
