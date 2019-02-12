@@ -50,7 +50,7 @@ func (b *BatchController) Post(c *gin.Context) {
 	session := b.DAL.StartSession(c.GetHeader("Db"))
 	defer session.Finish()
 
-	bundle, err := bundleResource.AsShallowBundle()
+	bundle, err := bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)
 	if err != nil {
 		abortWithErr(c, err)
 		return

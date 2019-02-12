@@ -132,6 +132,8 @@ Building and running from source
 				Port to listen on (default 3001)
 		-reqlog
 				Enables request logging -- use with caution in production
+		-failedRequestsDir string
+				Directory where to dump failed requests (e.g. with malformed json)
 		-startMongod
 				Run mongod (for 'getting started' docker images - development only)
 

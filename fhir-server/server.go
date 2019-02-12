@@ -25,6 +25,7 @@ func main() {
 	disableSearchTotals := flag.Bool("disableSearchTotals", false, "Don't query for all results of a search to return Bundle.total, only do paging")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
 	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
+	failedRequestsDir := flag.String("failedRequestsDir", "", "Directory where to dump failed requests (e.g. with malformed json)")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	flag.Parse()
 
@@ -98,6 +99,7 @@ func main() {
 		EnableHistory:         true,
 		Debug:                 true,
 		ValidatorURL:          *validatorURL,
+		FailedRequestsDir:     *failedRequestsDir,
 	}
 	s := server.NewServer(MyConfig)
 	if *reqLog {

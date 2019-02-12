@@ -80,6 +80,9 @@ type Config struct {
 
 	// Debug toggles debug-level logging.
 	Debug bool
+
+	// Where to dump failed requests for debugging
+	FailedRequestsDir string
 }
 
 // DefaultConfig is the default server configuration

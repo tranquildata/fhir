@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -101,12 +102,61 @@ func (r *Resource) SetWhatToEncrypt(whatToEncrypt WhatToEncrypt) {
 	r.whatToEncrypt = whatToEncrypt
 }
 
-func (r *Resource) AsShallowBundle() (bundle *ShallowBundle, err error) {
+func dumpMalformedJson(jsonBytes []byte, jsonError error, failedRequestsDir string) error {
+	currentTime := time.Now()
+	timestamp := currentTime.Format("2006-01-02-15-04-05.000000")
+
+	f, ferr := os.Create(path.Join(failedRequestsDir, timestamp + ".error.txt"))
+	if (ferr != nil) {
+		return ferr
+	}
+	defer f.Close()
+
+	_, ferr = f.WriteString("AsShallowBundle: json.Unmarshal failed: ")
+	if (ferr != nil) {
+		return ferr
+	}
+	_, ferr = f.WriteString(jsonError.Error())
+	if (ferr != nil) {
+		return ferr
+	}
+	_, ferr = f.WriteString("\n")
+	if (ferr != nil) {
+		return ferr
+	}
+	_, ferr = f.WriteString("\n")
+	if (ferr != nil) {
+		return ferr
+	}
+	_, ferr = f.Write(jsonBytes)
+	if (ferr != nil) {
+		return ferr
+	}
+	ferr = f.Sync()
+	if (ferr != nil) {
+		return ferr
+	}
+
+	return nil
+}
+
+func (r *Resource) AsShallowBundle(failedRequestsDir string) (bundle *ShallowBundle, err error) {
 	bundle = &ShallowBundle{}
 	err = json.Unmarshal(r.jsonBytes, bundle)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "json.Unmarshal failed: %s (%s)\n", err.Error(), r.jsonBytes)
-		return nil, errors.Wrap(err, "json.Unmarshal failed - see stderr for the culprit string")
+		if (failedRequestsDir != "") {
+
+			// previously tried dumping to stderr but Kubernetes and Stackdriver truncate it..
+			ferr := dumpMalformedJson(r.jsonBytes, err, failedRequestsDir)
+			if (ferr != nil) {
+				fmt.Fprintf(os.Stderr, "json.Unmarshal failed: %s and failed to write to failedRequestsDir (%s)", err.Error(), ferr.Error())
+				return nil, errors.Wrapf(err, "json.Unmarshal failed - see stderr for more details", failedRequestsDir)
+			}
+
+			return nil, errors.Wrapf(err, "json.Unmarshal failed - see %s for the culprit string", failedRequestsDir)
+		} else {
+			return nil, errors.Wrap(err, "json.Unmarshal failed - enable failedRequestsDir to see the culprit string")
+		}
 	}
 	for _, entry := range bundle.Entry {
 		if entry.Resource != nil {
