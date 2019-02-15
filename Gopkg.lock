@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:ed77032e4241e3b8329c9304d66452ed196e795876e14be677a546f36b94e67a"
+  name = "github.com/DataDog/zstd"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c7161f8c63c045cbc7ca051dcc969dd0e4054de2"
+  version = "v1.3.5"
+
+[[projects]]
   digest = "1:b520b55fc1146c5b0eea03b07233f7a3d4a9be985c037c91ea6b82ecb81bd521"
   name = "github.com/bitly/go-simplejson"
   packages = ["."]
@@ -667,6 +675,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/DataDog/zstd",
     "github.com/bitly/go-simplejson",
     "github.com/buger/jsonparser",
     "github.com/dop251/goja",
@@ -688,6 +697,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/suite",
     "golang.org/x/oauth2",
+    "golang.org/x/sys/unix",
     "gopkg.in/check.v1",
     "gopkg.in/mgo.v2",
     "gopkg.in/mgo.v2/bson",

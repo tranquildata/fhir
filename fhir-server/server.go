@@ -26,6 +26,8 @@ func main() {
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
 	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
 	failedRequestsDir := flag.String("failedRequestsDir", "", "Directory where to dump failed requests (e.g. with malformed json)")
+	requestsDumpDir := flag.String("requestsDumpDir", "", "Directory where to dump all requests and responses")
+	requestsDumpGET := flag.Bool("requestsDumpGET", true, "Whether to dump HTTP GET requests")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	flag.Parse()
 
@@ -109,6 +111,10 @@ func main() {
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
 	// (unless using a MongoDB >= 4.0 replica set)
 	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
+
+	if *requestsDumpDir != "" {
+		s.Engine.Use(middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET))
+	}
 
 	s.Run()
 }
