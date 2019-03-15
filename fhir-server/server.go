@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/url"
 	"flag"
 	"fmt"
 	"net"
@@ -108,13 +110,30 @@ func main() {
 		s.Engine.Use(server.RequestLoggerHandler)
 	}
 
+	url, err := url.Parse(MyConfig.ServerURL)
+	if err != nil {
+		panic("Failed to parse ServerURL: " + MyConfig.ServerURL)
+	}
+	address := ":" + url.Port()
+
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
 	// (unless using a MongoDB >= 4.0 replica set)
 	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
+	s.InitEngine()
 
 	if *requestsDumpDir != "" {
-		s.Engine.Use(middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET))
+		
+		fileLoggerMiddleware := middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET, s.Engine)
+
+		err = http.ListenAndServe(address, fileLoggerMiddleware)
+		if err != nil {
+			panic("ListenAndServe failed: " + err.Error())
+		}
+
+	} else {
+
+		s.Engine.Run(address)
+
 	}
 
-	s.Run()
 }

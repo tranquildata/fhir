@@ -86,7 +86,7 @@ func NewServer(config Config) *FHIRServer {
 	return server
 }
 
-func (f *FHIRServer) Run() {
+func (f *FHIRServer) InitEngine() {
 	var err error
 
 	// Establish initial connection to mongo
@@ -157,6 +157,10 @@ func (f *FHIRServer) Run() {
 	} else {
 		log.Println("Server: Running in read-only mode")
 	}
+}
+
+func (f *FHIRServer) Run() {
+	f.InitEngine()
 
 	url, err := url.Parse(f.Config.ServerURL)
 	if err != nil {
