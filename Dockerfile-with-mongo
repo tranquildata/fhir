@@ -1,6 +1,6 @@
 # Build with modules
-FROM golang:1.12.1-alpine as builder
-RUN apk add --no-cache ca-certificates curl git build-base
+FROM golang:1.12.1-stretch as builder
+#RUN apk add --no-cache ca-certificates curl git build-base
 
 # Get dependencies first for docker caching
 WORKDIR /fhir
