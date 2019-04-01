@@ -333,7 +333,7 @@ func convertNumberValue(jsonBytes []byte, pos positionInfo) (elem interface{}, e
 		}
 	} else {
 		if strings.Contains(stringForm, ".") {
-			return nil, errors.Wrapf(err, "non-decimal numer has a decimal point (%s)", stringForm, pos.pathHere)
+			return nil, errors.Wrapf(err, "non-decimal number has a decimal point (%s) at %s", stringForm, pos.pathHere)
 		}
 
 		elemInt64, err := jsonparser.GetInt(jsonBytes)

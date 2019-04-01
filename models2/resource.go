@@ -150,7 +150,7 @@ func (r *Resource) AsShallowBundle(failedRequestsDir string) (bundle *ShallowBun
 			ferr := dumpMalformedJson(r.jsonBytes, err, failedRequestsDir)
 			if (ferr != nil) {
 				fmt.Fprintf(os.Stderr, "json.Unmarshal failed: %s and failed to write to failedRequestsDir (%s)", err.Error(), ferr.Error())
-				return nil, errors.Wrapf(err, "json.Unmarshal failed - see stderr for more details", failedRequestsDir)
+				return nil, errors.Wrap(err, "json.Unmarshal failed - see stderr for more details")
 			}
 
 			return nil, errors.Wrapf(err, "json.Unmarshal failed - see %s for the culprit string", failedRequestsDir)
