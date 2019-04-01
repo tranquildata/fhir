@@ -16,7 +16,7 @@ func main() {
 		setupTestInterceptors(s)
 	}
 
-	s.Run()
+	s.Run(8080, true)
 }
 
 // With this test server running, verfiy the following (by viewing server log):

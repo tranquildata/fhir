@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 	"flag"
 	"fmt"
 	"net"
@@ -86,7 +85,6 @@ func main() {
 	fmt.Printf("MongoDB URI is %s\n", *mongodbURI)
 
 	var MyConfig = server.Config{
-		ServerURL:             fmt.Sprintf("http://localhost:%d", *port),
 		IndexConfigPath:       "config/indexes.conf",
 		DatabaseURI:           *mongodbURI,
 		DefaultDatabaseName:   *databaseName,
@@ -110,11 +108,7 @@ func main() {
 		s.Engine.Use(server.RequestLoggerHandler)
 	}
 
-	url, err := url.Parse(MyConfig.ServerURL)
-	if err != nil {
-		panic("Failed to parse ServerURL: " + MyConfig.ServerURL)
-	}
-	address := ":" + url.Port()
+	address := fmt.Sprintf(":%d", *port)
 
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
 	// (unless using a MongoDB >= 4.0 replica set)
@@ -125,7 +119,7 @@ func main() {
 		
 		fileLoggerMiddleware := middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET, s.Engine)
 
-		err = http.ListenAndServe(address, fileLoggerMiddleware)
+		err := http.ListenAndServe(address, fileLoggerMiddleware)
 		if err != nil {
 			panic("ListenAndServe failed: " + err.Error())
 		}

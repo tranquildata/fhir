@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"time"
 
@@ -159,14 +158,14 @@ func (f *FHIRServer) InitEngine() {
 	}
 }
 
-func (f *FHIRServer) Run() {
+func (f *FHIRServer) Run(port int, localhostOnly bool) {
 	f.InitEngine()
 
-	url, err := url.Parse(f.Config.ServerURL)
-	if err != nil {
-		panic("Server: Failed to parse ServerURL: " + f.Config.ServerURL)
+	if localhostOnly {
+		f.Engine.Run(fmt.Sprintf("localhost:%d", port))
+	} else {
+		f.Engine.Run(fmt.Sprintf(":%d", port))
 	}
-	f.Engine.Run(":" + url.Port())
 }
 
 func (f *FHIRServer) InitDB(databaseName string) {
