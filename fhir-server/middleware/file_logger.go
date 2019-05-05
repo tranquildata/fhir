@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/DataDog/zstd"
@@ -41,6 +42,9 @@ func (w *responseTeeWriter) AbortWithError(statusCode int, err error) {
 	w.ResponseWriter.WriteHeader(statusCode)
 	w.ResponseWriter.Write([]byte(err.Error()))
 }
+
+// counter to add to filenames to prevent name collisions when doing many concurrent requests
+var globalCounter uint64
 
 /*
 	Writes raw requests and responses to files for archiving.
@@ -78,9 +82,12 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, ginEngine *g
 		hasher := sha1.New()
 		hasher.Write(reqBytes)
 		hashBytes := hasher.Sum(nil)
+
+		counter := atomic.AddUint64(&globalCounter, 1)
 		currentTime := time.Now()
-		timestamp := currentTime.Format("2006-01-02-15-04-05.000000")
-		filename := fmt.Sprintf("%s-%x", timestamp, hashBytes)
+		timestamp := currentTime.Format("2006-01-02T15-04-05.000000")
+
+		filename := fmt.Sprintf("%s-%x-%d", timestamp, hashBytes, counter)
 		requestFilename := filename + ".req.zst"
 		responseFilename := filename + ".res.zst"
 
