@@ -61,7 +61,9 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, ginEngine *g
 	// so that monitoring tools don't see a partially-written file
 	tempDirectory := path.Join(outputDirectory, "temp")
 
-	os.MkdirAll(tempDirectory, 0777)
+	if err := os.MkdirAll(tempDirectory, 0777); err != nil {
+		panic(fmt.Sprintf("file_logger.go: failed to create temp directory (%s): %s", tempDirectory, err.Error()))
+	}
 
 	return func(resp http.ResponseWriter, req *http.Request) {
 
