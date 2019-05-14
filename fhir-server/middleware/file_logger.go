@@ -34,6 +34,9 @@ func (w *responseTeeWriter) WriteHeader(statusCode int) {
 }
 func (w *responseTeeWriter) SendResponse() {
 	w.ResponseWriter.Header().Set("X-GoFHIR-Request-ID", w.requestId)
+	if w.statusCode == 0 {
+		panic("file_logger.go: SendResponse: header not yet written")
+	}
 	w.ResponseWriter.WriteHeader(w.statusCode)
 	w.ResponseWriter.Write(w.body.Bytes())
 }
