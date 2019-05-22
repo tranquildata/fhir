@@ -1,5 +1,5 @@
 # Build using Dep
-FROM golang:1.10.2 as builder
+FROM golang:1.10.6 as builder
 RUN curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 && chmod +x /usr/local/bin/dep
 
 # Get dependencies first for docker caching
@@ -12,7 +12,7 @@ COPY . ./
 
 # Build
 WORKDIR /go/src/github.com/eug48/fhir/fhir-server
-RUN CGO_ENABLED=0 GOOS=linux go build
+RUN go build -ldflags "-X main.gitCommit=$GIT_COMMIT"
 
 # Copy into official image with MongoDB
 FROM mongo:4-xenial
