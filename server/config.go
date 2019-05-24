@@ -2,10 +2,10 @@ package server
 
 import (
 	"fmt"
-	"time"
-	"strings"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/eug48/fhir/auth"
 )
@@ -19,6 +19,9 @@ type Config struct {
 	// Auth determines what, if any authentication and authorization will be used
 	// by the FHIR server
 	Auth auth.Config
+
+	// Whether to create indexes on startup
+	CreateIndexes bool
 
 	// IndexConfigPath is the path to an indexes.conf configuration file, specifying
 	// what mongo indexes the server should create (or verify) on startup

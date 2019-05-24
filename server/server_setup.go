@@ -9,7 +9,7 @@ import (
 
 	"github.com/eug48/fhir/models2"
 	"github.com/gin-gonic/gin"
-	"github.com/itsjamie/gin-cors"
+	cors "github.com/itsjamie/gin-cors"
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/pkg/errors"
@@ -116,7 +116,9 @@ func (f *FHIRServer) InitEngine() {
 	CreateCollections(db)
 
 	// Ensure all indexes
-	NewIndexer(f.Config.DefaultDatabaseName, f.Config).ConfigureIndexes(db)
+	if f.Config.CreateIndexes {
+		NewIndexer(f.Config.DefaultDatabaseName, f.Config).ConfigureIndexes(db)
+	}
 
 	// Kick off the database op monitoring routine. This periodically checks db.currentOp() and
 	// kills client-initiated operations exceeding the configurable timeout. Do this AFTER the index
@@ -180,7 +182,9 @@ func (f *FHIRServer) InitDB(databaseName string) {
 	CreateCollections(db)
 
 	// Ensure all indexes
-	NewIndexer(databaseName, f.Config).ConfigureIndexes(db)
+	if f.Config.CreateIndexes {
+		NewIndexer(databaseName, f.Config).ConfigureIndexes(db)
+	}
 }
 
 func CreateCollections(db *mongo.Database) {

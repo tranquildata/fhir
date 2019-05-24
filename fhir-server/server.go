@@ -23,6 +23,7 @@ func main() {
 	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use by default")
 	enableMultiDB := flag.Bool("enableMultiDB", false, "Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex")
 	databaseSuffix := flag.String("databaseSuffix", "", "Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')")
+	dontCreateIndexes := flag.Bool("dontCreateIndexes", false, "Don't create indexes for the 'fhr' database on startup")
 	disableSearchTotals := flag.Bool("disableSearchTotals", false, "Don't query for all results of a search to return Bundle.total, only do paging")
 	enableXML := flag.Bool("enableXML", false, "Enable support for the FHIR XML encoding")
 	validatorURL := flag.String("validatorURL", "", "A FHIR validation endpoint to proxy validation requests to")
@@ -85,6 +86,7 @@ func main() {
 	fmt.Printf("MongoDB URI is %s\n", *mongodbURI)
 
 	var MyConfig = server.Config{
+		CreateIndexes:         !*dontCreateIndexes,
 		IndexConfigPath:       "config/indexes.conf",
 		DatabaseURI:           *mongodbURI,
 		DefaultDatabaseName:   *databaseName,
