@@ -45,6 +45,9 @@ func ConvertJsonToGoFhirBSON(jsonBytes []byte, whatToEncrypt WhatToEncrypt, tran
 		pos := positionInfo{pathHere: resourceType, element: resourceType}
 		err = jsonparser.ObjectEach(jsonBytes, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 			err4 := addToBSONdoc(&bsonRoot, pos, key, value, dataType, offset, refsMap)
+			if err4 != nil {
+				err4 = errors.Wrapf(err4, "addToBSONdoc failed at %s", key)
+			}
 			return err4
 		})
 	}
@@ -87,7 +90,7 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 		*output = append(*output, elem)
 	}
 
-	if pos.atReference() {
+	if pos.atReference() && strKey == "reference" /* ignore the identifier and display fields */ {
 
 		// transform reference during transactions
 		reference := string(value)
@@ -99,13 +102,44 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 
 		// add reference__id, reference__type and reference__external fields
 		splitURL := strings.Split(reference, "/")
-		if len(splitURL) >= 2 {
+		components := len(splitURL)
+		if components >= 2 {
 			// TODO: validate?
-			referenceID := splitURL[len(splitURL)-1]
-			typeStr := splitURL[len(splitURL)-2]
+			
+			lastComponent := splitURL[components-1]
+			secondLastComponent := splitURL[components-2]
+
+			var referenceID, typeStr string
+
+			if secondLastComponent == "_history" {
+				// e.g. http://..../..../Patient/34/_history/3
+
+				if components < 4 {
+					return errors.Errorf("invalid reference (less than 4 components): %s", reference)
+				}
+
+				referenceID = splitURL[components-3]
+				typeStr = splitURL[components-4]
+			} else {
+				// e.g. http://..../..../Patient/34
+				referenceID = lastComponent
+				typeStr = secondLastComponent
+			}
+
+			if _, exists := fhirTypes[typeStr + ".id"]; !exists {
+				return errors.Errorf("invalid reference (type not found): %s", reference)
+			}
+			
 			*output = append(*output, bson.DocElem{Name: "reference__id", Value: referenceID})
 			*output = append(*output, bson.DocElem{Name: "reference__type", Value: typeStr})
+		} else if strings.HasPrefix(reference, "#") {
+			// may have internal references like #ClinicIcon
+		} else if strings.HasPrefix(reference, "urn:uuid:") && strings.HasPrefix(pos.pathHere, "Bundle.") {
+			// may have in-bundle references in unprocessed Bundles (e.g. POSTed to /Bundle)
+		} else {
+			return errors.Errorf("invalid reference (less than 2 components): %s", reference)
 		}
+
 		external := strings.HasPrefix(reference, "http")
 		*output = append(*output, bson.DocElem{Name: "reference__external", Value: external})
 	}
@@ -132,6 +166,9 @@ func convertValue(pos positionInfo, value []byte, dataType jsonparser.ValueType,
 		err = jsonparser.ObjectEach(value, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 			err2 := addToBSONdoc(&subDoc, pos, key, value, dataType, offset, refsMap)
 			// fmt.Printf("Key: '%s'\n Value: '%s'\n Type: %s\n", string(key), string(value), dataType)
+			if err2 != nil {
+				err2 = errors.Wrapf(err2, "addToBSONdoc failed at %s", key)
+			}
 			return err2
 		})
 		if err != nil {
@@ -249,6 +286,9 @@ func convertExtensionArray(output *[]interface{}, jsonBytes []byte, pos position
 					debug("convertExtensionArray: child object: %s", strKey)
 				}
 				err4 := addToBSONdoc(&newChildExtensionObj, pos, key, value, dataType, offset, refsMap)
+				if err4 != nil {
+					err4 = errors.Wrapf(err4, "addToBSONdoc failed at %s", key)
+				}
 				return err4
 			})
 			if funcErr != nil {
