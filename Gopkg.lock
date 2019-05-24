@@ -172,6 +172,14 @@
   version = "v1.7.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+
+[[projects]]
   digest = "1:17fe264ee908afc795734e8c4e63db2accabaf57326dbf21763a7d6b86096260"
   name = "github.com/golang/protobuf"
   packages = [
@@ -681,6 +689,7 @@
     "github.com/dop251/goja",
     "github.com/gin-gonic/contrib/sessions",
     "github.com/gin-gonic/gin",
+    "github.com/golang/glog",
     "github.com/google/uuid",
     "github.com/icrowley/fake",
     "github.com/itsjamie/gin-cors",

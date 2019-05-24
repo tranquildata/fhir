@@ -1,23 +1,25 @@
 package server
 
 import (
-	"strconv"
-	"github.com/pkg/errors"
-	"github.com/eug48/fhir/utils"
-	"time"
 	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/eug48/fhir/utils"
+	"github.com/pkg/errors"
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/gin-gonic/gin"
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
 	"github.com/eug48/fhir/search"
+	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 )
 
 // BatchController handles FHIR batch operations via input bundles
@@ -58,13 +60,16 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	switch bundle.Type {
 	case "transaction":
+		glog.V(2).Info("starting transaction")
 		err := session.StartTransaction()
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "error starting MongoDB transaction"))
 			return
 		}
 	case "batch":
+		glog.V(2).Info("starting batch")
 		// TODO: If type is batch, ensure there are no interdependent resources
+
 	default:
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"))
 		return
@@ -132,6 +137,7 @@ func (b *BatchController) Post(c *gin.Context) {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
 				}
+				glog.V(3).Infof("  conditional create (%s?%s): existing: %v", entry.Request.Url, entry.Request.IfNoneExist, existingIds)
 
 				if len(existingIds) == 0 {
 					createStatus[i] = "201"
@@ -149,20 +155,25 @@ func (b *BatchController) Post(c *gin.Context) {
 			if createStatus[i] == "201" {
 				// Create a new ID
 				id = bson.NewObjectId().Hex()
+				glog.V(3).Infof("    create (%s): new id: %s", entry.Request.Url, id)
 				newIDs[i] = id
 			}
 
 			if len(id) > 0 {
 				// Add id to the reference map
 				refMap[entry.FullUrl] = entry.Request.Url + "/" + id
+				glog.V(3).Infof("    need to rewrite %s --> %s", entry.FullUrl, entry.Request.Url+"/"+id)
 				// Rewrite the FullUrl using the new ID
 				entry.FullUrl = b.Config.responseURL(c.Request, entry.Request.Url, id).String()
 			}
 
 		} else if entry.Request.Method == "PUT" && isConditional(entry) {
+
+			glog.V(3).Infof("  conditional PUT: %s", entry.Request.Url)
+
 			// We need to process conditionals referencing temp IDs in a second pass, so skip them here
 			if hasTempID(entry.Request.Url) {
-				// fmt.Printf("hasTempID! %s\n", entry.Request.Url)
+				glog.V(3).Info("    hasTempID")
 				continue
 			}
 
@@ -170,6 +181,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
+			glog.V(3).Infof("    resolved to: %s", entry.Request.Url)
 		}
 	}
 
@@ -181,7 +193,9 @@ func (b *BatchController) Post(c *gin.Context) {
 			// Use a regex to swap out the temp IDs with the new IDs
 			for oldID, ref := range refMap {
 				re := regexp.MustCompile("([=,])(" + oldID + "|" + url.QueryEscape(oldID) + ")(&|,|$)")
-				entry.Request.Url = re.ReplaceAllString(entry.Request.Url, "${1}"+ref+"${3}")
+				origUrl := entry.Request.Url
+				entry.Request.Url = re.ReplaceAllString(origUrl, "${1}"+ref+"${3}")
+				glog.V(3).Infof("  replaced %s --> %s", origUrl, entry.Request.Url)
 			}
 
 			if hasTempID(entry.Request.Url) {
@@ -194,6 +208,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
+			glog.V(3).Infof("    resolved to %s", entry.Request.Url)
 		}
 	}
 
@@ -204,8 +219,9 @@ func (b *BatchController) Post(c *gin.Context) {
 		return
 	}
 	for _, reference := range references {
-		
+
 		if _, alreadyMapped := refMap[reference]; alreadyMapped {
+			glog.V(3).Infof("  reference already mapped: %s", reference)
 			continue
 		}
 
@@ -218,15 +234,17 @@ func (b *BatchController) Post(c *gin.Context) {
 				c.AbortWithError(http.StatusBadRequest, errors.New("conditional references are only allowed in transactions, not batches"))
 				return
 			}
+			glog.V(3).Infof("  conditional reference: %s", reference)
 
 			resourceType := reference[0:queryPos]
 			queryString := reference[queryPos+1:]
-			searchQuery := search.Query{Resource: resourceType, Query: queryString }
+			searchQuery := search.Query{Resource: resourceType, Query: queryString}
 			ids, err := session.FindIDs(searchQuery)
 			if err != nil {
 				c.AbortWithError(http.StatusBadRequest, errors.Wrapf(err, "lookup of conditional reference failed (%s)", reference))
 				return
 			}
+			glog.V(3).Infof("    ids: %v", ids)
 
 			if len(ids) == 1 {
 				refMap[reference] = resourceType + "/" + ids[0]
@@ -248,6 +266,8 @@ func (b *BatchController) Post(c *gin.Context) {
 		switch entry.Request.Method {
 		case "PUT":
 			if entry.Request.IfMatch != "" {
+				glog.V(3).Infof(" PUT %s, If-Match: %s", entry.Request.Url, entry.Request.IfMatch)
+
 				parts := strings.SplitN(entry.Request.Url, "/", 2)
 				if len(parts) != 2 { // TODO: refactor
 					c.AbortWithError(http.StatusBadRequest,
@@ -264,8 +284,9 @@ func (b *BatchController) Post(c *gin.Context) {
 
 				currentResource, err := session.Get(id, entry.Resource.ResourceType())
 				if err == ErrNotFound {
+					glog.V(3).Infof("   current resource not found")
 					entry.Response = &models.BundleEntryResponseComponent{
-						Status: "404",
+						Status:  "404",
 						Outcome: models.CreateOpOutcome("error", "not-found", "", "Existing resource not found when handling If-Match"),
 					}
 					entry.Resource = nil
@@ -274,8 +295,9 @@ func (b *BatchController) Post(c *gin.Context) {
 					c.AbortWithError(http.StatusInternalServerError, err)
 					return
 				} else if conditionalVersionId != currentResource.VersionId() {
+					glog.V(3).Infof("   conflict with current resource")
 					entry.Response = &models.BundleEntryResponseComponent{
-						Status: "409",
+						Status:  "409",
 						Outcome: models.CreateOpOutcome("error", "conflict", "", fmt.Sprintf("Version mismatch when handling If-Match (current=%s wanted=%s)", currentResource.VersionId(), conditionalVersionId)),
 					}
 					entry.Resource = nil
@@ -289,7 +311,10 @@ func (b *BatchController) Post(c *gin.Context) {
 	if bundle.Type == "transaction" {
 		for _, entry := range entries {
 			if entry.Response != nil && entry.Response.Outcome != nil {
+
 				// FIXME: ensure it is a "failed" outcome
+
+				glog.V(3).Infof("  transaction aborting due to %s %s: %v", entry.Request.Method, entry.Request.Url, entry.Response.Outcome)
 
 				proceed = false
 				break
@@ -298,32 +323,34 @@ func (b *BatchController) Post(c *gin.Context) {
 	}
 
 	// Make the changes in the database and update the entry responses
-	if (proceed) {
+	if proceed {
 		for i, entry := range entries {
 			err = b.doRequest(c, session, i, entry, createStatus, newIDs)
 			if err != nil {
-				debug("  --> ERROR %+v", err)
+				glog.V(4).Infof("  --> ERROR %+v", err)
 			}
 			if entry.Response != nil {
-				debug("  --> %s", entry.Response.DebugString())
+				glog.V(4).Infof("  --> %s", entry.Response.DebugString())
 			} else {
-				debug("  --> nil Response")
+				glog.V(4).Infof("  --> nil Response")
 			}
 			if entry.Resource != nil {
-				debug("  --> %s", entry.Resource.JsonBytes())
+				glog.V(4).Infof("  --> %s", entry.Resource.JsonBytes())
 			} else {
-				debug("  --> nil Resource")
+				glog.V(4).Infof("  --> nil Resource")
 			}
 			if err != nil {
 				statusCode, outcome := ErrorToOpOutcome(err)
 				if bundle.Type == "transaction" {
+					glog.V(2).Infof("  transaction failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
 					sendReply(c, statusCode, outcome)
 					return
 				} else {
+					glog.V(2).Infof("  batch entry failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
 					entry.Resource = nil
 					entry.Request = nil
 					entry.Response = &models.BundleEntryResponseComponent{
-						Status: strconv.Itoa(statusCode),
+						Status:  strconv.Itoa(statusCode),
 						Outcome: outcome,
 					}
 				}
@@ -331,11 +358,12 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	}
 
-	// For failing transactions return a single operation-outcome
 	if bundle.Type == "transaction" {
 		for _, entry := range entries {
+			// For failing transactions return a single operation-outcome
 			if entry.Response != nil && entry.Response.Outcome != nil {
-				// FIXME: ensure it is a "failed" outcome
+
+				glog.V(3).Infof("  transaction failing due to %s %s: %v", entry.Request.Method, entry.Request.Url, entry.Response.Outcome)
 
 				status, err := strconv.Atoi(entry.Response.Status)
 				if err != nil {
@@ -347,7 +375,15 @@ func (b *BatchController) Post(c *gin.Context) {
 			}
 		}
 
+		var start time.Time
+		if glog.V(4) {
+			start = time.Now()
+			glog.V(4).Infof("    starting transaction commit")
+		}
 		session.CommmitIfTransaction()
+		if glog.V(4) {
+			glog.V(4).Infof("    finished transaction commit in %v", time.Since(start))
+		}
 	}
 
 	if proceed {
@@ -374,10 +410,10 @@ func sendReply(c *gin.Context, httpStatus int, reply interface{}) {
 }
 
 func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
-	debug("doRequest %s %s", entry.Request.Method, entry.Request.Url)
+	glog.V(3).Infof("  doRequest %s %s", entry.Request.Method, entry.Request.Url)
 	if entry.Response != nil {
 		// already handled (e.g. conditional update returned 409)
-		debug("  already handled (%s)", entry.Response.DebugString())
+		glog.V(3).Infof("  already handled (%s)", entry.Response.DebugString())
 		return nil
 	}
 
@@ -389,6 +425,7 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 			if len(parts) != 2 {
 				return fmt.Errorf("Couldn't identify resource and id to delete from %s", entry.Request.Url)
 			}
+			glog.V(3).Infof("    normal delete")
 			if _, err := session.Delete(parts[1], parts[0]); err != nil && err != ErrNotFound {
 				return errors.Wrapf(err, "failed to delete %s", entry.Request.Url)
 			}
@@ -396,6 +433,7 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 			// It's a conditional (query-based) delete
 			parts := strings.SplitN(entry.Request.Url, "?", 2)
 			query := search.Query{Resource: parts[0], Query: parts[1]}
+			glog.V(3).Infof("    conditional delete")
 			if _, err := session.ConditionalDelete(query); err != nil {
 				return errors.Wrapf(err, "failed to conditional-delete %s", entry.Request.Url)
 			}
@@ -462,12 +500,12 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 		updateEntryMeta(entry)
 	case "GET":
 		/*
-		examples
-			1 /Patient
-			2 /Patient/_search
-			2 /Patient/12345
-			3 /Patient/12345/_history
-			4 /Patient/12345/_history/55
+			examples
+				1 /Patient
+				2 /Patient/_search
+				2 /Patient/12345
+				3 /Patient/12345/_history
+				4 /Patient/12345/_history/55
 		*/
 
 		pathAndQuery := strings.SplitN(entry.Request.Url, "?", 2)
@@ -486,8 +524,8 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 		segments := strings.Split(path, "/")
 		var id, vid string
 		var historyRequest bool
-		resourceType := segments [0]
-		debug("  segments: %q (%d)", segments, len(segments))
+		resourceType := segments[0]
+		glog.V(3).Infof("  segments: %q (%d)", segments, len(segments))
 		if len(segments) >= 2 {
 			id = segments[1]
 			if id == "_search" {
@@ -496,10 +534,10 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 			if id == "_history" {
 				return errors.Errorf("resource-level history not supported in request: %s", entry.Request.Url)
 			}
-			
+
 			if len(segments) >= 3 {
 				op := segments[2]
-				debug("  op = %s", op)
+				glog.V(3).Infof("  op = %s", op)
 				if op != "_history" {
 					return errors.Errorf("operation not supported in request: %s", entry.Request.Url)
 				}
@@ -517,7 +555,7 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 		if historyRequest {
 			baseURL := b.Config.responseURL(c.Request, resourceType)
 			bundle, err := session.History(*baseURL, resourceType, id)
-			debug("  history request (%s/%s) --> err %+v", resourceType, id, err)
+			glog.V(3).Infof("  history request (%s/%s) --> err %+v", resourceType, id, err)
 			if err != nil && err != ErrNotFound {
 				return errors.Wrapf(err, "History request failed: %s", entry.Request.Url)
 			}
@@ -545,15 +583,15 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 			} else {
 				entry.Resource, err = session.GetVersion(id, vid, resourceType)
 			}
-			debug("  get resource request (%s id=%s vid=%s) --> err %+v", resourceType, id, vid, err)
+			glog.V(3).Infof("  get resource request (%s id=%s vid=%s) --> err %+v", resourceType, id, vid, err)
 
-			switch (err) {
+			switch err {
 			case nil:
 				lastUpdated := entry.Resource.LastUpdated()
 				if lastUpdated != "" {
 					// entry.Response.LastModified = entry.Resource.LastUpdatedTime().UTC().Format(http.TimeFormat)
-					entry.Response.LastModified = &models.FHIRDateTime {
-						Time: entry.Resource.LastUpdatedTime(),
+					entry.Response.LastModified = &models.FHIRDateTime{
+						Time:      entry.Resource.LastUpdatedTime(),
 						Precision: models.Timestamp,
 					}
 				}
@@ -573,10 +611,10 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 			// Search:
 			// /Patient
 			// /Patient/_search
-			searchQuery := search.Query{Resource: resourceType, Query: queryString }
+			searchQuery := search.Query{Resource: resourceType, Query: queryString}
 			baseURL := b.Config.responseURL(c.Request, resourceType)
 			bundle, err := session.Search(*baseURL, searchQuery)
-			debug("  search request (%s %s) --> err %#v", resourceType, queryString, err)
+			glog.V(3).Infof("  search request (%s %s) --> err %#v", resourceType, queryString, err)
 			if err != nil {
 				return errors.Wrapf(err, "Search failed for %s", entry.Request.Url)
 			}
@@ -590,11 +628,13 @@ func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i
 		}
 		entry.Request = nil
 	}
+
+	glog.V(3).Infof("    done")
 	return nil
 }
 
 func updateEntryMeta(entry *models2.ShallowBundleEntryComponent) {
-	
+
 	// TODO: keep LastModified as a string
 	lastUpdated := entry.Resource.LastUpdated()
 	if lastUpdated != "" {
@@ -603,7 +643,7 @@ func updateEntryMeta(entry *models2.ShallowBundleEntryComponent) {
 		if err != nil {
 			panic(fmt.Errorf("failed to parse LastUpdated String: %s", lastUpdated))
 		}
-		entry.Response.LastModified = &models.FHIRDateTime{ Time: t, Precision: "timestamp" }
+		entry.Response.LastModified = &models.FHIRDateTime{Time: t, Precision: "timestamp"}
 	}
 
 	versionId := entry.Resource.VersionId()

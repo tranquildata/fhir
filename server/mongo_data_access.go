@@ -12,6 +12,7 @@ import (
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
 	"github.com/eug48/fhir/search"
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	"github.com/mongodb/mongo-go-driver/bson"
@@ -19,6 +20,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"github.com/mongodb/mongo-go-driver/mongo/replaceopt"
+	"github.com/mongodb/mongo-go-driver/mongo/sessionopt"
 )
 
 type mongoDataAccessLayer struct {
@@ -41,7 +43,7 @@ type mongoSession struct {
 }
 
 func (dal *mongoDataAccessLayer) StartSession(customDbName string) DataAccessSession {
-	session, err := dal.client.StartSession()
+	session, err := dal.client.StartSession(sessionopt.CausalConsistency(false))
 	if err != nil {
 		panic(errors.Wrap(err, "StartSession failed"))
 	}
@@ -83,7 +85,7 @@ func (ms *mongoSession) StartTransaction() error {
 	}
 
 	err := ms.session.StartTransaction()
-	ms.debug("StartTransaction")
+	glog.V(3).Infof("StartTransaction")
 	if err == nil {
 		ms.inTransaction = true
 	}
@@ -92,7 +94,7 @@ func (ms *mongoSession) StartTransaction() error {
 func (ms *mongoSession) CommmitIfTransaction() error {
 	if ms.inTransaction {
 		err := ms.session.CommitTransaction(context.TODO())
-		ms.debug("CommmitTransaction")
+		glog.V(3).Infof("CommmitTransaction")
 		if err == nil {
 			ms.inTransaction = false
 		}
@@ -105,7 +107,7 @@ func (ms *mongoSession) Finish() {
 	var err error
 	if ms.inTransaction {
 		err = ms.session.AbortTransaction(context.TODO())
-		ms.debug("AbortTransaction called from mongoSession.Finish")
+		glog.Warningf("AbortTransaction called from mongoSession.Finish")
 		if err == nil {
 			ms.inTransaction = false
 		}
@@ -129,10 +131,6 @@ func NewMongoDataAccessLayer(client *mongo.Client, defaultDbName string, enableM
 		enableHistory:     config.EnableHistory,
 		readonly:          config.ReadOnly,
 	}
-}
-
-func (ms *mongoSession) debug(format string, a ...interface{}) {
-	// fmt.Printf("[mongo] " + format + "\n", a...)
 }
 
 // InterceptorList is a list of interceptors registered for a given database operation
@@ -212,7 +210,7 @@ func (ms *mongoSession) Get(id, resourceType string) (resource *models2.Resource
 	filter := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
 	var doc bson.Document
 	err = collection.FindOne(context.TODO(), filter, ms.session).Decode(&doc)
-	ms.debug("Get %s/%s --> %s (err %+v)", resourceType, id, doc.String(), err)
+	glog.V(3).Infof("Get %s/%s --> %s (err %+v)", resourceType, id, doc.String(), err)
 	if err == mongo.ErrNoDocuments && ms.dal.enableHistory {
 		// check whether this is a deleted record
 		prevCollection := ms.PreviousVersionsCollection(resourceType)
@@ -228,7 +226,7 @@ func (ms *mongoSession) Get(id, resourceType string) (resource *models2.Resource
 
 		deleted := cursor.Next(context.TODO())
 		err = cursor.Err()
-		ms.debug("   deleted version: %t (err %+v)", deleted, err)
+		glog.V(3).Infof("   deleted version: %t (err %+v)", deleted, err)
 		if err != nil {
 			return nil, errors.Wrap(err, "Get --> prevCollection.Find --> cursor error")
 		}
@@ -414,7 +412,7 @@ func (ms *mongoSession) PostWithID(id string, resource *models2.Resource) error 
 		return convertMongoErr(err)
 	}
 
-	ms.debug("PostWithID: updating %s", resource)
+	glog.V(3).Infof("PostWithID: updating %s", resource.ResourceType())
 	resource.SetId(bsonID.Hex())
 	updateResourceMeta(resource, 1)
 	resourceType := resource.ResourceType()
@@ -422,7 +420,7 @@ func (ms *mongoSession) PostWithID(id string, resource *models2.Resource) error 
 
 	ms.invokeInterceptorsBefore("Create", resourceType, resource)
 
-	ms.debug("PostWithID: inserting %s", resource)
+	glog.V(3).Infof("PostWithID: inserting %s", resource.ResourceType())
 	_, err = curCollection.InsertOne(context.TODO(), resource, ms.session)
 
 	if err == nil {
@@ -444,32 +442,40 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 	curCollection := ms.CurrentVersionCollection(resourceType)
 	resource.SetId(bsonID.Hex())
 	if conditionalVersionId != "" {
-		ms.debug("PUT %s/%s (If-Match %s)", resourceType, resource.Id(), conditionalVersionId)
+		glog.V(3).Infof("PUT %s/%s (If-Match %s)", resourceType, resource.Id(), conditionalVersionId)
 	} else {
-		ms.debug("PUT %s/%s", resourceType, resource.Id())
+		glog.V(3).Infof("PUT %s/%s", resourceType, resource.Id())
 	}
 
 	var curVersionId *int = nil
 	var newVersionId = 1
+	var start time.Time
+
 	if ms.dal.enableHistory == false {
 		if conditionalVersionId != "" {
 			return false, errors.Errorf("If-Match specified for a conditional put, but version histories are disabled")
 		}
-		ms.debug("  versionIds: history disabled; new %d", newVersionId)
+		glog.V(3).Infof("  versionIds: history disabled; new %d", newVersionId)
 	} else {
 
 		// get current version of this document
+		if glog.V(5) {
+			start = time.Now()
+		}
 		var currentDoc bson.Document
 		currentDocQuery := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
 		if err = curCollection.FindOne(context.TODO(), currentDocQuery, ms.session).Decode(&currentDoc); err != nil && err != mongo.ErrNoDocuments {
 			return false, errors.Wrap(convertMongoErr(err), "Put handler: error retrieving current version")
+		}
+		if glog.V(5) {
+			glog.V(5).Infof("get_current_version took %v", time.Since(start))
 		}
 
 		if err == mongo.ErrNoDocuments {
 			if conditionalVersionId != "" {
 				return false, ErrConflict{msg: "If-Match specified for a resource that doesn't exist"}
 			}
-			ms.debug("  versionIds: no current; new %d", newVersionId)
+			glog.V(3).Infof("  versionIds: no current; new %d", newVersionId)
 		} else {
 			hasVersionId, curVersionIdTemp, curVersionIdStr := getVersionIdFromResource(&currentDoc)
 			if hasVersionId {
@@ -480,7 +486,7 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 				curVersionIdTemp = 0
 			}
 			curVersionId = &curVersionIdTemp
-			ms.debug("  versionIds: current %d; new %d", *curVersionId, newVersionId)
+			glog.V(3).Infof("  versionIds: current %d; new %d", *curVersionId, newVersionId)
 
 			if conditionalVersionId != "" && conditionalVersionId != curVersionIdStr {
 				return false, ErrConflict{msg: "If-Match doesn't match current versionId"}
@@ -500,7 +506,7 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 				current version - they are harmless in this case since the correct
 				data should have been written to prev.
 				Should be fixed by MongoDB 4.0 transactions. */
-				ms.debug("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
+				glog.V(3).Infof("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
 				fmt.Printf("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
 			} else if err != nil {
 				return false, errors.Wrap(convertMongoErr(err), "failed to store previous version")
@@ -521,8 +527,13 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 	if curVersionId == nil {
 		var info *mongo.UpdateResult
 		selector := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
+		if glog.V(5) {
+			start = time.Now()
+		}
 		info, err = curCollection.ReplaceOne(context.TODO(), selector, resource, replaceopt.Upsert(true), ms.session)
-		ms.debug("   upsert %#v", selector)
+		if glog.V(5) {
+			glog.V(3).Infof("   upsert %#v took %v", selector, time.Since(start))
+		}
 		if err != nil {
 			bson, err2 := resource.GetBSON()
 			if err2 != nil {
@@ -543,8 +554,13 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 			selector.Set(bson.EC.SubDocumentFromElements("meta.versionId", bson.EC.Boolean("$exists", false)))
 		}
 		var updateOneInfo *mongo.UpdateResult
+		if glog.V(5) {
+			start = time.Now()
+		}
 		updateOneInfo, err = curCollection.ReplaceOne(context.TODO(), selector, resource, ms.session)
-		ms.debug("   update %#v --> %#v (err %#v)", selector.String(), updateOneInfo, err)
+		if glog.V(5) {
+			glog.V(3).Infof("   update %#v --> %#v (err %#v) took %v", selector.String(), updateOneInfo, err, time.Since(start))
+		}
 		if err != nil {
 			err = errors.Wrap(err, "PUT handler: failed to update current document")
 		} else if updateOneInfo.ModifiedCount == 0 {
@@ -553,9 +569,9 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 		updated = 1
 	}
 	if updated == 0 {
-		ms.debug("      created new")
+		glog.V(3).Infof("      created new")
 	} else {
-		ms.debug("      updated %d", updated)
+		glog.V(3).Infof("      updated %d", updated)
 	}
 
 	if err == nil {
@@ -657,7 +673,7 @@ func (ms *mongoSession) Delete(id, resourceType string) (newVersionId string, er
 
 	filter := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
 	deleteInfo, err := curCollection.DeleteOne(context.TODO(), filter, ms.session)
-	ms.debug("   deleteInfo: %+v (err %+v)", deleteInfo, err)
+	glog.V(3).Infof("   deleteInfo: %+v (err %+v)", deleteInfo, err)
 	if deleteInfo.DeletedCount == 0 && err == nil {
 		err = mongo.ErrNoDocuments
 	}
@@ -891,7 +907,7 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 
 		var prevDocBson bson.Document
 		err = cursor.Decode(&prevDocBson)
-		ms.debug("History: decoded prev document: %s", prevDocBson.String())
+		glog.V(8).Infof("History: decoded prev document: %s", prevDocBson.String())
 		if err != nil {
 			return nil, errors.Wrap(err, "History: cursor.Decode failed")
 		}
@@ -973,7 +989,7 @@ func (ms *mongoSession) Search(baseURL url.URL, searchQuery search.Query) (*mode
 	}
 
 	for _, v := range includesMap {
-		ms.debug("includesMap: %#v\n", v)
+		glog.V(4).Infof("includesMap: %#v\n", v)
 		var entry models2.ShallowBundleEntryComponent
 		entry.Resource = v
 		entry.Search = &models.BundleEntrySearchComponent{Mode: "include"}

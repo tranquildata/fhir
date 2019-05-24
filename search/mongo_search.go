@@ -2,22 +2,27 @@ package search
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
-	"context"
 	"regexp"
-	"strings"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/mongo/aggregateopt"
 	bson2 "github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/aggregateopt"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+
 	// mgo "gopkg.in/mgo.v2"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -46,7 +51,9 @@ func (b *BSONQuery) DebugString() string {
 	out.WriteString(fmt.Sprintf("Resource: %s; ", b.Resource))
 	if b.Query != nil {
 		queryJSON, err := bson.MarshalJSON(b.Query)
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 		out.WriteString("Query: ")
 		// out.WriteString(fmt.Sprintf("%+v; as JSON: ", b.Query))
 		out.Write(queryJSON)
@@ -54,7 +61,9 @@ func (b *BSONQuery) DebugString() string {
 	}
 	if b.Pipeline != nil {
 		pipelineJson, err := bson.MarshalJSON(b.Pipeline)
-		if err != nil { panic(err) }
+		if err != nil {
+			panic(err)
+		}
 		out.WriteString("Pipeline: ")
 		out.Write(pipelineJson)
 		out.WriteString("; ")
@@ -79,22 +88,11 @@ type MongoSearcher struct {
 	readonly          bool
 }
 
-func (dal *MongoSearcher) debug(format string, a ...interface{}) {
-	return
-	fmt.Println()
-	fmt.Print("[search] ")
-	fmt.Printf(format, a...)
-	fmt.Println()
-	fmt.Println()
-}
-
-
-
 // NewMongoSearcher creates a new instance of a MongoSearcher for an already open session
 func NewMongoSearcher(db *mongo.Database, session *mongo.Session, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
 	return &MongoSearcher{
 		db:                db,
-		session:	       session,
+		session:           session,
 		countTotalResults: countTotalResults,
 		enableCISearches:  enableCISearches,
 		readonly:          readonly,
@@ -119,7 +117,7 @@ func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTota
 
 	return &MongoSearcher{
 		db:                db,
-		session:	       session,
+		session:           session,
 		countTotalResults: countTotalResults,
 		enableCISearches:  enableCISearches,
 		readonly:          readonly,
@@ -175,6 +173,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 
 	var computedTotal uint32
 	var cursor mongo.Cursor
+	var start time.Time
 	options := query.Options()
 	bsonQuery := m.convertToBSON(query) // build the BSON query (without any options)
 	usesPipeline := bsonQuery.usesPipeline()
@@ -182,14 +181,30 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 	// Execute the query
 	if usesPipeline {
 		// The (slower) aggregation pipeline is used if the query contains includes or revincludes
-		m.debug("aggregate (%s) %#v count=%t", bsonQuery.DebugString(), options, doCount)
+
+		if glog.V(5) {
+			start = time.Now()
+			glog.V(5).Infof("aggregate (%s) %#v count=%t", bsonQuery.DebugString(), options, doCount)
+		}
+
 		cursor, computedTotal, err = m.aggregate(bsonQuery, options, doCount)
-		m.debug("   cursor  %+v, total %d, err %+v", cursor, computedTotal, err)
+
+		if glog.V(5) {
+			glog.V(5).Infof("   cursor  %+v, total %d, err %+v took %v", cursor, computedTotal, err, time.Since(start))
+		}
+
 	} else {
 		// Otherwise, the (faster) standard query is used
-		m.debug("find (%s) %#v count=%t", bsonQuery.DebugString(), options, doCount)
+
+		if glog.V(5) {
+			start = time.Now()
+			glog.V(5).Infof("find (%s) %#v count=%t", bsonQuery.DebugString(), options, doCount)
+		}
 		cursor, computedTotal, err = m.find(bsonQuery, options, doCount)
-		m.debug("   cursor  %+v, total %d, err %+v", cursor, computedTotal, err)
+
+		if glog.V(5) {
+			glog.V(5).Infof("   cursor  %+v, total %d, err %+v took %v", cursor, computedTotal, err, time.Since(start))
+		}
 	}
 
 	// Check if the query returned any errors
@@ -225,7 +240,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 				return nil, 0, errors.Wrap(err, "Search: NewResourceFromBSON failed")
 			}
 			resources = append(resources, resource)
-		} 
+		}
 		if err := cursor.Err(); err != nil {
 			return nil, 0, errors.Wrap(err, "Search cursor error")
 		}
@@ -295,7 +310,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 				}
 				total = uint32(result.Total)
 			} else {
-				m.debug("aggregate count --> cursor Next returned false")
+				glog.V(3).Infof("aggregate count --> cursor Next returned false")
 				err = cursor.Err()
 				if err != nil {
 					return nil, 0, errors.Wrap(err, "aggregate count cursor --> next failed")
@@ -306,7 +321,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 
 	if options.Summary == "count" {
 		// Just return the count and don't do the search.
-		m.debug("returning only total (%d)", total)
+		glog.V(3).Infof("returning only total (%d)", total)
 		return nil, total, nil
 	}
 
@@ -319,18 +334,18 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "aggregate operation failed")
 	}
-	m.debug("returning cursor")
+	glog.V(3).Infof("returning cursor")
 	return cursor, total, nil
 }
 
-func bson1ArrayToBytes(bson1 []bson.M) ([]byte) {
+func bson1ArrayToBytes(bson1 []bson.M) []byte {
 	bytes, err := bson.Marshal(bson1)
 	if err != nil {
 		panic(err)
 	}
 	return bytes
 }
-func bson1ToBytes(bson1 bson.M) ([]byte) {
+func bson1ToBytes(bson1 bson.M) []byte {
 	bytes, err := bson.Marshal(bson1)
 	if err != nil {
 		panic(err)
@@ -1128,7 +1143,7 @@ func (m *MongoSearcher) createQuantityQueryObject(q *QuantityParam) bson.M {
 					"$gte": l,
 				},
 				"value.__to": bson.M{
-					"$lte":  h,
+					"$lte": h,
 				},
 			}
 
@@ -1200,7 +1215,7 @@ func (m *MongoSearcher) createQuantityQueryObject(q *QuantityParam) bson.M {
 			// } else {
 			// 	criteria["$or"] = orClause
 			// }
-			
+
 		} else {
 			criteria["code"] = m.ci(q.Code)
 			criteria["system"] = m.ci(q.System)
@@ -1315,7 +1330,6 @@ func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
 		systemCriteria = m.ci(t.System)
 	}
 
-
 	single := func(p SearchParamPath) bson.M {
 		criteria := bson.M{}
 		switch p.Type {
@@ -1327,7 +1341,7 @@ func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
 				criteria["code"] = codeCriteria
 			}
 		case "CodeableConcept":
-			if systemCriteria != nil && codeCriteria != nil{
+			if systemCriteria != nil && codeCriteria != nil {
 				criteria["coding"] = bson.M{"$elemMatch": bson.M{"system": systemCriteria, "code": codeCriteria}}
 			} else {
 				if systemCriteria != nil {
