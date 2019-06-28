@@ -412,7 +412,6 @@ func (ms *mongoSession) PostWithID(id string, resource *models2.Resource) error 
 		return convertMongoErr(err)
 	}
 
-	glog.V(3).Infof("PostWithID: updating %s", resource.ResourceType())
 	resource.SetId(bsonID.Hex())
 	updateResourceMeta(resource, 1)
 	resourceType := resource.ResourceType()
@@ -420,7 +419,7 @@ func (ms *mongoSession) PostWithID(id string, resource *models2.Resource) error 
 
 	ms.invokeInterceptorsBefore("Create", resourceType, resource)
 
-	glog.V(3).Infof("PostWithID: inserting %s", resource.ResourceType())
+	glog.V(3).Infof("PostWithID: inserting %s/%s", resourceType, id)
 	_, err = curCollection.InsertOne(context.TODO(), resource, ms.session)
 
 	if err == nil {

@@ -330,12 +330,12 @@ func (b *BatchController) Post(c *gin.Context) {
 				glog.V(4).Infof("  --> ERROR %+v", err)
 			}
 			if entry.Response != nil {
-				glog.V(4).Infof("  --> %s", entry.Response.DebugString())
+				glog.V(11).Infof("  --> %s", entry.Response.DebugString())
 			} else {
 				glog.V(4).Infof("  --> nil Response")
 			}
 			if entry.Resource != nil {
-				glog.V(4).Infof("  --> %s", entry.Resource.JsonBytes())
+				glog.V(11).Infof("  --> %s", entry.Resource.JsonBytes())
 			} else {
 				glog.V(4).Infof("  --> nil Resource")
 			}

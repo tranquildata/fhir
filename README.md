@@ -124,6 +124,8 @@ Building and running from source
 				Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')
 		-enableMultiDB
 				Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex
+		-enableHistory
+				Keep previous versions of every resource
 		-disableSearchTotals
 				Don't query for all results of a search to return Bundle.total, only do paging
 		-mongodbURI string
