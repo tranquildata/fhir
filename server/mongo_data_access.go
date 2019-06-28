@@ -17,6 +17,8 @@ import (
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/core/readconcern"
+	"github.com/mongodb/mongo-go-driver/core/writeconcern"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"github.com/mongodb/mongo-go-driver/mongo/replaceopt"
@@ -43,7 +45,10 @@ type mongoSession struct {
 }
 
 func (dal *mongoDataAccessLayer) StartSession(customDbName string) DataAccessSession {
-	session, err := dal.client.StartSession(sessionopt.CausalConsistency(false))
+	session, err := dal.client.StartSession(
+		sessionopt.CausalConsistency(true),
+		sessionopt.DefaultWriteConcern(writeconcern.New(writeconcern.W(1), writeconcern.J(false))),
+		sessionopt.DefaultReadConcern(readconcern.New(readconcern.Level("snapshot"))))
 	if err != nil {
 		panic(errors.Wrap(err, "StartSession failed"))
 	}
