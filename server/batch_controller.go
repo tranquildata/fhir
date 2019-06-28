@@ -363,7 +363,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			// For failing transactions return a single operation-outcome
 			if entry.Response != nil && entry.Response.Outcome != nil {
 
-				glog.V(3).Infof("  transaction failing due to %s %s: %v", entry.Request.Method, entry.Request.Url, entry.Response.Outcome)
+				glog.V(3).Infof("  transaction failing due to: %v", entry.Response)
 
 				status, err := strconv.Atoi(entry.Response.Status)
 				if err != nil {

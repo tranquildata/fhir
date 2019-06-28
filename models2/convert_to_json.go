@@ -273,7 +273,7 @@ func processArray(out *bytes.Buffer, v []interface{}) error {
 
 func processExtensionsArray(out *bytes.Buffer, value interface{}) error {
 
-	debug("  processExtensionsArray: %+v", value, value)
+	debug("  processExtensionsArray: %+v", value)
 
 	var array []interface{}
 	// var array []bson.DocElem
