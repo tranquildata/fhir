@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"time"
 
+	"go.opencensus.io/plugin/ochttp"
+
 	"github.com/eug48/fhir/auth"
 	"github.com/eug48/fhir/fhir-server/middleware"
 	"github.com/eug48/fhir/server"
@@ -84,7 +86,9 @@ func main() {
 
 		fileLoggerMiddleware := middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET, s.Engine)
 
-		err := http.ListenAndServe(address, fileLoggerMiddleware)
+		openCensusHandler := ochttp.WithRouteTag(fileLoggerMiddleware, "/")
+
+		err := http.ListenAndServe(address, openCensusHandler)
 		if err != nil {
 			panic("ListenAndServe failed: " + err.Error())
 		}

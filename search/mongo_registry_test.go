@@ -3,7 +3,7 @@ package search
 import (
 	"github.com/pebbe/util"
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type MongoRegistrySuite struct{}

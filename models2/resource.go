@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
-	bson2 "github.com/mongodb/mongo-go-driver/bson"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
@@ -28,7 +27,7 @@ type Resource struct {
 	versionIdChanged       bool
 	lastUpdatedChanged     bool
 	transformReferencesMap map[string]string
-	cachedBson             *[]bson.DocElem
+	cachedBson             *[]bson.E
 	whatToEncrypt          WhatToEncrypt
 }
 
@@ -106,34 +105,34 @@ func dumpMalformedJson(jsonBytes []byte, jsonError error, failedRequestsDir stri
 	currentTime := time.Now()
 	timestamp := currentTime.Format("2006-01-02-15-04-05.000000")
 
-	f, ferr := os.Create(path.Join(failedRequestsDir, timestamp + ".error.txt"))
-	if (ferr != nil) {
+	f, ferr := os.Create(path.Join(failedRequestsDir, timestamp+".error.txt"))
+	if ferr != nil {
 		return ferr
 	}
 	defer f.Close()
 
 	_, ferr = f.WriteString("AsShallowBundle: json.Unmarshal failed: ")
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 	_, ferr = f.WriteString(jsonError.Error())
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 	_, ferr = f.WriteString("\n")
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 	_, ferr = f.WriteString("\n")
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 	_, ferr = f.Write(jsonBytes)
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 	ferr = f.Sync()
-	if (ferr != nil) {
+	if ferr != nil {
 		return ferr
 	}
 
@@ -144,11 +143,11 @@ func (r *Resource) AsShallowBundle(failedRequestsDir string) (bundle *ShallowBun
 	bundle = &ShallowBundle{}
 	err = json.Unmarshal(r.jsonBytes, bundle)
 	if err != nil {
-		if (failedRequestsDir != "") {
+		if failedRequestsDir != "" {
 
 			// previously tried dumping to stderr but Kubernetes and Stackdriver truncate it..
 			ferr := dumpMalformedJson(r.jsonBytes, err, failedRequestsDir)
-			if (ferr != nil) {
+			if ferr != nil {
 				fmt.Fprintf(os.Stderr, "json.Unmarshal failed: %s and failed to write to failedRequestsDir (%s)", err.Error(), ferr.Error())
 				return nil, errors.Wrap(err, "json.Unmarshal failed - see stderr for more details")
 			}
@@ -190,7 +189,7 @@ func (r *Resource) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Resource.MarshalJSON: GetBSON failed")
 		}
-		cachedBson2 := cachedBson.([]bson.DocElem)
+		cachedBson2 := cachedBson.([]bson.E)
 		r.cachedBson = &cachedBson2
 	}
 
@@ -237,7 +236,7 @@ func (r *Resource) MarshalBSON() ([]byte, error) {
 func (r *Resource) GetBSON() (interface{}, error) {
 	// debug("GetBSON: transformReferencesMap: %#v", r.transformReferencesMap)
 	bsonDoc, err := ConvertJsonToGoFhirBSON(r.jsonBytes, r.whatToEncrypt, r.transformReferencesMap)
-	bsonDoc2 := []bson.DocElem(bsonDoc)
+	bsonDoc2 := []bson.E(bsonDoc)
 	if err != nil {
 		return nil, errors.Wrap(err, "ConvertJsonToGoFhirBSON failed")
 	}
@@ -269,12 +268,12 @@ func (r *Resource) GetBSON() (interface{}, error) {
 	return bsonDoc2, err
 }
 
-func getOrInsertBsonEmbeddedDoc(doc *[]bson.DocElem, name string, rawInsertPos int) (*[]bson.DocElem, error) {
+func getOrInsertBsonEmbeddedDoc(doc *[]bson.E, name string, rawInsertPos int) (*[]bson.E, error) {
 
 	for i, _ := range *doc {
 		elem := &(*doc)[i]
-		if elem.Name == name {
-			val, ok := elem.Value.([]bson.DocElem)
+		if elem.Key == name {
+			val, ok := elem.Value.([]bson.E)
 			if !ok {
 				return nil, fmt.Errorf("findBsonEmbeddedDoc: bad type: %T", elem.Value)
 			}
@@ -283,22 +282,22 @@ func getOrInsertBsonEmbeddedDoc(doc *[]bson.DocElem, name string, rawInsertPos i
 		}
 	}
 
-	*doc = append(*doc, bson.DocElem{})
+	*doc = append(*doc, bson.E{})
 	ins := min(rawInsertPos, len(*doc)-1)
 	if ins < len(*doc)-1 {
 		copy((*doc)[ins+1:], (*doc)[ins:])
 	}
 
-	subdoc := make([]bson.DocElem, 0, 2)
-	(*doc)[ins] = bson.DocElem{Name: name, Value: &subdoc}
+	subdoc := make([]bson.E, 0, 2)
+	(*doc)[ins] = bson.E{Key: name, Value: &subdoc}
 	return &subdoc, nil
 }
 
-func setBsonValue(doc *[]bson.DocElem, name string, valueToSet interface{}, rawInsertPos int) {
+func setBsonValue(doc *[]bson.E, name string, valueToSet interface{}, rawInsertPos int) {
 
 	for i, _ := range *doc {
 		elem := &(*doc)[i]
-		if elem.Name == name {
+		if elem.Key == name {
 			debug("     setBsonValue: %s -> %s", name, valueToSet)
 			elem.Value = valueToSet
 			return
@@ -307,12 +306,12 @@ func setBsonValue(doc *[]bson.DocElem, name string, valueToSet interface{}, rawI
 		}
 	}
 
-	*doc = append(*doc, bson.DocElem{})
+	*doc = append(*doc, bson.E{})
 	ins := min(rawInsertPos, len(*doc)-1)
 	if ins < len(*doc)-1 {
 		copy((*doc)[ins+1:], (*doc)[ins:])
 	}
-	(*doc)[ins] = bson.DocElem{Name: name, Value: valueToSet}
+	(*doc)[ins] = bson.E{Key: name, Value: valueToSet}
 	debug("     setBsonValue: inserted %s --> %s", name, valueToSet)
 }
 
@@ -324,24 +323,7 @@ func min(x int, y int) int {
 	}
 }
 
-
-func NewResourceFromBSON2(bsonDoc2 *bson2.Document) (resource *Resource, err error) {
-	bytes, err := bsonDoc2.MarshalBSON()
-	if err != nil {
-		return nil, errors.Wrap(err, "NewResourceFromBSON2 --> MarshalBSON")
-	}
-
-	var bsonDoc bson.D
-	err = bson.Unmarshal(bytes, &bsonDoc)
-	if err != nil {
-		return nil, errors.Wrap(err, "NewResourceFromBSON2 --> Unmarshal")
-	}
-
-	// TODO: migrate fully to mongo-go-driver
-	return NewResourceFromBSON(bsonDoc)
-}
-
-func NewResourceFromBSON(bsonDoc []bson.DocElem) (resource *Resource, err error) {
+func NewResourceFromBSON(bsonDoc []bson.E) (resource *Resource, err error) {
 	jsonBytes, includedJsons, err := ConvertGoFhirBSONToJSON(bsonDoc)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewResourceFromBSON: ConvertGoFhirBSONToJSON failed")

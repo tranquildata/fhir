@@ -10,8 +10,9 @@ import (
 	"gopkg.in/mgo.v2/dbtest"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MiddlewareTestSuite struct {
@@ -41,7 +42,7 @@ func (m *MiddlewareTestSuite) SetupSuite() {
 	mgoSession := m.DBServer.Session()
 	defer mgoSession.Close()
 	serverUri := mgoSession.LiveServers()[0]
-	m.client, err = mongo.Connect(context.TODO(), "mongodb://"+serverUri)
+	m.client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://"+serverUri))
 	m.dbname = "fhir-test"
 	if err != nil {
 		panic(err)

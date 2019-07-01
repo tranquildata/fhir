@@ -2,16 +2,18 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
-	"context"
 	"strings"
+
 	// "time"
 
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Indexer is the top-level interface for managing MongoDB indexes.
@@ -135,7 +137,8 @@ func parseIndex(line string) (collectionName string, newIndex *mongo.IndexModel,
 	}
 
 	// build the index in the background; do not block other connections
-	newIndex.Options = bson.NewDocument(bson.EC.Boolean("background", true))
+	backgroundIndex := true
+	newIndex.Options = &options.IndexOptions{Background: &backgroundIndex}
 	return collectionName, newIndex, nil
 }
 
@@ -151,7 +154,7 @@ func parseStandardIndex(indexSpec string) (*mongo.IndexModel, error) {
 	}
 
 	return &mongo.IndexModel{
-		Keys: bson.NewDocument(bson.EC.Int32(key, direction)),
+		Keys: bson.D{{Key: key, Value: direction}},
 	}, nil
 }
 
@@ -168,17 +171,17 @@ func parseCompoundIndex(indexSpec string) (*mongo.IndexModel, error) {
 	// Note: if only one key is specified in the compound format a standard (not compound) key will be returned
 	specs := strings.Split(indexSpec[1:len(indexSpec)-1], ",")
 
-	var keys bson.Document
+	var keys bson.D
 
 	for _, spec := range specs {
 		key, direction := parseIndexKey(strings.Trim(spec, " ")) // trim leading and trailing whitespace before parsing
 		if key == "" {
 			return nil, errors.New("Compound key sub-key not of format: <key>_(-)1")
 		}
-		keys.Set(bson.EC.Int32(key, direction))
+		keys = append(keys, bson.E{Key: key, Value: direction})
 	}
 	return &mongo.IndexModel{
-		Keys: &keys,
+		Keys: keys,
 	}, nil
 }
 
@@ -206,5 +209,5 @@ func newParseIndexError(indexName, reason string) error {
 }
 
 func sprintIndexKeys(index *mongo.IndexModel) string {
-	return fmt.Sprintf("%s (%s)", index.Keys.ToExtJSON(false), index.Options.ToExtJSON(false))
+	return fmt.Sprintf("%+v (%+v)", index.Keys, index.Options)
 }

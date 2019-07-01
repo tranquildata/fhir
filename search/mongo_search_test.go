@@ -16,9 +16,10 @@ import (
 
 	"github.com/eug48/fhir/models"
 	"github.com/pebbe/util"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/mgo.v2/dbtest"
 )
 
@@ -97,8 +98,8 @@ func (m *MongoSearchSuite) TestConditionCodeQueryObjectBySystemAndCode(c *C) {
 	c.Assert(o, DeepEquals, bson.M{
 		"code.coding": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-				"code":   bson.RegEx{Pattern: "^123641001$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^123641001$", Options: "i"},
 			},
 		},
 	})
@@ -142,7 +143,7 @@ func (m *MongoSearchSuite) TestConditionCodeQueryObjectByCode(c *C) {
 	q := Query{"Condition", "code=123641001"}
 
 	o := m.MongoSearcher.createQueryObject(q)
-	c.Assert(o, DeepEquals, bson.M{"code.coding.code": bson.RegEx{Pattern: "^123641001$", Options: "i"}})
+	c.Assert(o, DeepEquals, bson.M{"code.coding.code": primitive.Regex{Pattern: "^123641001$", Options: "i"}})
 }
 
 func (m *MongoSearchSuite) TestConditionCodeQueryByCode(c *C) {
@@ -241,8 +242,8 @@ func (m *MongoSearchSuite) TestImagingStudyBodySiteQueryObjectBySystemAndCode(c 
 	c.Assert(o, DeepEquals, bson.M{
 		"series": bson.M{
 			"$elemMatch": bson.M{
-				"bodySite.system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-				"bodySite.code": bson.RegEx{Pattern: "^67734004$", Options: "i"},
+				"bodySite.system": primitive.Regex{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
+				"bodySite.code":   primitive.Regex{Pattern: "^67734004$", Options: "i"},
 			},
 		},
 	})
@@ -272,8 +273,8 @@ func (m *MongoSearchSuite) TestEncounterIdentifierQueryObjectBySystemAndValue(c 
 	c.Assert(o, DeepEquals, bson.M{
 		"identifier": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://acme\\.com$", Options: "i"},
-				"value":  bson.RegEx{Pattern: "^1$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://acme\\.com$", Options: "i"},
+				"value":  primitive.Regex{Pattern: "^1$", Options: "i"},
 			},
 		},
 	})
@@ -396,8 +397,8 @@ func (m *MongoSearchSuite) TestConditionReferenceQueryObjectByPatientId(c *C) {
 
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
-		"subject.reference__id": "4954037118555241963",
-		"subject.reference__type":        "Patient",
+		"subject.reference__id":   "4954037118555241963",
+		"subject.reference__type": "Patient",
 	})
 }
 
@@ -428,7 +429,7 @@ func (m *MongoSearchSuite) TestConditionReferenceQueryObjectByPatientURL(c *C) {
 	q := Query{"Condition", "patient=http://acme.com/Patient/123456789"}
 
 	o := m.MongoSearcher.createQueryObject(q)
-	c.Assert(o, DeepEquals, bson.M{"subject.reference": bson.RegEx{Pattern: "^http://acme\\.com/Patient/123456789$", Options: "i"}})
+	c.Assert(o, DeepEquals, bson.M{"subject.reference": primitive.Regex{Pattern: "^http://acme\\.com/Patient/123456789$", Options: "i"}})
 }
 
 func (m *MongoSearchSuite) TestConditionSortByPatientAscending(c *C) {
@@ -531,7 +532,7 @@ func (m *MongoSearchSuite) TestConditionChainedSearchPipelineObject(c *C) {
 			"as":           "_lookup0",
 		}},
 		bson.M{"$match": bson.M{
-			"_lookup0.gender": bson.RegEx{Pattern: "^male$", Options: "i"},
+			"_lookup0.gender": primitive.Regex{Pattern: "^male$", Options: "i"},
 		}},
 	})
 }
@@ -554,8 +555,8 @@ func (m *MongoSearchSuite) TestChainedSearchPipelineObjectWithOr(c *C) {
 		}},
 		bson.M{"$match": bson.M{
 			"$or": []bson.M{
-				bson.M{"_lookup0.gender": bson.RegEx{Pattern: "^foo$", Options: "i"}},
-				bson.M{"_lookup0.gender": bson.RegEx{Pattern: "^bar$", Options: "i"}},
+				bson.M{"_lookup0.gender": primitive.Regex{Pattern: "^foo$", Options: "i"}},
+				bson.M{"_lookup0.gender": primitive.Regex{Pattern: "^bar$", Options: "i"}},
 			},
 		}},
 	})
@@ -585,8 +586,8 @@ func (m *MongoSearchSuite) TestChainedSearchPipelineObjectWithMultipleReferenceP
 		}},
 		bson.M{"$match": bson.M{
 			"$or": []bson.M{
-				bson.M{"_lookup0.gender": bson.RegEx{Pattern: "^male$", Options: "i"}},
-				bson.M{"_lookup1.gender": bson.RegEx{Pattern: "^male$", Options: "i"}},
+				bson.M{"_lookup0.gender": primitive.Regex{Pattern: "^male$", Options: "i"}},
+				bson.M{"_lookup1.gender": primitive.Regex{Pattern: "^male$", Options: "i"}},
 			},
 		}},
 	})
@@ -617,12 +618,12 @@ func (m *MongoSearchSuite) TestChainedSearchPipelineObjectWithMultipleReferenceP
 		bson.M{"$match": bson.M{
 			"$or": []bson.M{
 				bson.M{"$or": []bson.M{
-					bson.M{"_lookup0.gender": bson.RegEx{Pattern: "^foo$", Options: "i"}},
-					bson.M{"_lookup1.gender": bson.RegEx{Pattern: "^foo$", Options: "i"}},
+					bson.M{"_lookup0.gender": primitive.Regex{Pattern: "^foo$", Options: "i"}},
+					bson.M{"_lookup1.gender": primitive.Regex{Pattern: "^foo$", Options: "i"}},
 				}},
 				bson.M{"$or": []bson.M{
-					bson.M{"_lookup0.gender": bson.RegEx{Pattern: "^bar$", Options: "i"}},
-					bson.M{"_lookup1.gender": bson.RegEx{Pattern: "^bar$", Options: "i"}},
+					bson.M{"_lookup0.gender": primitive.Regex{Pattern: "^bar$", Options: "i"}},
+					bson.M{"_lookup1.gender": primitive.Regex{Pattern: "^bar$", Options: "i"}},
 				}},
 			},
 		}},
@@ -671,7 +672,7 @@ func (m *MongoSearchSuite) TestPatientReverseChainedSearchPipelineObject(c *C) {
 			"foreignField": "subject.reference__id",
 			"as":           "_lookup0",
 		}},
-		bson.M{"$match": bson.M{"_lookup0.code.coding.code": bson.RegEx{Pattern: "^1234-5$", Options: "i"}}},
+		bson.M{"$match": bson.M{"_lookup0.code.coding.code": primitive.Regex{Pattern: "^1234-5$", Options: "i"}}},
 	})
 }
 
@@ -694,8 +695,8 @@ func (m *MongoSearchSuite) TestPatientReverseChainedSearchPipelineObjectWithOr(c
 		}},
 		bson.M{"$match": bson.M{
 			"$or": []bson.M{
-				bson.M{"_lookup0.code.coding.code": bson.RegEx{Pattern: "^1234-5$", Options: "i"}},
-				bson.M{"_lookup0.code.coding.code": bson.RegEx{Pattern: "^5678-9$", Options: "i"}},
+				bson.M{"_lookup0.code.coding.code": primitive.Regex{Pattern: "^1234-5$", Options: "i"}},
+				bson.M{"_lookup0.code.coding.code": primitive.Regex{Pattern: "^5678-9$", Options: "i"}},
 			}},
 		},
 	})
@@ -726,8 +727,8 @@ func (m *MongoSearchSuite) TestReverseChainedSearchPipelineObjectWithMultipleRef
 		}},
 		bson.M{"$match": bson.M{
 			"$or": []bson.M{
-				bson.M{"_lookup0.outcome": bson.RegEx{Pattern: "^foo$", Options: "i"}},
-				bson.M{"_lookup1.outcome": bson.RegEx{Pattern: "^foo$", Options: "i"}},
+				bson.M{"_lookup0.outcome": primitive.Regex{Pattern: "^foo$", Options: "i"}},
+				bson.M{"_lookup1.outcome": primitive.Regex{Pattern: "^foo$", Options: "i"}},
 			},
 		}},
 	})
@@ -1490,7 +1491,7 @@ func (m *MongoSearchSuite) TestDeviceStringQueryObject(c *C) {
 	q := Query{"Device", "manufacturer=Acme"}
 
 	o := m.MongoSearcher.createQueryObject(q)
-	c.Assert(o, DeepEquals, bson.M{"manufacturer": bson.RegEx{Pattern: "^Acme$", Options: "i"}})
+	c.Assert(o, DeepEquals, bson.M{"manufacturer": primitive.Regex{Pattern: "^Acme$", Options: "i"}})
 }
 
 func (m *MongoSearchSuite) TestDeviceStringQuery(c *C) {
@@ -1569,9 +1570,9 @@ func (m *MongoSearchSuite) TestPatientNameStringQueryObject(c *C) {
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
 		"$or": []bson.M{
-			bson.M{"name.text": bson.RegEx{Pattern: "^Peters", Options: "i"}},
-			bson.M{"name.family": bson.RegEx{Pattern: "^Peters", Options: "i"}},
-			bson.M{"name.given": bson.RegEx{Pattern: "^Peters", Options: "i"}},
+			bson.M{"name.text": primitive.Regex{Pattern: "^Peters", Options: "i"}},
+			bson.M{"name.family": primitive.Regex{Pattern: "^Peters", Options: "i"}},
+			bson.M{"name.given": primitive.Regex{Pattern: "^Peters", Options: "i"}},
 		},
 	})
 }
@@ -1679,12 +1680,12 @@ func (m *MongoSearchSuite) TestPatientAddressStringQueryObject(c *C) {
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
 		"$or": []bson.M{
-			bson.M{"address.text": bson.RegEx{Pattern: "^AK", Options: "i"}},
-			bson.M{"address.line": bson.RegEx{Pattern: "^AK", Options: "i"}},
-			bson.M{"address.city": bson.RegEx{Pattern: "^AK", Options: "i"}},
-			bson.M{"address.state": bson.RegEx{Pattern: "^AK", Options: "i"}},
-			bson.M{"address.postalCode": bson.RegEx{Pattern: "^AK", Options: "i"}},
-			bson.M{"address.country": bson.RegEx{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.text": primitive.Regex{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.line": primitive.Regex{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.city": primitive.Regex{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.state": primitive.Regex{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.postalCode": primitive.Regex{Pattern: "^AK", Options: "i"}},
+			bson.M{"address.country": primitive.Regex{Pattern: "^AK", Options: "i"}},
 		},
 	})
 }
@@ -1711,10 +1712,10 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndUnit(c *C) {
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
 		"valueQuantity.value.__from": bson.M{"$gte": 184.5},
-		"valueQuantity.value.__to": bson.M{"$lte": 185.5},
+		"valueQuantity.value.__to":   bson.M{"$lte": 185.5},
 		"$or": []bson.M{
-			bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-			bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 		},
 	})
 }
@@ -1756,9 +1757,9 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndSystemAndCode(c
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
 		"valueQuantity.value.__from": bson.M{"$gte": 184.5},
-		"valueQuantity.value.__to": bson.M{"$lte": 185.5},
-		"valueQuantity.code":   bson.RegEx{Pattern: "^\\[lb_av\\]$", Options: "i"},
-		"valueQuantity.system": bson.RegEx{Pattern: "^http://unitsofmeasure\\.org$", Options: "i"},
+		"valueQuantity.value.__to":   bson.M{"$lte": 185.5},
+		"valueQuantity.code":         primitive.Regex{Pattern: "^\\[lb_av\\]$", Options: "i"},
+		"valueQuantity.system":       primitive.Regex{Pattern: "^http://unitsofmeasure\\.org$", Options: "i"},
 	})
 }
 
@@ -1769,8 +1770,8 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndUnitLT(c *C) {
 	c.Assert(o, DeepEquals, bson.M{
 		"valueQuantity.value.__from": bson.M{"$lt": float64(186)},
 		"$or": []bson.M{
-			bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-			bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 		},
 	})
 
@@ -1791,8 +1792,8 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndUnitGT(c *C) {
 	c.Assert(o, DeepEquals, bson.M{
 		"valueQuantity.value.__to": bson.M{"$gt": float64(184)},
 		"$or": []bson.M{
-			bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-			bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 		},
 	})
 
@@ -1811,18 +1812,18 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndUnitLE(c *C) {
 	q := Query{"Observation", "value-quantity=le186||lbs"}
 	o := m.MongoSearcher.createQueryObject(q)
 	c.Assert(o, DeepEquals, bson.M{
-		"valueQuantity": bson.M {
+		"valueQuantity": bson.M{
 			"$and": []bson.M{
-				bson.M {
+				bson.M{
 					"$or": []bson.M{
 						bson.M{"value.__from": bson.M{"$lte": float64(185.5)}},
 						bson.M{"value.__to": bson.M{"$lte": float64(186.5)}},
 					},
 				},
-				bson.M {
+				bson.M{
 					"$or": []bson.M{
-						bson.M{"code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-						bson.M{"unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+						bson.M{"code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+						bson.M{"unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 					},
 				},
 			},
@@ -1846,8 +1847,8 @@ func (m *MongoSearchSuite) TestValueQuantityQueryObjectByValueAndUnitGE(c *C) {
 	c.Assert(o, DeepEquals, bson.M{
 		"valueQuantity.value.__from": bson.M{"$gte": float64(183.5)},
 		"$or": []bson.M{
-			bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-			bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+			bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 		},
 	})
 
@@ -1898,10 +1899,10 @@ func (m *MongoSearchSuite) TestComponentValueQuantityQueryObjectByValueAndUnit(c
 		"component": bson.M{
 			"$elemMatch": bson.M{
 				"valueQuantity.value.__from": bson.M{"$gte": 184.5},
-				"valueQuantity.value.__to": bson.M{"$lte": 185.5},
+				"valueQuantity.value.__to":   bson.M{"$lte": 185.5},
 				"$or": []bson.M{
-					bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-					bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+					bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+					bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 				},
 			},
 		},
@@ -1920,20 +1921,20 @@ func (m *MongoSearchSuite) TestComboValueQuantityQueryObjectByValueAndUnit(c *C)
 				"component": bson.M{
 					"$elemMatch": bson.M{
 						"valueQuantity.value.__from": bson.M{"$gte": 184.5},
-						"valueQuantity.value.__to": bson.M{"$lte": 185.5},
+						"valueQuantity.value.__to":   bson.M{"$lte": 185.5},
 						"$or": []bson.M{
-							bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-							bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+							bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+							bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 						},
 					},
 				},
 			},
 			bson.M{
 				"valueQuantity.value.__from": bson.M{"$gte": 184.5},
-				"valueQuantity.value.__to": bson.M{"$lte": 185.5},
+				"valueQuantity.value.__to":   bson.M{"$lte": 185.5},
 				"$or": []bson.M{
-					bson.M{"valueQuantity.code": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
-					bson.M{"valueQuantity.unit": bson.RegEx{Pattern: "^lbs$", Options: "i"}},
+					bson.M{"valueQuantity.code": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
+					bson.M{"valueQuantity.unit": primitive.Regex{Pattern: "^lbs$", Options: "i"}},
 				},
 			},
 		},
@@ -2183,8 +2184,8 @@ func (m *MongoSearchSuite) TestConditionTagQueryObject(c *C) {
 	c.Assert(o, DeepEquals, bson.M{
 		"meta.tag": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^foo$", Options: "i"},
-				"code": bson.RegEx{Pattern: "^bar$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^foo$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^bar$", Options: "i"},
 			}},
 	})
 }
@@ -2217,22 +2218,22 @@ func (m *MongoSearchSuite) TestConditionMultipleCodesQueryObject(c *C) {
 			bson.M{
 				"code.coding": bson.M{
 					"$elemMatch": bson.M{
-						"system": bson.RegEx{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
-						"code":   bson.RegEx{Pattern: "^428\\.0$", Options: "i"},
+						"system": primitive.Regex{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
+						"code":   primitive.Regex{Pattern: "^428\\.0$", Options: "i"},
 					}},
 			},
 			bson.M{
 				"code.coding": bson.M{
 					"$elemMatch": bson.M{
-						"system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-						"code":   bson.RegEx{Pattern: "^981000124106$", Options: "i"},
+						"system": primitive.Regex{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
+						"code":   primitive.Regex{Pattern: "^981000124106$", Options: "i"},
 					}},
 			},
 			bson.M{
 				"code.coding": bson.M{
 					"$elemMatch": bson.M{
-						"system": bson.RegEx{Pattern: "^http://hl7\\.org/fhir/sid/icd-10$", Options: "i"},
-						"code":   bson.RegEx{Pattern: "^I20\\.0$", Options: "i"},
+						"system": primitive.Regex{Pattern: "^http://hl7\\.org/fhir/sid/icd-10$", Options: "i"},
+						"code":   primitive.Regex{Pattern: "^I20\\.0$", Options: "i"},
 					}},
 			},
 		},
@@ -2268,8 +2269,8 @@ func (m *MongoSearchSuite) TestConditionPatientAndCodeAndOnsetQueryObject(c *C) 
 	// Check the code part of the query
 	c.Assert(o["code.coding"], DeepEquals, bson.M{
 		"$elemMatch": bson.M{
-			"system": bson.RegEx{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
-			"code":   bson.RegEx{Pattern: "^428\\.0$", Options: "i"},
+			"system": primitive.Regex{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
+			"code":   primitive.Regex{Pattern: "^428\\.0$", Options: "i"},
 		},
 	})
 
@@ -2336,16 +2337,16 @@ func (m *MongoSearchSuite) TestConditionPatientAndMultipleCodesQueryObject(c *C)
 		bson.M{
 			"code.coding": bson.M{
 				"$elemMatch": bson.M{
-					"system": bson.RegEx{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
-					"code":   bson.RegEx{Pattern: "^428\\.0$", Options: "i"},
+					"system": primitive.Regex{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
+					"code":   primitive.Regex{Pattern: "^428\\.0$", Options: "i"},
 				},
 			},
 		},
 		bson.M{
 			"code.coding": bson.M{
 				"$elemMatch": bson.M{
-					"system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-					"code":   bson.RegEx{Pattern: "^981000124106$", Options: "i"},
+					"system": primitive.Regex{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
+					"code":   primitive.Regex{Pattern: "^981000124106$", Options: "i"},
 				},
 			},
 		},
@@ -2361,16 +2362,16 @@ func (m *MongoSearchSuite) TestConditionMultiplePatientAndMultipleCodesQueryObje
 
 	expectedTopOr := []bson.M{
 		{
-			"subject.reference__id": "4954037118555241963",
-			"subject.reference__type":        "Patient",
+			"subject.reference__id":   "4954037118555241963",
+			"subject.reference__type": "Patient",
 		},
 		{
-			"subject.reference__id": "123456789",
-			"subject.reference__type":        "Patient",
+			"subject.reference__id":   "123456789",
+			"subject.reference__type": "Patient",
 		},
 		{
-			"subject.reference__id": "ABCDEFG",
-			"subject.reference__type":        "Patient",
+			"subject.reference__id":   "ABCDEFG",
+			"subject.reference__type": "Patient",
 		},
 	}
 
@@ -2378,16 +2379,16 @@ func (m *MongoSearchSuite) TestConditionMultiplePatientAndMultipleCodesQueryObje
 		bson.M{
 			"code.coding": bson.M{
 				"$elemMatch": bson.M{
-					"system": bson.RegEx{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
-					"code":   bson.RegEx{Pattern: "^428\\.0$", Options: "i"},
+					"system": primitive.Regex{Pattern: "^http://hl7\\.org/fhir/sid/icd-9$", Options: "i"},
+					"code":   primitive.Regex{Pattern: "^428\\.0$", Options: "i"},
 				},
 			},
 		},
 		bson.M{
 			"code.coding": bson.M{
 				"$elemMatch": bson.M{
-					"system": bson.RegEx{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
-					"code":   bson.RegEx{Pattern: "^981000124106$", Options: "i"},
+					"system": primitive.Regex{Pattern: "^http://snomed\\.info/sct$", Options: "i"},
+					"code":   primitive.Regex{Pattern: "^981000124106$", Options: "i"},
 				},
 			},
 		},
@@ -2427,8 +2428,8 @@ func (m *MongoSearchSuite) TestEncounterTypeQueryOptionsWithCount(c *C) {
 	c.Assert(obj, DeepEquals, bson.M{
 		"type.coding": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
-				"code":   bson.RegEx{Pattern: "^99201$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^99201$", Options: "i"},
 			},
 		},
 	})
@@ -2454,8 +2455,8 @@ func (m *MongoSearchSuite) TestEncounterTypeQueryOptionsForOffset(c *C) {
 	c.Assert(obj, DeepEquals, bson.M{
 		"type.coding": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
-				"code":   bson.RegEx{Pattern: "^99201$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^99201$", Options: "i"},
 			},
 		},
 	})
@@ -2481,8 +2482,8 @@ func (m *MongoSearchSuite) TestEncounterTypeQueryOptionsForCountAndOffset(c *C) 
 	c.Assert(obj, DeepEquals, bson.M{
 		"type.coding": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
-				"code":   bson.RegEx{Pattern: "^99201$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://www\\.ama-assn\\.org/go/cpt$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^99201$", Options: "i"},
 			},
 		},
 	})
@@ -2603,8 +2604,8 @@ func (m *MongoSearchSuite) TestObservationCodeQueryOptionsForInclude(c *C) {
 	c.Assert(obj, DeepEquals, bson.M{
 		"code.coding": bson.M{
 			"$elemMatch": bson.M{
-				"system": bson.RegEx{Pattern: "^http://loinc\\.org$", Options: "i"},
-				"code":   bson.RegEx{Pattern: "^17856-6$", Options: "i"},
+				"system": primitive.Regex{Pattern: "^http://loinc\\.org$", Options: "i"},
+				"code":   primitive.Regex{Pattern: "^17856-6$", Options: "i"},
 			},
 		},
 	})
@@ -2679,7 +2680,7 @@ func (m *MongoSearchSuite) TestPatientGenderQueryOptionsForRevInclude(c *C) {
 	// Make sure it doesn't somehow mess up the query object
 	obj := m.MongoSearcher.createQueryObject(q)
 	c.Assert(obj, DeepEquals, bson.M{
-		"gender": bson.RegEx{Pattern: "^male$", Options: "i"},
+		"gender": primitive.Regex{Pattern: "^male$", Options: "i"},
 	})
 
 	// Check that the options are parsed correctly
@@ -2721,7 +2722,7 @@ func (m *MongoSearchSuite) TestPatientGenderQueryForRevInclude(c *C) {
 	c.Assert(encounters, HasLen, 4)
 	// Just ensure they are populated to some degree
 	for _, encounterRes := range encounters {
-		var encounter  models.Encounter
+		var encounter models.Encounter
 		util.CheckErr(encounterRes.Unmarshal(&encounter))
 		c.Assert(encounter.Id, NotNil)
 		c.Assert(encounter.Subject.ReferencedID, Equals, "4954037118555241963")

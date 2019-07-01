@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net/url"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type DataAccessLayer interface {
-	StartSession(dbname string) DataAccessSession
+	StartSession(ctx context.Context, dbname string) DataAccessSession
 }
 
 // DataAccessLayer is an interface for the various interactions that can occur on a FHIR data store.
@@ -62,6 +63,7 @@ var ErrDeleted = errors.New("Resource deleted")
 type ErrMultipleMatches struct {
 	msg string
 }
+
 func (e ErrMultipleMatches) Error() string {
 	return e.msg
 }
@@ -72,6 +74,7 @@ var ErrOpInterrupted = errors.New("Operation Interrupted")
 type ErrConflict struct {
 	msg string
 }
+
 func (e ErrConflict) Error() string {
 	return e.msg
 }

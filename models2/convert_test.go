@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestConversion(t *testing.T) {
@@ -30,8 +31,8 @@ func TestConversion(t *testing.T) {
 
 			if encrypt {
 				for _, field := range bson {
-					if shouldEncrypt, _ := shouldEncryptField(field.Name); shouldEncrypt && field.Name != "identifier" {
-						assert.Failf(t, "field should have been encrypted", "field: %s", field.Name)
+					if shouldEncrypt, _ := shouldEncryptField(field.Key); shouldEncrypt && field.Key != "identifier" {
+						assert.Failf(t, "field should have been encrypted", "field: %s", field.Key)
 					}
 				}
 			}
@@ -79,14 +80,14 @@ func TestEncryptionOfMedicareIdentifier(t *testing.T) {
 			assert.Nil(t, err)
 
 			for _, field := range bsonDoc {
-				if shouldEncrypt, _ := shouldEncryptField(field.Name); shouldEncrypt && field.Name != "identifier" {
-					assert.Failf(t, "field should have been encrypted", "field: %s", field.Name)
+				if shouldEncrypt, _ := shouldEncryptField(field.Key); shouldEncrypt && field.Key != "identifier" {
+					assert.Failf(t, "field should have been encrypted", "field: %s", field.Key)
 				}
 			}
 
 			bsonBytes, err := bson.Marshal(&bsonDoc)
 			assert.Nil(t, err)
-			assert.True(t, bytes.Contains(bsonBytes, []byte("123"))) // unencrypted identifier
+			assert.True(t, bytes.Contains(bsonBytes, []byte("123")))  // unencrypted identifier
 			assert.False(t, bytes.Contains(bsonBytes, []byte("987"))) // encrypted identifier
 
 			backToJson, included, err := ConvertGoFhirBSONToJSON(bsonDoc)

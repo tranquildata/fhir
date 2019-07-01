@@ -49,7 +49,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		return
 	}
 
-	session := b.DAL.StartSession(c.GetHeader("Db"))
+	session := b.DAL.StartSession(c.Request.Context(), c.GetHeader("Db"))
 	defer session.Finish()
 
 	bundle, err := bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)

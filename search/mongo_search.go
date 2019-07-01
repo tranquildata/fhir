@@ -16,14 +16,10 @@ import (
 
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
-	bson2 "github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/aggregateopt"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-
-	// mgo "gopkg.in/mgo.v2"
-
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	moptions "go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // This is a MongoDB internal error code for an interrupted operation, see:
@@ -50,7 +46,7 @@ func (b *BSONQuery) DebugString() string {
 	out := bytes.Buffer{}
 	out.WriteString(fmt.Sprintf("Resource: %s; ", b.Resource))
 	if b.Query != nil {
-		queryJSON, err := bson.MarshalJSON(b.Query)
+		queryJSON, err := bson.MarshalExtJSON(b.Query, true, false)
 		if err != nil {
 			panic(err)
 		}
@@ -60,7 +56,7 @@ func (b *BSONQuery) DebugString() string {
 		out.WriteString("; ")
 	}
 	if b.Pipeline != nil {
-		pipelineJson, err := bson.MarshalJSON(b.Pipeline)
+		pipelineJson, err := bson.MarshalExtJSON(b.Pipeline, true, false)
 		if err != nil {
 			panic(err)
 		}
@@ -81,18 +77,19 @@ type CountCache struct {
 // MongoSearcher implements FHIR searches using the Mongo database.
 type MongoSearcher struct {
 	db                *mongo.Database
-	session           *mongo.Session
+	ctx               context.Context
 	client            *mongo.Client // only non-nil for newly created sessions - Close() should be called
+	session           mongo.Session // only non-nil for newly created sessions - Close() should be called
 	countTotalResults bool
 	enableCISearches  bool
 	readonly          bool
 }
 
 // NewMongoSearcher creates a new instance of a MongoSearcher for an already open session
-func NewMongoSearcher(db *mongo.Database, session *mongo.Session, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
+func NewMongoSearcher(db *mongo.Database, ctx context.Context, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
 	return &MongoSearcher{
 		db:                db,
-		session:           session,
+		ctx:               ctx,
 		countTotalResults: countTotalResults,
 		enableCISearches:  enableCISearches,
 		readonly:          readonly,
@@ -103,7 +100,7 @@ func NewMongoSearcher(db *mongo.Database, session *mongo.Session, countTotalResu
 // Call Close()
 func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
 
-	client, err := mongo.Connect(context.Background(), mongoUri)
+	client, err := mongo.Connect(context.Background(), moptions.Client().ApplyURI(mongoUri))
 	if err != nil {
 		panic(errors.Wrap(err, "NewMongoSearcherForUri"))
 	}
@@ -117,6 +114,7 @@ func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTota
 
 	return &MongoSearcher{
 		db:                db,
+		ctx:               context.TODO(),
 		session:           session,
 		countTotalResults: countTotalResults,
 		enableCISearches:  enableCISearches,
@@ -151,9 +149,9 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 
 	if m.readonly && m.countTotalResults {
 		queryHash = fmt.Sprintf("%x", md5.Sum([]byte(query.Resource+"?"+query.Query)))
-		countcacheQuery := bson2.NewDocument(bson2.EC.String("_id", queryHash))
+		countcacheQuery := bson.D{{Key: "_id", Value: queryHash}}
 		countcache := &CountCache{}
-		err = m.db.Collection("countcache").FindOne(context.TODO(), countcacheQuery, m.session).Decode(&countcache)
+		err = m.db.Collection("countcache").FindOne(m.ctx, countcacheQuery).Decode(&countcache)
 		if err == nil {
 			// Use the cached total and don't bother recomputing it.
 			total = countcache.Count
@@ -172,7 +170,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 	}
 
 	var computedTotal uint32
-	var cursor mongo.Cursor
+	var cursor *mongo.Cursor
 	var start time.Time
 	options := query.Options()
 	bsonQuery := m.convertToBSON(query) // build the BSON query (without any options)
@@ -229,13 +227,13 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 	// Collect the results
 	if cursor != nil {
 		for cursor.Next(context.TODO()) {
-			var document bson2.Document
+			var document bson.D
 			err := cursor.Decode(&document)
 			if err != nil {
 				return nil, 0, errors.Wrap(err, "Search result decoding error")
 			}
 
-			resource, err := models2.NewResourceFromBSON2(&document)
+			resource, err := models2.NewResourceFromBSON(document)
 			if err != nil {
 				return nil, 0, errors.Wrap(err, "Search: NewResourceFromBSON failed")
 			}
@@ -253,7 +251,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 			Count: computedTotal,
 		}
 		// Don't collect the error here since this should fail silently.
-		m.db.Collection("countcache").InsertOne(context.TODO(), countcache, m.session)
+		m.db.Collection("countcache").InsertOne(m.ctx, countcache)
 	}
 
 	// The computed total will only be used if the server had no cached
@@ -267,7 +265,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 
 // aggregate takes a BSONQuery and runs its Pipeline through the mongo aggregation framework. Any query options
 // will be added to the end of the pipeline.
-func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, doCount bool) (cursor mongo.Cursor, total uint32, err error) {
+func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, doCount bool) (cursor *mongo.Cursor, total uint32, err error) {
 	c := m.db.Collection(models.PluralizeLowerResourceName(bsonQuery.Resource))
 
 	// First get a count of the total results (doesn't apply any options)
@@ -278,7 +276,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 			// collection after a find operation. The first stage in the Pipeline will
 			// always be a $match stage.
 			match := bsonQuery.Pipeline[0]["$match"]
-			intTotal, err := c.Count(context.TODO(), match, m.session)
+			intTotal, err := c.CountDocuments(m.ctx, match)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -293,7 +291,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 			copy(countPipeline, bsonQuery.Pipeline)
 			countPipeline[len(countPipeline)-1] = countStage
 
-			cursor, err := c.Aggregate(context.TODO(), bson1ArrayToBytes(countPipeline), m.session)
+			cursor, err := c.Aggregate(m.ctx, countPipeline)
 			if err != nil {
 				return nil, 0, errors.Wrap(err, "aggregate count failed")
 			}
@@ -330,7 +328,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 	if options != nil {
 		searchPipeline = append(searchPipeline, m.convertOptionsToPipelineStages(bsonQuery.Resource, options)...)
 	}
-	cursor, err = c.Aggregate(context.TODO(), bson1ArrayToBytes(searchPipeline), aggregateopt.AllowDiskUse(true), m.session)
+	cursor, err = c.Aggregate(m.ctx, searchPipeline, moptions.Aggregate().SetAllowDiskUse(true))
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "aggregate operation failed")
 	}
@@ -355,47 +353,47 @@ func bson1ToBytes(bson1 bson.M) []byte {
 
 // find takes a BSONQuery and runs a standard mongo search on that query. Any query options are applied
 // after the initial search is performed.
-func (m *MongoSearcher) find(bsonQuery *BSONQuery, options *QueryOptions, doCount bool) (cursor mongo.Cursor, total uint32, err error) {
+func (m *MongoSearcher) find(bsonQuery *BSONQuery, queryOptions *QueryOptions, doCount bool) (cursor *mongo.Cursor, total uint32, err error) {
 	c := m.db.Collection(models.PluralizeLowerResourceName(bsonQuery.Resource))
 
 	// First get a count of the total results (doesn't apply any options)
-	if doCount || options.Summary == "count" {
+	if doCount || queryOptions.Summary == "count" {
 		// c.CountDocuments rather than c.Count works in transactions
-		intTotal, err := c.CountDocuments(context.TODO(), bson1ToBytes(bsonQuery.Query), m.session)
+		intTotal, err := c.CountDocuments(m.ctx, bsonQuery.Query)
 		if err != nil {
 			return nil, 0, errors.Wrap(err, "search count operation failed")
 		}
 		total = uint32(intTotal)
 	}
 
-	if options.Summary == "count" {
+	if queryOptions.Summary == "count" {
 		// Just return the count and don't do the search.
 		return nil, total, nil
 	}
 
-	var optionsBundle *findopt.FindBundle = findopt.BundleFind(m.session)
-	if options != nil {
-		removeParallelArraySorts(options)
-		if len(options.Sort) > 0 {
-			fields := bson2.NewDocument()
-			for i := range options.Sort {
+	optionsBundle := moptions.Find()
+	if queryOptions != nil {
+		removeParallelArraySorts(queryOptions)
+		if len(queryOptions.Sort) > 0 {
+			fields := bson.D{}
+			for i := range queryOptions.Sort {
 				// Note: If there are multiple paths, we only look at the first one -- not ideal, but otherwise it gets tricky
-				field := convertSearchPathToMongoField(options.Sort[i].Parameter.Paths[0].Path)
-				if options.Sort[i].Descending {
-					fields.Set(bson2.EC.Int32(field, -1))
+				field := convertSearchPathToMongoField(queryOptions.Sort[i].Parameter.Paths[0].Path)
+				if queryOptions.Sort[i].Descending {
+					fields = append(fields, bson.E{Key: field, Value: -1})
 				} else {
-					fields.Set(bson2.EC.Int32(field, 1))
+					fields = append(fields, bson.E{Key: field, Value: 1})
 				}
 			}
-			optionsBundle = optionsBundle.Sort(fields)
+			optionsBundle = optionsBundle.SetSort(fields)
 		}
-		if options.Offset > 0 {
-			optionsBundle = optionsBundle.Skip(int64(options.Offset))
+		if queryOptions.Offset > 0 {
+			optionsBundle = optionsBundle.SetSkip(int64(queryOptions.Offset))
 		}
-		optionsBundle = optionsBundle.Limit(int64(options.Count))
+		optionsBundle = optionsBundle.SetLimit(int64(queryOptions.Count))
 	}
 
-	searchCursor, err := c.Find(context.TODO(), bson1ToBytes(bsonQuery.Query), optionsBundle)
+	searchCursor, err := c.Find(context.TODO(), bsonQuery.Query, optionsBundle)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "search find operation failed")
 	}
@@ -513,7 +511,7 @@ func (m *MongoSearcher) convertOptionsToPipelineStages(resource string, o *Query
 			if sort.Descending {
 				order = -1
 			}
-			sortBSOND = append(sortBSOND, bson.DocElem{Name: field, Value: order})
+			sortBSOND = append(sortBSOND, bson.E{Key: field, Value: order})
 		}
 		p = append(p, bson.M{"$sort": sortBSOND})
 	}
@@ -1581,7 +1579,7 @@ func processOrCriteria(path string, orValue interface{}, result bson.M) {
 // TODO: consider case-insensitive indexes in MongoDB 3.4 (https://docs.mongodb.com/manual/core/index-case-insensitive/)
 func (m *MongoSearcher) ci(s string) interface{} {
 	if m.enableCISearches {
-		return bson.RegEx{Pattern: fmt.Sprintf("^%s$", regexp.QuoteMeta(s)), Options: "i"}
+		return primitive.Regex{Pattern: fmt.Sprintf("^%s$", regexp.QuoteMeta(s)), Options: "i"}
 	}
 	return s
 }
@@ -1590,7 +1588,7 @@ func (m *MongoSearcher) ci(s string) interface{} {
 // TODO: consider case-insensitive indexes in MongoDB 3.4 (https://docs.mongodb.com/manual/core/index-case-insensitive/)
 func (m *MongoSearcher) cisw(s string) interface{} {
 	if m.enableCISearches {
-		return bson.RegEx{Pattern: fmt.Sprintf("^%s", regexp.QuoteMeta(s)), Options: "i"}
+		return primitive.Regex{Pattern: fmt.Sprintf("^%s", regexp.QuoteMeta(s)), Options: "i"}
 	}
 	return s
 }

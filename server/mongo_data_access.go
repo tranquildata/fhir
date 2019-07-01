@@ -15,14 +15,13 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/core/readconcern"
-	"github.com/mongodb/mongo-go-driver/core/writeconcern"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
-	"github.com/mongodb/mongo-go-driver/mongo/replaceopt"
-	"github.com/mongodb/mongo-go-driver/mongo/sessionopt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
+	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
 
 type mongoDataAccessLayer struct {
@@ -38,17 +37,21 @@ type mongoDataAccessLayer struct {
 }
 
 type mongoSession struct {
-	session       *mongo.Session
+	session       mongo.Session
+	context       mongo.SessionContext
 	db            *mongo.Database
 	dal           *mongoDataAccessLayer
 	inTransaction bool
 }
 
-func (dal *mongoDataAccessLayer) StartSession(customDbName string) DataAccessSession {
-	session, err := dal.client.StartSession(
-		sessionopt.CausalConsistency(true),
-		sessionopt.DefaultWriteConcern(writeconcern.New(writeconcern.W(1), writeconcern.J(false))),
-		sessionopt.DefaultReadConcern(readconcern.New(readconcern.Level("snapshot"))))
+func (dal *mongoDataAccessLayer) StartSession(ctx context.Context, customDbName string) DataAccessSession {
+	defaultCausalConsistency := true
+	options := options.SessionOptions{
+		CausalConsistency:   &defaultCausalConsistency,
+		DefaultReadConcern:  readconcern.Snapshot(),
+		DefaultWriteConcern: writeconcern.New(writeconcern.WMajority(), writeconcern.J(false)),
+	}
+	session, err := dal.client.StartSession(&options)
 	if err != nil {
 		panic(errors.Wrap(err, "StartSession failed"))
 	}
@@ -68,8 +71,17 @@ func (dal *mongoDataAccessLayer) StartSession(customDbName string) DataAccessSes
 		panic(errors.Wrap(err, "client.Database failed"))
 	}
 
+	var contextWithSession mongo.SessionContext
+	mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+		// hack to work around this closure-based API
+		// WithSession just calls the callback and does nothing else.. (at least in MongoDB Go Driver 1.0.3)
+		contextWithSession = sc
+		return nil
+	})
+
 	return &mongoSession{
 		session:       session,
+		context:       contextWithSession,
 		db:            db,
 		inTransaction: false,
 		dal:           dal,
@@ -212,19 +224,20 @@ func (ms *mongoSession) Get(id, resourceType string) (resource *models2.Resource
 	}
 
 	collection := ms.CurrentVersionCollection(resourceType)
-	filter := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
-	var doc bson.Document
-	err = collection.FindOne(context.TODO(), filter, ms.session).Decode(&doc)
-	glog.V(3).Infof("Get %s/%s --> %s (err %+v)", resourceType, id, doc.String(), err)
+	filter := bson.D{{"_id", bsonID.Hex()}}
+	var doc bson.D
+	err = collection.FindOne(ms.context, filter).Decode(&doc)
+	glog.V(3).Infof("Get %s/%s --> %s (err %+v)", resourceType, id, doc, err)
 	if err == mongo.ErrNoDocuments && ms.dal.enableHistory {
 		// check whether this is a deleted record
 		prevCollection := ms.PreviousVersionsCollection(resourceType)
-		prevQuery := bson.NewDocument(
-			bson.EC.String("_id._id", bsonID.Hex()),
-			bson.EC.Int32("_id._deleted", 1),
-		)
-		idOnly := bson.NewDocument(bson.EC.Int32("_id", 1))
-		cursor, err := prevCollection.Find(context.TODO(), prevQuery, ms.session, findopt.Limit(1), findopt.Projection(idOnly))
+		prevQuery := bson.D{
+			{"_id._id", bsonID.Hex()},
+			{"_id._deleted", 1},
+		}
+		idOnly := bson.D{{"_id", 1}}
+
+		cursor, err := prevCollection.Find(ms.context, prevQuery, options.Find().SetLimit(1).SetProjection(idOnly))
 		if err != nil {
 			return nil, errors.Wrap(err, "Get --> prevCollection.Find")
 		}
@@ -246,7 +259,7 @@ func (ms *mongoSession) Get(id, resourceType string) (resource *models2.Resource
 		return nil, convertMongoErr(err)
 	}
 
-	resource, err = models2.NewResourceFromBSON2(&doc)
+	resource, err = models2.NewResourceFromBSON(doc)
 	return
 }
 
@@ -262,30 +275,30 @@ func (ms *mongoSession) GetVersion(id, versionIdStr, resourceType string) (resou
 	}
 
 	// First assume versionId is for the current version
-	curQuery := bson.NewDocument(
-		bson.EC.String("_id", bsonID.Hex()),
-		bson.EC.String("meta.versionId", versionIdStr),
-	)
+	curQuery := bson.D{
+		{"_id", bsonID.Hex()},
+		{"meta.versionId", versionIdStr},
+	}
 	curCollection := ms.CurrentVersionCollection(resourceType)
-	var result bson.Document
-	err = curCollection.FindOne(context.TODO(), curQuery, ms.session).Decode(&result)
+	var result bson.D
+	err = curCollection.FindOne(ms.context, curQuery).Decode(&result)
 	// fmt.Printf("GetVersion: curQuery=%+v; err=%+v\n", curQuery, err)
 
 	if err == mongo.ErrNoDocuments {
 		// try to search for previous versions
-		prevQuery := bson.NewDocument(
-			bson.EC.String("_id._id", bsonID.Hex()),
-			bson.EC.Int32("_id._version", int32(versionIdInt)),
-		)
+		prevQuery := bson.D{
+			{"_id._id", bsonID.Hex()},
+			{"_id._version", int32(versionIdInt)},
+		}
 		prevCollection := ms.PreviousVersionsCollection(resourceType)
-		cur, err := prevCollection.Find(context.TODO(), prevQuery, ms.session, findopt.Limit(1))
+		cur, err := prevCollection.Find(ms.context, prevQuery, options.Find().SetLimit(1))
 		if err != nil {
 			return nil, errors.Wrap(err, "GetVersion --> prevCollection.Find")
 		}
 
 		if cur.Next(context.TODO()) {
 
-			var prevDoc bson.Document
+			var prevDoc bson.Raw
 			err = cur.Decode(&prevDoc)
 			if err != nil {
 				return nil, errors.Wrap(err, "GetVersion --> prevCollection.Find --> Decode")
@@ -311,76 +324,69 @@ func (ms *mongoSession) GetVersion(id, versionIdStr, resourceType string) (resou
 	} else if err != nil {
 		return nil, errors.Wrap(convertMongoErr(err), "failed to search for current version")
 	} else {
-		resource, err = models2.NewResourceFromBSON2(&result)
+		resource, err = models2.NewResourceFromBSON(result)
 	}
 
 	return
 }
 
 // Convert document stored in one of the _prev collections into a resource
-func unmarshalPreviousVersion(asBSON *bson.Document) (deleted bool, resource *models2.Resource, err error) {
-	// fmt.Printf("[unmarshalPreviousVersion] %+v\n", asBSON)
+func unmarshalPreviousVersion(rawDoc *bson.Raw) (deleted bool, resource *models2.Resource, err error) {
+	// fmt.Printf("[unmarshalPreviousVersion] %+v\n", rawDoc)
 	// first we have to parse the vermongo-style id
-	if asBSON.Len() == 0 {
-		return false, nil, fmt.Errorf("unmarshalPreviousVersion: input empty")
+	idItem, err := rawDoc.IndexErr(0)
+	if err != nil {
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: input empty: %s", err)
 	}
-	idItem := asBSON.ElementAt(0)
 	if idItem.Key() != "_id" {
 		return false, nil, fmt.Errorf("unmarshalPreviousVersion: first element not an _id")
 	}
-	val := idItem.Value()
-	switch val.Type() {
-	case bson.TypeEmbeddedDocument:
-		idDoc := val.MutableDocument()
-		if idDoc.Len() < 2 {
-			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id value size < 2")
-		}
-		actualId := idDoc.ElementAt(0)
-		// fmt.Printf("[unmarshalPreviousVersion] ACTUAL %+v\n", actualId)
-		if actualId.Key() != "_id" {
-			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id value without first inner _id field")
-		}
 
-		switch idVal := actualId.Value().Interface().(type) {
-		case string:
-			// check if actually deleted
-			deleted := false
-			for i := 0; i < idDoc.Len(); i++ {
-				idElt := idDoc.ElementAt(uint(i))
-				if idElt.Key() == "_deleted" {
-					deletedInt, isInt := idElt.Value().Int32OK()
-					if isInt {
-						deleted = deletedInt > 0
-					} else {
-						return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._deleted is not an integer")
-					}
-				}
-			}
-			if deleted {
-				return true, nil, nil
-			}
-
-			// create a BSON doc with a string id
-			stringIdElem := bson.EC.String("_id", idVal)
-			bsonWithStringId := asBSON.Copy().Set(stringIdElem)
-
-			// convert to JSON
-			resource, err = models2.NewResourceFromBSON2(bsonWithStringId)
-			if err != nil {
-				return false, nil, errors.Wrap(err, "unmarshalPreviousVersion: NewResourceFromBSON failed")
-			}
-
-			return false, resource, nil
-		default:
-			return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._id not a string")
-		}
-	default:
+	idValue, ok := idItem.Value().DocumentOK()
+	if !ok {
 		return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id not a bson dictionary")
 	}
+
+	actualIdVal, err := idValue.LookupErr("_id")
+	if err != nil {
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._id missing")
+	}
+
+	actualId, ok := actualIdVal.StringValueOK()
+	if !ok {
+		return false, nil, fmt.Errorf("unmarshalPreviousVersion: _id._id not a string")
+	}
+
+	// check if actually deleted
+	deletedVal, err := idValue.LookupErr("_deleted")
+	if err == nil {
+		deleted, ok := deletedVal.Int32OK()
+		if ok && deleted > 0 {
+			return true, nil, nil
+		}
+	}
+
+	// convert to a bson.D
+	var doc bson.D
+	err = bson.Unmarshal(*rawDoc, &doc)
+	if err != nil {
+		return false, nil, errors.Wrapf(err, "unmarshalPreviousVersion: unmarshal failed")
+	}
+
+	// replace first element with a string id
+	doc[0] = bson.E{"_id", actualId}
+
+	// convert to JSON
+	resource, err = models2.NewResourceFromBSON(doc)
+	if err != nil {
+		return false, nil, errors.Wrap(err, "unmarshalPreviousVersion: NewResourceFromBSON failed")
+	}
+
+	return false, resource, nil
 }
 
 func (ms *mongoSession) Post(resource *models2.Resource) (id string, err error) {
-	id = objectid.New().Hex()
+	id = primitive.NewObjectID().Hex()
 	err = convertMongoErr(ms.PostWithID(id, resource))
 	return
 }
@@ -393,7 +399,7 @@ func (ms *mongoSession) ConditionalPost(query search.Query, resource *models2.Re
 
 	if len(existingIds) == 0 {
 		httpStatus = 201
-		id = objectid.New().Hex()
+		id = primitive.NewObjectID().Hex()
 		err = convertMongoErr(ms.PostWithID(id, resource))
 		if err == nil {
 			outputResource = resource
@@ -425,7 +431,7 @@ func (ms *mongoSession) PostWithID(id string, resource *models2.Resource) error 
 	ms.invokeInterceptorsBefore("Create", resourceType, resource)
 
 	glog.V(3).Infof("PostWithID: inserting %s/%s", resourceType, id)
-	_, err = curCollection.InsertOne(context.TODO(), resource, ms.session)
+	_, err = curCollection.InsertOne(ms.context, resource)
 
 	if err == nil {
 		ms.invokeInterceptorsAfter("Create", resourceType, resource)
@@ -466,9 +472,10 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 		if glog.V(5) {
 			start = time.Now()
 		}
-		var currentDoc bson.Document
-		currentDocQuery := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
-		if err = curCollection.FindOne(context.TODO(), currentDocQuery, ms.session).Decode(&currentDoc); err != nil && err != mongo.ErrNoDocuments {
+		var currentDoc bson.D
+		var currentDocRaw bson.Raw
+		currentDocQuery := bson.D{{"_id", bsonID.Hex()}}
+		if err = curCollection.FindOne(ms.context, currentDocQuery).Decode(&currentDocRaw); err != nil && err != mongo.ErrNoDocuments {
 			return false, errors.Wrap(convertMongoErr(err), "Put handler: error retrieving current version")
 		}
 		if glog.V(5) {
@@ -481,7 +488,13 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 			}
 			glog.V(3).Infof("  versionIds: no current; new %d", newVersionId)
 		} else {
-			hasVersionId, curVersionIdTemp, curVersionIdStr := getVersionIdFromResource(&currentDoc)
+			// unmarshal fully
+			err = bson.Unmarshal(currentDocRaw, &currentDoc)
+			if err != nil {
+				return false, errors.Wrap(convertMongoErr(err), "Put: error unmarshalling current version")
+			}
+
+			hasVersionId, curVersionIdTemp, curVersionIdStr := getVersionIdFromResource(&currentDocRaw)
 			if hasVersionId {
 				newVersionId = curVersionIdTemp + 1
 			} else {
@@ -503,7 +516,7 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 			// NOTE: currentDoc._id modified in-place
 
 			prevCollection := ms.PreviousVersionsCollection(resourceType)
-			_, err := prevCollection.InsertOne(context.TODO(), &currentDoc, ms.session) // TODO: do concurrently with the main update
+			_, err := prevCollection.InsertOne(ms.context, &currentDoc) // TODO: do concurrently with the main update
 			if err != nil && strings.Contains(err.Error(), "duplicate key") {
 				/* Ignore duplicate key error - these can happen if we successfully
 				insert into the prev collection but then fail to update the
@@ -530,11 +543,11 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 	var updated int64
 	if curVersionId == nil {
 		var info *mongo.UpdateResult
-		selector := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
+		selector := bson.D{{"_id", bsonID.Hex()}}
 		if glog.V(5) {
 			start = time.Now()
 		}
-		info, err = curCollection.ReplaceOne(context.TODO(), selector, resource, replaceopt.Upsert(true), ms.session)
+		info, err = curCollection.ReplaceOne(ms.context, selector, resource, options.Replace().SetUpsert(true))
 		if glog.V(5) {
 			glog.V(3).Infof("   upsert %#v took %v", selector, time.Since(start))
 		}
@@ -549,21 +562,21 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 		}
 	} else {
 		// atomic check-then-update
-		selector := bson.NewDocument(
-			bson.EC.String("_id", bsonID.Hex()),
-			bson.EC.String("meta.versionId", strconv.Itoa(*curVersionId)),
-		)
+		selector := bson.D{
+			{"_id", bsonID.Hex()},
+			{"meta.versionId", strconv.Itoa(*curVersionId)},
+		}
 		if *curVersionId == 0 {
 			// cur doc won't actually have a versionId field
-			selector.Set(bson.EC.SubDocumentFromElements("meta.versionId", bson.EC.Boolean("$exists", false)))
+			selector[1] = bson.E{"meta.versionId", bson.D{{"$exists", false}}}
 		}
 		var updateOneInfo *mongo.UpdateResult
 		if glog.V(5) {
 			start = time.Now()
 		}
-		updateOneInfo, err = curCollection.ReplaceOne(context.TODO(), selector, resource, ms.session)
+		updateOneInfo, err = curCollection.ReplaceOne(ms.context, selector, resource)
 		if glog.V(5) {
-			glog.V(3).Infof("   update %#v --> %#v (err %#v) took %v", selector.String(), updateOneInfo, err, time.Since(start))
+			glog.V(3).Infof("   update %#v --> %#v (err %#v) took %v", selector, updateOneInfo, err, time.Since(start))
 		}
 		if err != nil {
 			err = errors.Wrap(err, "PUT handler: failed to update current document")
@@ -592,9 +605,9 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 	return createdNew, convertMongoErr(err)
 }
 
-func getVersionIdFromResource(doc *bson.Document) (hasVersionId bool, versionIdInt int, versionIdStr string) {
+func getVersionIdFromResource(doc *bson.Raw) (hasVersionId bool, versionIdInt int, versionIdStr string) {
 	versionId, err := doc.LookupErr("meta", "versionId")
-	if err == bson.ErrElementNotFound {
+	if err == bsoncore.ErrElementNotFound {
 		return false, -1, ""
 	} else if err != nil {
 		panic(errors.Wrap(err, "getVersionIdFromResource LookupErr failed"))
@@ -615,25 +628,25 @@ func getVersionIdFromResource(doc *bson.Document) (hasVersionId bool, versionIdI
 }
 
 // Updates the doc to use a vermongo-like _id (_id: current_id, _version: versionId)
-func setVermongoId(doc *bson.Document, versionIdInt int) {
-	idItem := doc.ElementAt(0)
-	if idItem == nil || idItem.Key() != "_id" {
+func setVermongoId(doc *bson.D, versionIdInt int) {
+	idItem := &((*doc)[0])
+	if idItem == nil || idItem.Key != "_id" {
 		panic("_id field not first in bson document")
 	}
 
-	newId := bson.NewDocument(
-		bson.EC.Interface("_id", idItem.Value().Interface()),
-		bson.EC.Int32("_version", int32(versionIdInt)),
-	)
+	newId := bson.D{
+		{"_id", idItem.Value},
+		{"_version", int32(versionIdInt)},
+	}
 
-	doc.Set(bson.EC.SubDocument("_id", newId))
+	(*doc)[0] = bson.E{"_id", newId}
 }
 
 func (ms *mongoSession) ConditionalPut(query search.Query, conditionalVersionId string, resource *models2.Resource) (id string, createdNew bool, err error) {
 	if IDs, err := ms.FindIDs(query); err == nil {
 		switch len(IDs) {
 		case 0:
-			id = objectid.New().Hex()
+			id = primitive.NewObjectID().Hex()
 		case 1:
 			id = IDs[0]
 		default:
@@ -657,7 +670,7 @@ func (ms *mongoSession) Delete(id, resourceType string) (newVersionId string, er
 	prevCollection := ms.PreviousVersionsCollection(resourceType)
 
 	if ms.dal.enableHistory {
-		newVersionId, err = saveDeletionIntoHistory(resourceType, bsonID.Hex(), curCollection, prevCollection, ms.session)
+		newVersionId, err = saveDeletionIntoHistory(resourceType, bsonID.Hex(), curCollection, prevCollection, ms)
 		if err == mongo.ErrNoDocuments {
 			return "", ErrNotFound
 		} else if err != nil {
@@ -675,8 +688,8 @@ func (ms *mongoSession) Delete(id, resourceType string) (newVersionId string, er
 		ms.invokeInterceptorsBefore("Delete", resourceType, resource)
 	}
 
-	filter := bson.NewDocument(bson.EC.String("_id", bsonID.Hex()))
-	deleteInfo, err := curCollection.DeleteOne(context.TODO(), filter, ms.session)
+	filter := bson.D{{"_id", bsonID.Hex()}}
+	deleteInfo, err := curCollection.DeleteOne(ms.context, filter)
 	glog.V(3).Infof("   deleteInfo: %+v (err %+v)", deleteInfo, err)
 	if deleteInfo.DeletedCount == 0 && err == nil {
 		err = mongo.ErrNoDocuments
@@ -694,19 +707,27 @@ func (ms *mongoSession) Delete(id, resourceType string) (newVersionId string, er
 	return
 }
 
-func saveDeletionIntoHistory(resourceType string, id string, curCollection *mongo.Collection, prevCollection *mongo.Collection, session *mongo.Session) (newVersionIdStr string, err error) {
+func saveDeletionIntoHistory(resourceType string, id string, curCollection *mongo.Collection, prevCollection *mongo.Collection, ms *mongoSession) (newVersionIdStr string, err error) {
 	// get current version of this document
-	var currentDoc bson.Document
-	currentDocQuery := bson.NewDocument(bson.EC.String("_id", id))
-	err = curCollection.FindOne(context.TODO(), currentDocQuery, session).Decode(&currentDoc)
+	var currentDoc bson.D
+	var currentDocRaw bson.Raw
+	currentDocQuery := bson.D{{"_id", id}}
+	err = curCollection.FindOne(ms.context, currentDocQuery).Decode(&currentDocRaw)
 
 	if err == mongo.ErrNoDocuments {
 		return "", err
 	} else if err != nil {
 		return "", errors.Wrap(convertMongoErr(err), "saveDeletionIntoHistory: error retrieving current version")
 	} else {
+
+		// unmarshal fully
+		err = bson.Unmarshal(currentDocRaw, &currentDoc)
+		if err != nil {
+			return "", errors.Wrap(convertMongoErr(err), "saveDeletionIntoHistory: error unmarshalling current version")
+		}
+
 		// extract current version
-		hasVersionId, curVersionId, _ := getVersionIdFromResource(&currentDoc)
+		hasVersionId, curVersionId, _ := getVersionIdFromResource(&currentDocRaw)
 		var newVersionId int
 		if hasVersionId {
 			newVersionId = curVersionId + 1
@@ -725,19 +746,19 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mong
 
 		// create a deletion record
 		now := time.Now()
-		deletionRecord := bson.NewDocument(
-			bson.EC.SubDocumentFromElements("_id",
-				bson.EC.String("_id", id),
-				bson.EC.Int32("_version", int32(newVersionId)),
-				bson.EC.Int32("_deleted", 1),
-			),
-			bson.EC.SubDocumentFromElements("meta",
-				bson.EC.String("versionId", newVersionIdStr),
-				bson.EC.Time("lastUpdated", now),
-			),
-		)
+		deletionRecord := bson.D{
+			{"_id", bson.D{
+				{"_id", id},
+				{"_version", int32(newVersionId)},
+				{"_deleted", 1},
+			}},
+			{"meta", bson.D{
+				{"versionId", newVersionIdStr},
+				{"lastUpdated", now},
+			}},
+		}
 
-		_, err = prevCollection.InsertMany(context.TODO(), []interface{}{&currentDoc, deletionRecord}, session) // TODO: do concurrently with the main deletion
+		_, err = prevCollection.InsertMany(ms.context, []interface{}{&currentDoc, deletionRecord}) // TODO: do concurrently with the main deletion
 		if err != nil && strings.Contains(err.Error(), "duplicate key") {
 			/* Ignore duplicate key error - these can happen if we successfully
 			insert into the prev collection but then fail to update the
@@ -760,11 +781,12 @@ func (ms *mongoSession) ConditionalDelete(query search.Query) (count int64, err 
 	}
 	// There is the potential here for the delete to fail if the slice of IDs
 	// is too large (exceeding Mongo's 16MB document size limit).
-	IDsToDeleteValues := make([]*bson.Value, len(IDsToDelete))
-	for i, id := range IDsToDelete {
-		IDsToDeleteValues[i] = bson.VC.String(id)
+	deleteQuery := bson.D{
+		{"_id", bson.D{
+			{"$in", IDsToDelete},
+		},
+		},
 	}
-	deleteQuery := bson.NewDocument(bson.EC.SubDocumentFromElements("_id", bson.EC.ArrayFromElements("$in", IDsToDeleteValues...)))
 	resourceType := query.Resource
 	curCollection := ms.CurrentVersionCollection(resourceType)
 	prevCollection := ms.PreviousVersionsCollection(resourceType)
@@ -793,7 +815,7 @@ func (ms *mongoSession) ConditionalDelete(query search.Query) (count int64, err 
 			for _, elem := range bundle.Entry {
 				if ms.dal.enableHistory {
 					id := elem.Resource.Id()
-					_, err = saveDeletionIntoHistory(resourceType, id, curCollection, prevCollection, ms.session)
+					_, err = saveDeletionIntoHistory(resourceType, id, curCollection, prevCollection, ms)
 					if err != nil {
 						return count, errors.Wrapf(err, "failed to save deletion into history (%s/%s)", resourceType, id)
 					}
@@ -801,7 +823,7 @@ func (ms *mongoSession) ConditionalDelete(query search.Query) (count int64, err 
 			}
 
 			// Do the bulk delete by ID.
-			info, err := curCollection.DeleteMany(context.TODO(), deleteQuery, ms.session)
+			info, err := curCollection.DeleteMany(ms.context, deleteQuery)
 			deletedIds := make([]string, len(IDsToDelete))
 			if info != nil {
 				count = info.DeletedCount
@@ -849,7 +871,7 @@ func (ms *mongoSession) ConditionalDelete(query search.Query) (count int64, err 
 		return count, convertMongoErr(err)
 	} else {
 		// do the bulk delete the usual way
-		info, err := curCollection.DeleteMany(context.TODO(), deleteQuery, ms.session)
+		info, err := curCollection.DeleteMany(ms.context, deleteQuery)
 		if info != nil {
 			count = info.DeletedCount
 		}
@@ -883,13 +905,13 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 	}
 
 	// add current version
-	var curDoc bson.Document
-	curDocQuery := bson.NewDocument(bson.EC.String("_id", id))
-	err = curCollection.FindOne(context.TODO(), curDocQuery, ms.session).Decode(&curDoc)
+	var curDoc bson.D
+	curDocQuery := bson.D{{"_id", id}}
+	err = curCollection.FindOne(ms.context, curDocQuery).Decode(&curDoc)
 	if err == nil {
 		var entry models2.ShallowBundleEntryComponent
 		entry.FullUrl = fullUrl
-		entry.Resource, err = models2.NewResourceFromBSON2(&curDoc)
+		entry.Resource, err = models2.NewResourceFromBSON(curDoc)
 		if err != nil {
 			return nil, errors.Wrap(err, "History: NewResourceFromBSON failed")
 		}
@@ -900,16 +922,16 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 	}
 
 	// sort - oldest versions last
-	prevDocsQuery := bson.NewDocument(bson.EC.String("_id._id", id))
-	prevDocsSort := findopt.Sort(bson.NewDocument(bson.EC.Int32("_id._version", -1)))
-	cursor, err := prevCollection.Find(context.TODO(), prevDocsQuery, prevDocsSort, ms.session)
+	prevDocsQuery := bson.D{{"_id._id", id}}
+	prevDocsSort := options.Find().SetSort(bson.D{{"_id._version", -1}})
+	cursor, err := prevCollection.Find(ms.context, prevDocsQuery, prevDocsSort)
 	if err != nil {
 		return nil, errors.Wrap(err, "History: prevCollection.Find failed")
 	}
 
 	for cursor.Next(context.TODO()) {
 
-		var prevDocBson bson.Document
+		var prevDocBson bson.Raw
 		err = cursor.Decode(&prevDocBson)
 		glog.V(8).Infof("History: decoded prev document: %s", prevDocBson.String())
 		if err != nil {
@@ -947,7 +969,7 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 
 	// output a Bundle
 	bundle = &models2.ShallowBundle{
-		Id:    objectid.New().Hex(),
+		Id:    primitive.NewObjectID().Hex(),
 		Type:  "history",
 		Entry: entryList,
 		Total: &totalDocs,
@@ -961,7 +983,7 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 
 func (ms *mongoSession) Search(baseURL url.URL, searchQuery search.Query) (*models2.ShallowBundle, error) {
 
-	searcher := search.NewMongoSearcher(ms.db, ms.session, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
+	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
 
 	resources, total, err := searcher.Search(searchQuery)
 	if err != nil {
@@ -1001,7 +1023,7 @@ func (ms *mongoSession) Search(baseURL url.URL, searchQuery search.Query) (*mode
 	}
 
 	bundle := models2.ShallowBundle{
-		Id:    objectid.New().Hex(),
+		Id:    primitive.NewObjectID().Hex(),
 		Type:  "searchset",
 		Entry: entryList,
 	}
@@ -1033,7 +1055,7 @@ func (ms *mongoSession) FindIDs(searchQuery search.Query) (IDs []string, err err
 	newQuery := search.Query{Resource: searchQuery.Resource, Query: newParams.Encode()}
 
 	// Now search on that query, unmarshaling to a temporary struct and converting results to []string
-	searcher := search.NewMongoSearcher(ms.db, ms.session, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
+	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
 	results, _, err := searcher.Search(newQuery)
 	if err != nil {
 		return nil, convertMongoErr(err)
@@ -1145,12 +1167,12 @@ func newLink(relation string, baseURL url.URL, params search.URLQueryParameters,
 	return models.BundleLinkComponent{Relation: relation, Url: baseURL.String()}
 }
 
-func convertIDToBsonID(id string) (objectid.ObjectID, error) {
-	objId, err := objectid.FromHex(id)
+func convertIDToBsonID(id string) (primitive.ObjectID, error) {
+	objId, err := primitive.ObjectIDFromHex(id)
 	if err == nil {
 		return objId, nil
 	}
-	return objectid.NilObjectID, models.NewOperationOutcome("fatal", "exception", "Id must be a valid BSON ObjectId")
+	return primitive.NilObjectID, models.NewOperationOutcome("fatal", "exception", "Id must be a valid BSON ObjectId")
 }
 
 func updateResourceMeta(resource *models2.Resource, versionId int) {

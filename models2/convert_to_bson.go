@@ -1,16 +1,16 @@
 package models2
 
 import (
-	"time"
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/eug48/fhir/utils"
 
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type refsMap map[string]string
@@ -20,7 +20,6 @@ const Gofhir__strDate = "__strDate"
 const Gofhir__num = "__num"
 const Gofhir__from = "__from"
 const Gofhir__to = "__to"
-
 
 // Converts a FHIR JSON Resource into BSON for storage in MongoDB
 // Does several transformations:
@@ -34,7 +33,7 @@ func ConvertJsonToGoFhirBSON(jsonBytes []byte, whatToEncrypt WhatToEncrypt, tran
 
 	debug("=== ConvertJsonToGoFhirBSON ===")
 
-	bsonRoot := make([]bson.DocElem, 0, 8)
+	bsonRoot := make([]bson.E, 0, 8)
 	refsMap := refsMap(transformReferencesMap)
 	resourceType, err := jsonparser.GetString(jsonBytes, "resourceType")
 	if err != nil {
@@ -66,7 +65,7 @@ func ConvertJsonToGoFhirBSON(jsonBytes []byte, whatToEncrypt WhatToEncrypt, tran
 	}
 }
 
-func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []byte, dataType jsonparser.ValueType, offset int, refsMap refsMap) error {
+func addToBSONdoc(output *[]bson.E, pos positionInfo, key []byte, value []byte, dataType jsonparser.ValueType, offset int, refsMap refsMap) error {
 	strKey := string(key)
 	nextPos := pos.downTo(strKey, value)
 
@@ -83,9 +82,9 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 	} else if strKey == "_id" {
 		bsonKey = "__id"
 	}
-	elem := bson.DocElem{Name: bsonKey, Value: valueBson}
+	elem := bson.E{Key: bsonKey, Value: valueBson}
 	if putFirst {
-		*output = append([]bson.DocElem{elem}, (*output)...)
+		*output = append([]bson.E{elem}, (*output)...)
 	} else {
 		*output = append(*output, elem)
 	}
@@ -105,7 +104,7 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 		components := len(splitURL)
 		if components >= 2 {
 			// TODO: validate?
-			
+
 			lastComponent := splitURL[components-1]
 			secondLastComponent := splitURL[components-2]
 
@@ -126,12 +125,12 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 				typeStr = secondLastComponent
 			}
 
-			if _, exists := fhirTypes[typeStr + ".id"]; !exists {
+			if _, exists := fhirTypes[typeStr+".id"]; !exists {
 				return errors.Errorf("invalid reference (type not found): %s", reference)
 			}
-			
-			*output = append(*output, bson.DocElem{Name: "reference__id", Value: referenceID})
-			*output = append(*output, bson.DocElem{Name: "reference__type", Value: typeStr})
+
+			*output = append(*output, bson.E{Key: "reference__id", Value: referenceID})
+			*output = append(*output, bson.E{Key: "reference__type", Value: typeStr})
 		} else if strings.HasPrefix(reference, "#") {
 			// may have internal references like #ClinicIcon
 		} else if strings.HasPrefix(reference, "urn:uuid:") && strings.HasPrefix(pos.pathHere, "Bundle.") {
@@ -141,7 +140,7 @@ func addToBSONdoc(output *[]bson.DocElem, pos positionInfo, key []byte, value []
 		}
 
 		external := strings.HasPrefix(reference, "http")
-		*output = append(*output, bson.DocElem{Name: "reference__external", Value: external})
+		*output = append(*output, bson.E{Key: "reference__external", Value: external})
 	}
 
 	return nil
@@ -161,7 +160,7 @@ func convertValue(pos positionInfo, value []byte, dataType jsonparser.ValueType,
 
 	switch dataType {
 	case jsonparser.Object:
-		subDoc := make([]bson.DocElem, 0, 4)
+		subDoc := make([]bson.E, 0, 4)
 
 		err = jsonparser.ObjectEach(value, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 			err2 := addToBSONdoc(&subDoc, pos, key, value, dataType, offset, refsMap)
@@ -276,7 +275,7 @@ func convertExtensionArray(output *[]interface{}, jsonBytes []byte, pos position
 				return
 			}
 
-			newChildExtensionObj := make([]bson.DocElem, 0, 4)
+			newChildExtensionObj := make([]bson.E, 0, 4)
 			funcErr = jsonparser.ObjectEach(origExtensonBytes, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 				strKey := string(key)
 				if strKey == "url" {
@@ -295,8 +294,8 @@ func convertExtensionArray(output *[]interface{}, jsonBytes []byte, pos position
 				return
 			}
 
-			newParentExtensionObj := []bson.DocElem{
-				bson.DocElem{Name: url, Value: newChildExtensionObj},
+			newParentExtensionObj := []bson.E{
+				bson.E{Key: url, Value: newChildExtensionObj},
 			}
 
 			*output = append(*output, newParentExtensionObj)
@@ -332,10 +331,10 @@ func convertDateValue(jsonBytes []byte, pos positionInfo) (elem interface{}, err
 		return nil, errors.Wrap(err, "ParseDate failed")
 	}
 
-	elem = []bson.DocElem{
-		bson.DocElem{Name: Gofhir__from, Value: date.RangeLowIncl()},
-		bson.DocElem{Name: Gofhir__to, Value: date.RangeHighExcl()},
-		bson.DocElem{Name: Gofhir__strDate, Value: stringForm},
+	elem = []bson.E{
+		bson.E{Key: Gofhir__from, Value: date.RangeLowIncl()},
+		bson.E{Key: Gofhir__to, Value: date.RangeHighExcl()},
+		bson.E{Key: Gofhir__strDate, Value: stringForm},
 	}
 	return
 }
@@ -364,12 +363,12 @@ func convertNumberValue(jsonBytes []byte, pos positionInfo) (elem interface{}, e
 		numFrom, _ := num.RangeLowIncl().Float64()
 		numTo, _ := num.RangeHighExcl().Float64()
 
-		elem = []bson.DocElem{
+		elem = []bson.E{
 			// TODO: set ranges properly based on precision
-			bson.DocElem{Name: Gofhir__from, Value: numFrom},
-			bson.DocElem{Name: Gofhir__to, Value: numTo},
-			bson.DocElem{Name: Gofhir__num, Value: numValue},
-			bson.DocElem{Name: Gofhir__strNum, Value: stringForm},
+			bson.E{Key: Gofhir__from, Value: numFrom},
+			bson.E{Key: Gofhir__to, Value: numTo},
+			bson.E{Key: Gofhir__num, Value: numValue},
+			bson.E{Key: Gofhir__strNum, Value: stringForm},
 		}
 	} else {
 		if strings.Contains(stringForm, ".") {

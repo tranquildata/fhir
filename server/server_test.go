@@ -20,9 +20,10 @@ import (
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/search"
 	"github.com/gin-gonic/gin"
-	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/pebbe/util"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -54,7 +55,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	var err error
 	s.initialSession, err = mgo.Dial("localhost")
 	util.CheckErr(err)
-	s.client, err = mongo.Connect(context.TODO(), "mongodb://localhost")
+	s.client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
 	util.CheckErr(err)
 
 	// Set gin to release mode (less verbose output)
@@ -227,7 +228,7 @@ func (s *ServerSuite) TestPatientPagingWithCountsDisabled(c *C) {
 		Host:   "fhir.example.com",
 		Path:   "fhir/Patient",
 	}
-	session := dal.StartSession(s.dbname).(*mongoSession)
+	session := dal.StartSession(context.TODO(), s.dbname).(*mongoSession)
 	defer session.Finish()
 	links := session.generatePagingLinks(u, search.Query{Resource: "Patient"}, 0, 100)
 	c.Assert(len(links), Equals, 3)
@@ -1294,7 +1295,6 @@ func loadFixture(resourceName, fileName string) interface{} {
 	util.CheckErr(err)
 	return resource
 }
-
 
 func logBody(res *http.Response) io.Reader {
 	bodyBytes, err := ioutil.ReadAll(res.Body)

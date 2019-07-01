@@ -1,11 +1,11 @@
 package server
 
 import (
-	"context"
-	"io"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,24 +13,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/eug48/fhir/models"
+	"github.com/gin-gonic/gin"
 	"github.com/pebbe/util"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
 type BatchControllerSuite struct {
 	initialSession *mgo.Session
 
-	MongoClient    *mongo.Client
-	DbName         string
+	MongoClient *mongo.Client
+	DbName      string
 
-	Engine         *gin.Engine
-	Server         *httptest.Server
-	Interceptors   map[string]InterceptorList
+	Engine       *gin.Engine
+	Server       *httptest.Server
+	Interceptors map[string]InterceptorList
 }
 
 var _ = Suite(&BatchControllerSuite{})
@@ -46,7 +47,7 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	s.initialSession.SetSafe(&mgo.Safe{})
 	util.CheckErr(err)
 	s.DbName = "fhir-test"
-	s.MongoClient, err = mongo.Connect(context.TODO(), "mongodb://localhost")
+	s.MongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
 	if err != nil {
 		panic(err)
 	}
@@ -403,9 +404,9 @@ func (s *BatchControllerSuite) addMongoRecords1() {
 
 	// Put some records in the database to update
 	patient := &models.Patient{
-		DomainResource: models.DomainResource {
-			Resource: models.Resource {
-				Meta: &models.Meta {
+		DomainResource: models.DomainResource{
+			Resource: models.Resource{
+				Meta: &models.Meta{
 					VersionId: "1",
 				},
 			},
@@ -419,9 +420,9 @@ func (s *BatchControllerSuite) addMongoRecords1() {
 	}
 	patient.Id = "56afe6b85cdc7ec329dfe6a0"
 	condition := &models.Condition{
-		DomainResource: models.DomainResource {
-			Resource: models.Resource {
-				Meta: &models.Meta {
+		DomainResource: models.DomainResource{
+			Resource: models.Resource{
+				Meta: &models.Meta{
 					VersionId: "1",
 				},
 			},
@@ -442,9 +443,9 @@ func (s *BatchControllerSuite) addMongoRecords1() {
 	condition.Id = "56afe6b85cdc7ec329dfe6a1"
 
 	condition2 := &models.Condition{
-		DomainResource: models.DomainResource {
-			Resource: models.Resource {
-				Meta: &models.Meta {
+		DomainResource: models.DomainResource{
+			Resource: models.Resource{
+				Meta: &models.Meta{
 					VersionId: "1",
 				},
 			},
