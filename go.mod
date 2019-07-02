@@ -3,6 +3,8 @@ module github.com/eug48/fhir
 go 1.12
 
 require (
+	contrib.go.opencensus.io/exporter/jaeger v0.1.0
+	contrib.go.opencensus.io/exporter/stackdriver v0.12.2
 	github.com/DataDog/zstd v1.3.5
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -18,7 +20,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.1.0
 	github.com/gorilla/sessions v1.1.1 // indirect
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
@@ -30,13 +32,13 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/mitre/heart v0.0.0-20160825192324-0c46b433a490
+	github.com/opencensus-integrations/gomongowrapper v0.0.0-00010101000000-000000000000
 	github.com/pebbe/util v0.0.0-20140716220158-e0e04dfe647c
 	github.com/pkg/errors v0.8.1
+	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tidwall/pretty v1.0.0 // indirect
 	github.com/ugorji/go v1.1.5-pre // indirect
-	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
-	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.0.3
 	go.opencensus.io v0.22.0
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
@@ -54,3 +56,7 @@ require (
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
+
+replace github.com/opencensus-integrations/gomongowrapper => github.com/eug48/gomongowrapper v0.0.2
+
+//replace github.com/opencensus-integrations/gomongowrapper => /home/user/src/gomongowrapper-eug48

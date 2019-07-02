@@ -20,9 +20,9 @@ import (
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/search"
 	"github.com/gin-gonic/gin"
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"github.com/pebbe/util"
 	"github.com/pkg/errors"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
@@ -31,7 +31,7 @@ import (
 
 type ServerSuite struct {
 	initialSession *mgo.Session
-	client         *mongo.Client
+	client         *mongowrapper.WrappedClient
 	dbname         string
 	Engine         *gin.Engine
 	Server         *httptest.Server
@@ -55,7 +55,7 @@ func (s *ServerSuite) SetUpSuite(c *C) {
 	var err error
 	s.initialSession, err = mgo.Dial("localhost")
 	util.CheckErr(err)
-	s.client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
+	s.client, err = mongowrapper.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
 	util.CheckErr(err)
 
 	// Set gin to release mode (less verbose output)

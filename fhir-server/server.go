@@ -3,13 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
 
+	"contrib.go.opencensus.io/exporter/jaeger"
+	"contrib.go.opencensus.io/exporter/stackdriver"
 	"go.opencensus.io/plugin/ochttp"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
 
 	"github.com/eug48/fhir/auth"
 	"github.com/eug48/fhir/fhir-server/middleware"
@@ -34,6 +39,8 @@ func main() {
 	failedRequestsDir := flag.String("failedRequestsDir", "", "Directory where to dump failed requests (e.g. with malformed json)")
 	requestsDumpDir := flag.String("requestsDumpDir", "", "Directory where to dump all requests and responses")
 	requestsDumpGET := flag.Bool("requestsDumpGET", true, "Whether to dump HTTP GET requests")
+	enableStackdriverTracing := flag.Bool("enableStackdriverTracing", false, "Enable OpenCensus tracing to StackDriver")
+	enableJaegerTracing := flag.Bool("enableJaegerTracing", false, "Enable OpenCensus tracing to Jaeger")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
 	flag.Parse()
 
@@ -49,6 +56,38 @@ func main() {
 		fmt.Printf("GoFHIR version %s\n", gitCommit)
 	}
 	glog.Infof("MongoDB URI is %s\n", *mongodbURI)
+
+	if *enableStackdriverTracing {
+		gcloudProject := os.Getenv("GCLOUD_PROJECT")
+		if gcloudProject == "" {
+			log.Fatal("GCLOUD_PROJECT not specified")
+		}
+		sde, err := stackdriver.NewExporter(stackdriver.Options{
+			ProjectID:    gcloudProject,
+			MetricPrefix: "gofhir",
+		})
+		if err != nil {
+			log.Fatalf("Failed to create Stackdriver exporter: %v", err)
+		}
+		view.RegisterExporter(sde)
+		trace.RegisterExporter(sde)
+	}
+	if *enableJaegerTracing {
+		jaegerAgentEndpointURI := os.Getenv("JAEGER_AGENT_ENDPOINT_URI")
+		jaegerCollectorEndpointURI := os.Getenv("JAEGER_COLLECTOR_ENDPOINT_URI")
+
+		je, err := jaeger.NewExporter(jaeger.Options{
+			AgentEndpoint:     jaegerAgentEndpointURI,
+			CollectorEndpoint: jaegerCollectorEndpointURI,
+			ServiceName:       "gofhir",
+		})
+		if err != nil {
+			log.Fatalf("Failed to create the Jaeger exporter: %v", err)
+		}
+		trace.RegisterExporter(je)
+	}
+	tracingEnabled := *enableJaegerTracing || *enableStackdriverTracing
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	var MyConfig = server.Config{
 		CreateIndexes:         !*dontCreateIndexes,
@@ -75,30 +114,27 @@ func main() {
 		s.Engine.Use(server.RequestLoggerHandler)
 	}
 
-	address := fmt.Sprintf(":%d", *port)
-
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
 	// (unless using a MongoDB >= 4.0 replica set)
 	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
 	s.InitEngine()
 
+	var handler http.Handler
+	handler = s.Engine
+
 	if *requestsDumpDir != "" {
-
-		fileLoggerMiddleware := middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET, s.Engine)
-
-		openCensusHandler := ochttp.WithRouteTag(fileLoggerMiddleware, "/")
-
-		err := http.ListenAndServe(address, openCensusHandler)
-		if err != nil {
-			panic("ListenAndServe failed: " + err.Error())
-		}
-
-	} else {
-
-		s.Engine.Run(address)
-
+		handler = middleware.FileLoggerMiddleware(*requestsDumpDir, *requestsDumpGET, handler)
+	}
+	if tracingEnabled {
+		// receives and propagates distributed trace context
+		handler = &ochttp.Handler{Handler: handler}
 	}
 
+	address := fmt.Sprintf(":%d", *port)
+	err := http.ListenAndServe(address, handler)
+	if err != nil {
+		panic("ListenAndServe failed: " + err.Error())
+	}
 }
 
 func startMongoDB() {

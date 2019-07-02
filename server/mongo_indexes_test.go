@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/dbtest"
@@ -31,7 +31,7 @@ var expectedIndexes = []mgo.Index{
 type MongoIndexesTestSuite struct {
 	suite.Suite
 	DBServer       *dbtest.DBServer
-	client         *mongo.Client
+	client         *mongowrapper.WrappedClient
 	EST            *time.Location
 	Local          *time.Location
 	initialSession *mgo.Session
@@ -68,7 +68,7 @@ func (s *MongoIndexesTestSuite) SetupSuite() {
 	mgoSession := s.DBServer.Session()
 	defer mgoSession.Close()
 	serverUri := mgoSession.LiveServers()[0]
-	s.client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://"+serverUri))
+	s.client, err = mongowrapper.Connect(context.TODO(), options.Client().ApplyURI("mongodb://"+serverUri))
 	if err != nil {
 		panic(err)
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/eug48/fhir/search"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
+	"go.opencensus.io/trace"
 )
 
 // BatchController handles FHIR batch operations via input bundles
@@ -43,13 +44,18 @@ func abortWithErr(c *gin.Context, err error) {
 
 // Handles batch and transaction requests
 func (b *BatchController) Post(c *gin.Context) {
+
+	ctx, span := trace.StartSpan(c.Request.Context(), "FHIR POST")
+	defer span.End()
+	customDbName := c.GetHeader("Db")
+
 	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
 		abortWithErr(c, err)
 		return
 	}
 
-	session := b.DAL.StartSession(c.Request.Context(), c.GetHeader("Db"))
+	session := b.DAL.StartSession(ctx, customDbName)
 	defer session.Finish()
 
 	bundle, err := bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)
@@ -58,9 +64,11 @@ func (b *BatchController) Post(c *gin.Context) {
 		return
 	}
 
+	var transaction bool
 	switch bundle.Type {
 	case "transaction":
 		glog.V(2).Info("starting transaction")
+		transaction = true
 		err := session.StartTransaction()
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "error starting MongoDB transaction"))
@@ -68,12 +76,15 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	case "batch":
 		glog.V(2).Info("starting batch")
+		transaction = false
 		// TODO: If type is batch, ensure there are no interdependent resources
 
 	default:
 		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"))
 		return
 	}
+
+	span.AddAttributes(trace.BoolAttribute("transaction", transaction))
 
 	// Loop through the entries, ensuring they have a request and that we support the method,
 	// while also creating a new entries array that can be sorted by method.
@@ -121,6 +132,8 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	// Now loop through the entries, assigning new IDs to those that are POST or Conditional PUT and fixing any
 	// references to reference the new ID.
+	_, spanForResolvingIDs := trace.StartSpan(ctx, "resolving IDs")
+	defer spanForResolvingIDs.End()
 	refMap := make(map[string]string)
 	newIDs := make([]string, len(entries))
 	createStatus := make([]string, len(entries))
@@ -184,10 +197,14 @@ func (b *BatchController) Post(c *gin.Context) {
 			glog.V(3).Infof("    resolved to: %s", entry.Request.Url)
 		}
 	}
+	spanForResolvingIDs.End()
+	spanForResolvingIDs = nil // gracefully handled by deferred End()
 
 	// Second pass to take care of conditionals referencing temporary IDs.  Known limitation: if a conditional
 	// references a temp ID also defined by a conditional, we error out if it hasn't been resolved yet -- too many
 	// rabbit holes.
+	_, spanForConditionalTemporaryIDs := trace.StartSpan(ctx, "resolving conditional temporary IDs")
+	defer spanForConditionalTemporaryIDs.End()
 	for i, entry := range entries {
 		if entry.Request.Method == "PUT" && isConditional(entry) {
 			// Use a regex to swap out the temp IDs with the new IDs
@@ -211,8 +228,12 @@ func (b *BatchController) Post(c *gin.Context) {
 			glog.V(3).Infof("    resolved to %s", entry.Request.Url)
 		}
 	}
+	spanForConditionalTemporaryIDs.End()
+	spanForConditionalTemporaryIDs = nil // gracefully handled by deferred End()
 
 	// Process references
+	_, spanForResolvingReferences := trace.StartSpan(ctx, "resolving references")
+	defer spanForResolvingReferences.End()
 	references, err := bundle.GetAllReferences()
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -260,13 +281,21 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	// When being converted to BSON references will be updated to reflect newly assigned or conditional IDs
 	bundle.SetTransformReferencesMap(refMap)
+	spanForResolvingReferences.End()
+	spanForResolvingReferences = nil // gracefully handled by deferred End()
 
 	// Handle If-Match
+	var spanForIfMatch *trace.Span
 	for _, entry := range entries {
 		switch entry.Request.Method {
 		case "PUT":
 			if entry.Request.IfMatch != "" {
 				glog.V(3).Infof(" PUT %s, If-Match: %s", entry.Request.Url, entry.Request.IfMatch)
+
+				if spanForIfMatch == nil {
+					_, spanForIfMatch = trace.StartSpan(ctx, "handling If-Match")
+					defer spanForIfMatch.End()
+				}
 
 				parts := strings.SplitN(entry.Request.Url, "/", 2)
 				if len(parts) != 2 { // TODO: refactor
@@ -305,10 +334,12 @@ func (b *BatchController) Post(c *gin.Context) {
 			}
 		}
 	}
+	spanForIfMatch.End()
+	spanForIfMatch = nil // gracefully handled by deferred End()
 
 	// If have an error for a transaction, do not proceeed
 	proceed := true
-	if bundle.Type == "transaction" {
+	if transaction {
 		for _, entry := range entries {
 			if entry.Response != nil && entry.Response.Outcome != nil {
 
@@ -358,7 +389,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		}
 	}
 
-	if bundle.Type == "transaction" {
+	if transaction {
 		for _, entry := range entries {
 			// For failing transactions return a single operation-outcome
 			if entry.Response != nil && entry.Response.Outcome != nil {

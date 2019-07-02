@@ -73,14 +73,18 @@ A single server can store multiple datasets with the `--enableMultiDB` switch. T
 The database should already exist and indexes will not be created automatically. MongoDB transactions also require that collections are pre-created. An existing database can be copied with MongoDB's `copyDatabase` command.
 
 
-Encryption
--------------------------------
+## Encryption
 
 To mitigate the effects of the database being compromised clients can request that
 [some Patient data](https://github.com/eug48/fhir/blob/master/models2/encryption.go) be encrypted when stored by setting an HTTP header `X-GoFHIR-Encrypt-Patient-Details: 1`. 
 However this currently prevents searches by these fields from working.
 
 Encryption is done using AES-GCM with a random nonce. The 32-byte key is specified in an environment variable `GOFHIR_ENCRYPTION_KEY_BASE64`. A name should be given to the key via `GOFHIR_ENCRYPTION_KEY_ID` and this is checked for consistency prior to decryption.
+
+## Tracing
+
+Calls to MongoDB have been instrumented using OpenCensus.
+There is currently support for Google StackDriver (`--enableStackdriverTracing`) and Jaeger (`--enableJaegerTracing` and set `JAEGER_AGENT_ENDPOINT_URI` and `JAEGER_COLLECTOR_ENDPOINT_URI`).
 
 
 Getting started using Docker
@@ -136,6 +140,10 @@ Building and running from source
 				Enables request logging -- use with caution in production
 		-failedRequestsDir string
 				Directory where to dump failed requests (e.g. with malformed json)
+		-enableJaegerTracing
+				Enable OpenCensus tracing to Jaeger
+		-enableStackdriverTracing
+				Enable OpenCensus tracing to StackDriver
 		-startMongod
 				Run mongod (for 'getting started' docker images - development only)
 

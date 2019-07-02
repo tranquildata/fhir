@@ -11,6 +11,7 @@ import (
 
 	// "time"
 
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -42,7 +43,7 @@ type IndexMap map[string][]mongo.IndexModel
 // on the size of the collection it may take some time before the index is created.
 // This will block the current thread until the indexing completes, but will not block
 // other connections to the mongo database.
-func (i *Indexer) ConfigureIndexes(db *mongo.Database) {
+func (i *Indexer) ConfigureIndexes(db *mongowrapper.WrappedDatabase) {
 	var err error
 	fmt.Println("Indexer: Ensuring indexes")
 

@@ -22,10 +22,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
+
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 )
 
 type mongoDataAccessLayer struct {
-	client            *mongo.Client
+	client            *mongowrapper.WrappedClient
 	defaultDbName     string
 	enableMultiDB     bool
 	dbSuffix          string
@@ -39,7 +41,7 @@ type mongoDataAccessLayer struct {
 type mongoSession struct {
 	session       mongo.Session
 	context       mongo.SessionContext
-	db            *mongo.Database
+	db            *mongowrapper.WrappedDatabase
 	dal           *mongoDataAccessLayer
 	inTransaction bool
 }
@@ -88,10 +90,10 @@ func (dal *mongoDataAccessLayer) StartSession(ctx context.Context, customDbName 
 	}
 }
 
-func (ms *mongoSession) CurrentVersionCollection(resourceType string) *mongo.Collection {
+func (ms *mongoSession) CurrentVersionCollection(resourceType string) *mongowrapper.WrappedCollection {
 	return ms.db.Collection(models.PluralizeLowerResourceName(resourceType))
 }
-func (ms *mongoSession) PreviousVersionsCollection(resourceType string) *mongo.Collection {
+func (ms *mongoSession) PreviousVersionsCollection(resourceType string) *mongowrapper.WrappedCollection {
 	return ms.db.Collection(models.PluralizeLowerResourceName(resourceType) + "_prev")
 }
 
@@ -110,7 +112,7 @@ func (ms *mongoSession) StartTransaction() error {
 }
 func (ms *mongoSession) CommmitIfTransaction() error {
 	if ms.inTransaction {
-		err := ms.session.CommitTransaction(context.TODO())
+		err := ms.session.CommitTransaction(ms.context)
 		glog.V(3).Infof("CommmitTransaction")
 		if err == nil {
 			ms.inTransaction = false
@@ -123,20 +125,20 @@ func (ms *mongoSession) CommmitIfTransaction() error {
 func (ms *mongoSession) Finish() {
 	var err error
 	if ms.inTransaction {
-		err = ms.session.AbortTransaction(context.TODO())
+		err = ms.session.AbortTransaction(ms.context)
 		glog.Warningf("AbortTransaction called from mongoSession.Finish")
 		if err == nil {
 			ms.inTransaction = false
 		}
 	}
-	ms.session.EndSession(context.TODO())
+	ms.session.EndSession(ms.context)
 	if err != nil {
 		panic(errors.Wrap(err, "session.Finish error"))
 	}
 }
 
 // NewMongoDataAccessLayer returns an implementation of DataAccessLayer that is backed by a Mongo database
-func NewMongoDataAccessLayer(client *mongo.Client, defaultDbName string, enableMultiDB bool, dbSuffix string, interceptors map[string]InterceptorList, config Config) DataAccessLayer {
+func NewMongoDataAccessLayer(client *mongowrapper.WrappedClient, defaultDbName string, enableMultiDB bool, dbSuffix string, interceptors map[string]InterceptorList, config Config) DataAccessLayer {
 	return &mongoDataAccessLayer{
 		client:            client,
 		defaultDbName:     defaultDbName,
@@ -242,7 +244,7 @@ func (ms *mongoSession) Get(id, resourceType string) (resource *models2.Resource
 			return nil, errors.Wrap(err, "Get --> prevCollection.Find")
 		}
 
-		deleted := cursor.Next(context.TODO())
+		deleted := cursor.Next(ms.context)
 		err = cursor.Err()
 		glog.V(3).Infof("   deleted version: %t (err %+v)", deleted, err)
 		if err != nil {
@@ -296,7 +298,7 @@ func (ms *mongoSession) GetVersion(id, versionIdStr, resourceType string) (resou
 			return nil, errors.Wrap(err, "GetVersion --> prevCollection.Find")
 		}
 
-		if cur.Next(context.TODO()) {
+		if cur.Next(ms.context) {
 
 			var prevDoc bson.Raw
 			err = cur.Decode(&prevDoc)
@@ -707,7 +709,7 @@ func (ms *mongoSession) Delete(id, resourceType string) (newVersionId string, er
 	return
 }
 
-func saveDeletionIntoHistory(resourceType string, id string, curCollection *mongo.Collection, prevCollection *mongo.Collection, ms *mongoSession) (newVersionIdStr string, err error) {
+func saveDeletionIntoHistory(resourceType string, id string, curCollection *mongowrapper.WrappedCollection, prevCollection *mongowrapper.WrappedCollection, ms *mongoSession) (newVersionIdStr string, err error) {
 	// get current version of this document
 	var currentDoc bson.D
 	var currentDocRaw bson.Raw
@@ -929,7 +931,7 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 		return nil, errors.Wrap(err, "History: prevCollection.Find failed")
 	}
 
-	for cursor.Next(context.TODO()) {
+	for cursor.Next(ms.context) {
 
 		var prevDocBson bson.Raw
 		err = cursor.Decode(&prevDocBson)

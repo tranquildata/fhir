@@ -15,8 +15,6 @@ import (
 	"github.com/DataDog/zstd"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
-
-	"github.com/gin-gonic/gin"
 )
 
 type responseTeeWriter struct {
@@ -55,7 +53,7 @@ var globalCounter uint64
 
 	Sets several xattrs: http_status, latency_ms, requestor_details, mutex_name
 */
-func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, ginEngine *gin.Engine) http.HandlerFunc {
+func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, httpHandler http.Handler) http.HandlerFunc {
 
 	// writing to temp directory and then moving into outputDirectory
 	// so that monitoring tools don't see a partially-written file
@@ -68,7 +66,7 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, ginEngine *g
 	return func(resp http.ResponseWriter, req *http.Request) {
 
 		if !dumpHttpGET && req.Method == "GET" {
-			ginEngine.ServeHTTP(resp, req)
+			httpHandler.ServeHTTP(resp, req)
 			return
 		}
 
@@ -120,7 +118,7 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, ginEngine *g
 
 		// do the work
 		started := time.Now()
-		ginEngine.ServeHTTP(tee, req)
+		httpHandler.ServeHTTP(tee, req)
 		latencyMsecs := time.Since(started).Nanoseconds() / 1e6
 
 		// write the response

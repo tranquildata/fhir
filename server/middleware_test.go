@@ -10,15 +10,15 @@ import (
 	"gopkg.in/mgo.v2/dbtest"
 
 	"github.com/gin-gonic/gin"
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"github.com/stretchr/testify/suite"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MiddlewareTestSuite struct {
 	suite.Suite
 	DBServer *dbtest.DBServer
-	client   *mongo.Client
+	client   *mongowrapper.WrappedClient
 	dbname   string
 }
 
@@ -42,7 +42,7 @@ func (m *MiddlewareTestSuite) SetupSuite() {
 	mgoSession := m.DBServer.Session()
 	defer mgoSession.Close()
 	serverUri := mgoSession.LiveServers()[0]
-	m.client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://"+serverUri))
+	m.client, err = mongowrapper.Connect(context.TODO(), options.Client().ApplyURI("mongodb://"+serverUri))
 	m.dbname = "fhir-test"
 	if err != nil {
 		panic(err)

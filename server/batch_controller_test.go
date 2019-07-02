@@ -15,8 +15,8 @@ import (
 
 	"github.com/eug48/fhir/models"
 	"github.com/gin-gonic/gin"
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"github.com/pebbe/util"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	. "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2"
@@ -26,7 +26,7 @@ import (
 type BatchControllerSuite struct {
 	initialSession *mgo.Session
 
-	MongoClient *mongo.Client
+	MongoClient *mongowrapper.WrappedClient
 	DbName      string
 
 	Engine       *gin.Engine
@@ -47,7 +47,7 @@ func (s *BatchControllerSuite) SetUpSuite(c *C) {
 	s.initialSession.SetSafe(&mgo.Safe{})
 	util.CheckErr(err)
 	s.DbName = "fhir-test"
-	s.MongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
+	s.MongoClient, err = mongowrapper.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost"))
 	if err != nil {
 		panic(err)
 	}

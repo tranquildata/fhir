@@ -12,8 +12,9 @@ import (
 	cors "github.com/itsjamie/gin-cors"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 )
 
 type AfterRoutes func(*gin.Engine)
@@ -89,8 +90,13 @@ func NewServer(config Config) *FHIRServer {
 func (f *FHIRServer) InitEngine() {
 	var err error
 
+	// Register OpenCensus metrics
+	if err := mongowrapper.RegisterAllViews(); err != nil {
+		log.Fatalf("Failed to register all OpenCensus views: %v\n", err)
+	}
+
 	// Establish initial connection to mongo
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(f.Config.DatabaseURI))
+	client, err := mongowrapper.Connect(context.Background(), options.Client().ApplyURI(f.Config.DatabaseURI))
 	if err != nil {
 		panic(errors.Wrap(err, "connecting to MongoDB"))
 	}
@@ -180,7 +186,7 @@ func (f *FHIRServer) Run(port int, localhostOnly bool) {
 
 func (f *FHIRServer) InitDB(databaseName string) {
 	// Connect
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(f.Config.DatabaseURI))
+	client, err := mongowrapper.Connect(context.Background(), options.Client().ApplyURI(f.Config.DatabaseURI))
 	if err != nil {
 		panic(errors.Wrap(err, "connecting to MongoDB"))
 	}
@@ -195,7 +201,7 @@ func (f *FHIRServer) InitDB(databaseName string) {
 	}
 }
 
-func CreateCollections(db *mongo.Database) {
+func CreateCollections(db *mongowrapper.WrappedDatabase) {
 	// MongoDB transactions require that collections be pre-created
 	for _, name := range models2.AllFhirResourceCollectionNames() {
 		// fmt.Printf("pre-creating collection %s, %s\n", name, name+"_prev")

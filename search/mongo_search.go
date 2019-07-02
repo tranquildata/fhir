@@ -16,6 +16,7 @@ import (
 
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
+	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -76,7 +77,7 @@ type CountCache struct {
 
 // MongoSearcher implements FHIR searches using the Mongo database.
 type MongoSearcher struct {
-	db                *mongo.Database
+	db                *mongowrapper.WrappedDatabase
 	ctx               context.Context
 	client            *mongo.Client // only non-nil for newly created sessions - Close() should be called
 	session           mongo.Session // only non-nil for newly created sessions - Close() should be called
@@ -86,7 +87,7 @@ type MongoSearcher struct {
 }
 
 // NewMongoSearcher creates a new instance of a MongoSearcher for an already open session
-func NewMongoSearcher(db *mongo.Database, ctx context.Context, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
+func NewMongoSearcher(db *mongowrapper.WrappedDatabase, ctx context.Context, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
 	return &MongoSearcher{
 		db:                db,
 		ctx:               ctx,
@@ -100,7 +101,7 @@ func NewMongoSearcher(db *mongo.Database, ctx context.Context, countTotalResults
 // Call Close()
 func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
 
-	client, err := mongo.Connect(context.Background(), moptions.Client().ApplyURI(mongoUri))
+	client, err := mongowrapper.Connect(context.Background(), moptions.Client().ApplyURI(mongoUri))
 	if err != nil {
 		panic(errors.Wrap(err, "NewMongoSearcherForUri"))
 	}
@@ -125,14 +126,14 @@ func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTota
 // Close a MongoDB session opened by NewMongoSearcherForUri
 func (m *MongoSearcher) Close() {
 	if m.client != nil {
-		m.session.EndSession(context.TODO())
-		m.client.Disconnect(context.TODO())
+		m.session.EndSession(m.ctx)
+		m.client.Disconnect(m.ctx)
 	}
 }
 
 // GetDB returns a pointer to the Mongo database.  This is helpful for custom search
 // implementations.
-func (m *MongoSearcher) GetDB() *mongo.Database {
+func (m *MongoSearcher) GetDB() *mongowrapper.WrappedDatabase {
 	return m.db
 }
 
@@ -226,7 +227,7 @@ func (m *MongoSearcher) Search(query Query) (resources []*models2.Resource, tota
 
 	// Collect the results
 	if cursor != nil {
-		for cursor.Next(context.TODO()) {
+		for cursor.Next(m.ctx) {
 			var document bson.D
 			err := cursor.Decode(&document)
 			if err != nil {
@@ -295,7 +296,7 @@ func (m *MongoSearcher) aggregate(bsonQuery *BSONQuery, options *QueryOptions, d
 			if err != nil {
 				return nil, 0, errors.Wrap(err, "aggregate count failed")
 			}
-			if cursor.Next(context.TODO()) {
+			if cursor.Next(m.ctx) {
 				result := struct {
 					Total float64 `bson:"total"`
 				}{}
@@ -393,7 +394,7 @@ func (m *MongoSearcher) find(bsonQuery *BSONQuery, queryOptions *QueryOptions, d
 		optionsBundle = optionsBundle.SetLimit(int64(queryOptions.Count))
 	}
 
-	searchCursor, err := c.Find(context.TODO(), bsonQuery.Query, optionsBundle)
+	searchCursor, err := c.Find(m.ctx, bsonQuery.Query, optionsBundle)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "search find operation failed")
 	}
