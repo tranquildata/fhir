@@ -74,7 +74,8 @@ func (dal *mongoDataAccessLayer) StartSession(ctx context.Context, customDbName 
 	}
 
 	var contextWithSession mongo.SessionContext
-	mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
+	wrappedSession := session.(*mongowrapper.WrappedSession) // unwrap - mongo's sessionFromContext wants its own session impl
+	mongo.WithSession(ctx, wrappedSession.Session, func(sc mongo.SessionContext) error {
 		// hack to work around this closure-based API
 		// WithSession just calls the callback and does nothing else.. (at least in MongoDB Go Driver 1.0.3)
 		contextWithSession = sc
