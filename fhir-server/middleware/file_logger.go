@@ -14,6 +14,7 @@ import (
 
 	"github.com/DataDog/zstd"
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 	"golang.org/x/sys/unix"
 )
 
@@ -70,6 +71,9 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, httpHandler 
 			return
 		}
 
+		_, span := trace.StartSpan(req.Context(), "file_logger")
+		defer span.End()
+
 		mutexName := req.Header.Get("X-Mutex-Name")
 		requestorDetails := req.Header.Get("X-Requestor-Details")
 
@@ -110,6 +114,7 @@ func FileLoggerMiddleware(outputDirectory string, dumpHttpGET bool, httpHandler 
 				return
 			}
 
+			span.Annotate([]trace.Attribute{trace.StringAttribute("filename", filename)}, "request written")
 			requestWritten <- nil
 		}()
 

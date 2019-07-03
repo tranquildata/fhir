@@ -2,24 +2,26 @@ package middleware
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.opencensus.io/trace"
 )
 
 type lockId string
 
 type lockRequest struct {
-	mutexName string
+	mutexName   string
 	gateChannel chan lockId
 }
 type unlockRequest struct {
 	mutexName string
-	lockId lockId
+	lockId    lockId
 }
 
 func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
-	var lockRequests = make (chan *lockRequest)
-	var unlockRequests = make (chan *unlockRequest)
+	var lockRequests = make(chan *lockRequest)
+	var unlockRequests = make(chan *unlockRequest)
 
 	go func() {
 		// mutex name ---> map[lockId ---> 'gate channel' on which request awaits]
@@ -27,7 +29,7 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 
 		for {
 			select {
-			case unlockRequest := <- unlockRequests:
+			case unlockRequest := <-unlockRequests:
 				locks, present := mutexes[unlockRequest.mutexName]
 				if !present {
 					panic("client_specified_mutexes.go: mutex not present during unlock request")
@@ -47,10 +49,10 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 					}
 				} else {
 					fmt.Printf("[client_specified_mutexes] %s: unlocked & freed\n", unlockRequest.mutexName)
-					delete (mutexes, unlockRequest.mutexName)
+					delete(mutexes, unlockRequest.mutexName)
 				}
 
-			case lockRequest := <- lockRequests:
+			case lockRequest := <-lockRequests:
 				newLockId := lockId(uuid.Must(uuid.NewRandom()).String())
 				locks, present := mutexes[lockRequest.mutexName]
 				if present {
@@ -80,13 +82,19 @@ func ClientSpecifiedMutexesMiddleware() gin.HandlerFunc {
 			// assume re-entrant call (via HandleContext() in routing.go)
 
 		} else if mutexName != "" {
-			lockRequest := &lockRequest{mutexName: mutexName, gateChannel: make(chan lockId) }
+
+			_, span := trace.StartSpan(c.Request.Context(), "locking mutex")
+			span.AddAttributes(trace.StringAttribute("X-Mutex-Name", mutexName))
+			lockRequest := &lockRequest{mutexName: mutexName, gateChannel: make(chan lockId)}
 			lockRequests <- lockRequest
-			lockId := <- lockRequest.gateChannel
+			lockId := <-lockRequest.gateChannel
+			span.End()
+
 			defer func() {
-				unlockRequest := &unlockRequest{mutexName, lockId }
+				unlockRequest := &unlockRequest{mutexName, lockId}
 				unlockRequests <- unlockRequest
 			}()
+
 			c.Header("X-Mutex-Used", "1")
 		} else {
 			c.Header("X-Mutex-Used", "0")
