@@ -66,6 +66,9 @@ type Config struct {
 	// Whether to support storing previous versions of each resource
 	EnableHistory bool
 
+	// Number of concurrent operations to do during batch bundle processing
+	BatchConcurrency int
+
 	// Whether to allow retrieving resources with no meta component,
 	// meaning Last-Modified & ETag headers can't be generated (breaking spec compliance)
 	// May be needed to support previous databases
@@ -100,6 +103,7 @@ var DefaultConfig = Config{
 	Auth:                  auth.None(),
 	EnableCISearches:      true,
 	EnableHistory:         true,
+	BatchConcurrency:      1,
 	EnableXML:             true,
 	CountTotalResults:     true,
 	ReadOnly:              false,

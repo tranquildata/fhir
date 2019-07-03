@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/eug48/fhir/utils"
@@ -375,38 +376,51 @@ func (b *BatchController) Post(c *gin.Context) {
 	}
 
 	// Make the changes in the database and update the entry responses
+	concurrency := 1
+	if !transaction {
+		concurrency = b.Config.BatchConcurrency
+	}
 	if proceed {
-		for i, entry := range entries {
-			err = b.doRequest(c, session, i, entry, createStatus, newIDs)
-			if err != nil {
-				glog.V(4).Infof("  --> ERROR %+v", err)
-			}
-			if entry.Response != nil {
-				glog.V(11).Infof("  --> %s", entry.Response.DebugString())
-			} else {
-				glog.V(4).Infof("  --> nil Response")
-			}
-			if entry.Resource != nil {
-				glog.V(11).Infof("  --> %s", entry.Resource.JsonBytes())
-			} else {
-				glog.V(4).Infof("  --> nil Resource")
-			}
-			if err != nil {
-				statusCode, outcome := ErrorToOpOutcome(err)
-				if bundle.Type == "transaction" {
-					glog.V(2).Infof("  transaction failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
-					sendReply(c, statusCode, outcome)
+		if concurrency == 1 {
+			glog.V(4).Info(" executing serially")
+			// transactions or concurrency disabled
+			for i, entry := range entries {
+				err = b.doRequest(c, transaction, session, i, entry, createStatus, newIDs)
+				if err != nil {
 					return
-				} else {
-					glog.V(2).Infof("  batch entry failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
-					entry.Resource = nil
-					entry.Request = nil
-					entry.Response = &models.BundleEntryResponseComponent{
-						Status:  strconv.Itoa(statusCode),
-						Outcome: outcome,
-					}
 				}
 			}
+		} else {
+			glog.V(4).Infof(" executing with concurrency capped to %d", concurrency)
+
+			// batches - try to do in parallel with capped concurrency (as in https://pocketgophers.com/limit-concurrent-use/)
+			var wg sync.WaitGroup
+			semaphore := make(chan bool, concurrency)
+
+			for i, _ := range entries {
+				wg.Add(1)
+
+				go func(i int) {
+					defer wg.Done()
+
+					semaphore <- true // "acquire" by writing to channel with capped capacty
+					defer func() {
+						<-semaphore // "release" by reading from channel
+					}()
+
+					// have to start a new session as mongo-driver warns that they aren't goroutine-safe
+					// (sessions do come from a pool)
+					newSession := b.DAL.StartSession(ctx, customDbName)
+
+					entry := entries[i]
+					err = b.doRequest(c, transaction, newSession, i, entry, createStatus, newIDs)
+					newSession.Finish()
+					if err != nil {
+						panic("doRequest should always return nil error in batches")
+					}
+				}(i)
+			}
+			wg.Wait()
 		}
 	}
 
@@ -461,7 +475,43 @@ func sendReply(c *gin.Context, httpStatus int, reply interface{}) {
 	}
 }
 
-func (b *BatchController) doRequest(c *gin.Context, session DataAccessSession, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
+func (b *BatchController) doRequest(c *gin.Context, transaction bool, session DataAccessSession, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
+	err := b.doRequestInner(c, session, i, entry, createStatus, newIDs)
+
+	if err != nil {
+		glog.V(4).Infof("  --> ERROR %+v", err)
+	}
+	if entry.Response != nil {
+		glog.V(11).Infof("  --> %s", entry.Response.DebugString())
+	} else {
+		glog.V(4).Infof("  --> nil Response")
+	}
+	if entry.Resource != nil {
+		glog.V(11).Infof("  --> %s", entry.Resource.JsonBytes())
+	} else {
+		glog.V(4).Infof("  --> nil Resource")
+	}
+
+	if err != nil {
+		statusCode, outcome := ErrorToOpOutcome(err)
+		if transaction {
+			glog.V(2).Infof("  transaction failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
+			sendReply(c, statusCode, outcome)
+		} else {
+			glog.V(2).Infof("  batch entry failed for %s %s: %d %v", entry.Request.Method, entry.Request.Url, statusCode, outcome)
+			entry.Resource = nil
+			entry.Request = nil
+			entry.Response = &models.BundleEntryResponseComponent{
+				Status:  strconv.Itoa(statusCode),
+				Outcome: outcome,
+			}
+			return nil // continue onwards
+		}
+	}
+	return err
+}
+
+func (b *BatchController) doRequestInner(c *gin.Context, session DataAccessSession, i int, entry *models2.ShallowBundleEntryComponent, createStatus []string, newIDs []string) error {
 	glog.V(3).Infof("  doRequest %s %s", entry.Request.Method, entry.Request.Url)
 	if entry.Response != nil {
 		// already handled (e.g. conditional update returned 409)
