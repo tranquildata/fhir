@@ -37,9 +37,33 @@ func NewBatchController(dal DataAccessLayer, config Config) *BatchController {
 	}
 }
 
-func abortWithErr(c *gin.Context, err error) {
-	outcome := models.CreateOpOutcome("fatal", "exception", "", err.Error())
+func abortWithBadStructure(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "structure", "", err.Error())
 	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+func abortWithBadValue(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "value", "", err.Error())
+	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+func abortWithBrokenInvariant(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "invariant", "", err.Error())
+	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+func abortWithMultipleMatches(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "multiple-matches", "", err.Error())
+	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+func abortWithNotFound(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "not-found", "", err.Error())
+	c.AbortWithStatusJSON(http.StatusBadRequest, outcome)
+}
+func abortWithInternalError(err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "exception", "", err.Error())
+	c.AbortWithStatusJSON(http.StatusInternalServerError, outcome)
+}
+func abortWithStatus(httpStatus int, err error, c *gin.Context) {
+	outcome := models.CreateOpOutcome("fatal", "exception", "", err.Error())
+	c.AbortWithStatusJSON(httpStatus, outcome)
 }
 
 // Handles batch and transaction requests
@@ -51,7 +75,7 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
-		abortWithErr(c, err)
+		abortWithBadStructure(err, c)
 		return
 	}
 
@@ -60,7 +84,7 @@ func (b *BatchController) Post(c *gin.Context) {
 
 	bundle, err := bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)
 	if err != nil {
-		abortWithErr(c, err)
+		abortWithBadStructure(err, c)
 		return
 	}
 
@@ -71,7 +95,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		transaction = true
 		err := session.StartTransaction()
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, errors.Wrap(err, "error starting MongoDB transaction"))
+			abortWithInternalError(errors.Wrap(err, "error starting MongoDB transaction"), c)
 			return
 		}
 	case "batch":
@@ -80,7 +104,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		// TODO: If type is batch, ensure there are no interdependent resources
 
 	default:
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"))
+		abortWithBadValue(fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"), c)
 		return
 	}
 
@@ -91,37 +115,36 @@ func (b *BatchController) Post(c *gin.Context) {
 	entries := make([]*models2.ShallowBundleEntryComponent, len(bundle.Entry))
 	for i := range bundle.Entry {
 		if bundle.Entry[i].Request == nil {
-			c.AbortWithError(http.StatusBadRequest, errors.New("Entries in a batch operation require a request"))
+			abortWithBrokenInvariant(errors.New("Entries in a batch operation require a request"), c)
 			return
 		}
 
 		switch bundle.Entry[i].Request.Method {
 		default:
-			c.AbortWithError(http.StatusNotImplemented,
-				errors.New("Operation currently unsupported in batch requests: "+bundle.Entry[i].Request.Method))
+			abortWithBadValue(errors.New("Operation currently unsupported in batch requests: "+bundle.Entry[i].Request.Method), c)
 			return
 		case "DELETE":
 			if bundle.Entry[i].Request.Url == "" {
-				c.AbortWithError(http.StatusBadRequest, errors.New("Batch DELETE must have a URL"))
+				abortWithBrokenInvariant(errors.New("Batch DELETE must have a URL"), c)
 				return
 			}
 		case "POST":
 			if bundle.Entry[i].Resource == nil {
-				c.AbortWithError(http.StatusBadRequest, errors.New("Batch POST must have a resource body"))
+				abortWithBrokenInvariant(errors.New("Batch POST must have a resource body"), c)
 				return
 			}
 		case "PUT":
 			if bundle.Entry[i].Resource == nil {
-				c.AbortWithError(http.StatusBadRequest, errors.New("Batch PUT must have a resource body"))
+				abortWithBrokenInvariant(errors.New("Batch PUT must have a resource body"), c)
 				return
 			}
 			if !strings.Contains(bundle.Entry[i].Request.Url, "/") && !strings.Contains(bundle.Entry[i].Request.Url, "?") {
-				c.AbortWithError(http.StatusBadRequest, errors.New("Batch PUT url must have an id or a condition"))
+				abortWithBrokenInvariant(errors.New("Batch PUT URL must have an id or a condition"), c)
 				return
 			}
 		case "GET":
 			if bundle.Entry[i].Request.Url == "" {
-				c.AbortWithError(http.StatusBadRequest, errors.New("Batch GET must have a URL"))
+				abortWithBrokenInvariant(errors.New("Batch GET must have a URL"), c)
 				return
 			}
 		}
@@ -147,7 +170,7 @@ func (b *BatchController) Post(c *gin.Context) {
 				query := search.Query{Resource: entry.Request.Url, Query: entry.Request.IfNoneExist}
 				existingIds, err := session.FindIDs(query)
 				if err != nil {
-					c.AbortWithError(http.StatusInternalServerError, err)
+					abortWithInternalError(err, c)
 					return
 				}
 				glog.V(3).Infof("  conditional create (%s?%s): existing: %v", entry.Request.Url, entry.Request.IfNoneExist, existingIds)
@@ -191,7 +214,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			}
 
 			if err := b.resolveConditionalPut(c.Request, session, i, entry, newIDs, refMap); err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				abortWithInternalError(err, c)
 				return
 			}
 			glog.V(3).Infof("    resolved to: %s", entry.Request.Url)
@@ -216,13 +239,12 @@ func (b *BatchController) Post(c *gin.Context) {
 			}
 
 			if hasTempID(entry.Request.Url) {
-				c.AbortWithError(http.StatusNotImplemented,
-					errors.New("Cannot resolve conditionals referencing other conditionals"))
+				abortWithStatus(http.StatusNotImplemented, errors.New("Cannot resolve conditionals referencing other conditionals"), c)
 				return
 			}
 
 			if err := b.resolveConditionalPut(c.Request, session, i, entry, newIDs, refMap); err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				abortWithInternalError(err, c)
 				return
 			}
 			glog.V(3).Infof("    resolved to %s", entry.Request.Url)
@@ -236,7 +258,7 @@ func (b *BatchController) Post(c *gin.Context) {
 	defer spanForResolvingReferences.End()
 	references, err := bundle.GetAllReferences()
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		abortWithBadStructure(err, c)
 		return
 	}
 	for _, reference := range references {
@@ -252,7 +274,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		if queryPos >= 0 {
 
 			if bundle.Type != "transaction" {
-				c.AbortWithError(http.StatusBadRequest, errors.New("conditional references are only allowed in transactions, not batches"))
+				abortWithBrokenInvariant(errors.New("conditional references are only allowed in transactions, not batches"), c)
 				return
 			}
 			glog.V(3).Infof("  conditional reference: %s", reference)
@@ -262,7 +284,7 @@ func (b *BatchController) Post(c *gin.Context) {
 			searchQuery := search.Query{Resource: resourceType, Query: queryString}
 			ids, err := session.FindIDs(searchQuery)
 			if err != nil {
-				c.AbortWithError(http.StatusBadRequest, errors.Wrapf(err, "lookup of conditional reference failed (%s)", reference))
+				abortWithInternalError(errors.Wrapf(err, "lookup of conditional reference failed (%s)", reference), c)
 				return
 			}
 			glog.V(3).Infof("    ids: %v", ids)
@@ -270,10 +292,10 @@ func (b *BatchController) Post(c *gin.Context) {
 			if len(ids) == 1 {
 				refMap[reference] = resourceType + "/" + ids[0]
 			} else if len(ids) == 0 {
-				c.AbortWithError(http.StatusBadRequest, errors.Errorf("no matches for conditional reference (%s)", reference))
+				abortWithNotFound(errors.Errorf("no matches for conditional reference (%s)", reference), c)
 				return
 			} else {
-				c.AbortWithError(http.StatusBadRequest, errors.Errorf("multiple matches for conditional reference (%s)", reference))
+				abortWithMultipleMatches(errors.Errorf("multiple matches for conditional reference (%s)", reference), c)
 				return
 			}
 		}
@@ -299,15 +321,14 @@ func (b *BatchController) Post(c *gin.Context) {
 
 				parts := strings.SplitN(entry.Request.Url, "/", 2)
 				if len(parts) != 2 { // TODO: refactor
-					c.AbortWithError(http.StatusBadRequest,
-						fmt.Errorf("Couldn't identify resource and id to put from %s", entry.Request.Url))
+					abortWithBadStructure(fmt.Errorf("Couldn't identify resource and id to put from %s", entry.Request.Url), c)
 					return
 				}
 				id := parts[1]
 
 				conditionalVersionId, err := utils.ETagToVersionId(entry.Request.IfMatch)
 				if err != nil {
-					c.AbortWithError(http.StatusBadRequest, err)
+					abortWithBadValue(fmt.Errorf("Couldn't parse If-Match: %s", entry.Request.IfMatch), c)
 					return
 				}
 
@@ -321,7 +342,7 @@ func (b *BatchController) Post(c *gin.Context) {
 					entry.Resource = nil
 				} else if err != nil {
 					err = errors.Wrapf(err, "failed to get current resource while processing If-Match for %s", entry.Request.Url)
-					c.AbortWithError(http.StatusInternalServerError, err)
+					abortWithInternalError(err, c)
 					return
 				} else if conditionalVersionId != currentResource.VersionId() {
 					glog.V(3).Infof("   conflict with current resource")

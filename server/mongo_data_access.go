@@ -127,15 +127,22 @@ func (ms *mongoSession) Finish() {
 	var err error
 	if ms.inTransaction {
 		err = ms.session.AbortTransaction(ms.context)
-		glog.Warningf("AbortTransaction called from mongoSession.Finish")
 		if err == nil {
+		glog.Warningf("AbortTransaction called from mongoSession.Finish")
 			ms.inTransaction = false
+		} else {
+			commandErr, ok := err.(mongo.CommandError)
+			if ok && commandErr.Name == "OperationNotSupportedInTransaction" {
+				// can ignore - occurs if we fail before issuing a command. msg is "Command is not supported as the first command in a transaction"
+				glog.V(5).Infof("ignoring failed AbortTransaction in mongoSession.Finish (%s %s)", commandErr.Name, commandErr.Message)
+			} else {
+				// don't know what to do - panic..
+				glog.Errorf("AbortTransaction in mongoSession.Finish failed: %T %v", err, err)
+				panic(fmt.Sprintf("AbortTransaction in mongoSession.Finish failed: %T %v", err, err))
+			}
 		}
 	}
 	ms.session.EndSession(ms.context)
-	if err != nil {
-		panic(errors.Wrap(err, "session.Finish error"))
-	}
 }
 
 // NewMongoDataAccessLayer returns an implementation of DataAccessLayer that is backed by a Mongo database
