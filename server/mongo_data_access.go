@@ -47,13 +47,12 @@ type mongoSession struct {
 }
 
 func (dal *mongoDataAccessLayer) StartSession(ctx context.Context, customDbName string) DataAccessSession {
-	defaultCausalConsistency := true
-	options := options.SessionOptions{
-		CausalConsistency:   &defaultCausalConsistency,
-		DefaultReadConcern:  readconcern.Snapshot(),
-		DefaultWriteConcern: writeconcern.New(writeconcern.WMajority(), writeconcern.J(false)),
-	}
-	session, err := dal.client.StartSession(&options)
+	opts := options.Session()
+	opts.SetCausalConsistency(true)
+	opts.SetDefaultReadConcern(readconcern.Majority())
+	opts.SetDefaultWriteConcern(writeconcern.New(writeconcern.WMajority(), writeconcern.J(true)))
+
+	session, err := dal.client.StartSession(opts)
 	if err != nil {
 		panic(errors.Wrap(err, "StartSession failed"))
 	}
@@ -128,7 +127,7 @@ func (ms *mongoSession) Finish() {
 	if ms.inTransaction {
 		err = ms.session.AbortTransaction(ms.context)
 		if err == nil {
-		glog.Warningf("AbortTransaction called from mongoSession.Finish")
+			glog.Warningf("AbortTransaction called from mongoSession.Finish")
 			ms.inTransaction = false
 		} else {
 			commandErr, ok := err.(mongo.CommandError)
