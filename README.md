@@ -184,18 +184,28 @@ You can also set up a trigger via https://console.cloud.google.com/gcr/triggers
 Development
 -------------
 
-This project uses Go 1.10. To test the library first install dependencies by running `dep ensure -vendor-only  -v`. You can also try using the older `go get -t ./...` (this requires the project to be at the right place in your GOPATH).
+To run the server whilst it is under development it is often easier to combine the build and run steps into a single command from the `fhir-server` directory:
 
-Once the dependecies have been installed, you can invoke the test suite by running:
+```
+$ cd fhir-server
+$ go run server.go
+```
+
+You can invoke the golang test suite by running:
 
 ```
 $ go test ./...
 ```
 
-To run the server whilst it is under development it is often easier to combine the build and run steps into a single command from the `fhir-server` directory:
+More tests have been written in F#:
 
 ```
-$ go run server.go
+$ cd fhir-server
+$ go build
+$ cd ..
+
+$ cd fsharp-fhir-tools/HttpTests/
+$ dotnet run start-gofhir
 ```
 
 As a library

@@ -117,7 +117,7 @@ let transactionTests = [
                         Bundle.EntryComponent(
                             Resource = Patient(
                                 Identifier = L [ Identifier("http://example.com", "Patient1")],
-                                ManagingOrganization = ResourceReference("Organization?active=true")
+                                ManagingOrganization = ResourceReference("Organization?active=true") // reference with multiple matches
                             ),
                             Request = Bundle.RequestComponent(
                                 Url =  "Patient",

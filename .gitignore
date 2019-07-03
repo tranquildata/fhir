@@ -36,3 +36,4 @@ _testmain.go
 *.exe
 *.test
 *.prof
+.ionide/symbolCache.db

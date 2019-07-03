@@ -4,8 +4,10 @@ open System
 open System.IO
 open System.Threading
 open System.Diagnostics
+open System.Runtime.InteropServices
 open Hl7.Fhir.Rest
 
+let onWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
 
 type IFhirRunner =
     inherit IDisposable
@@ -39,17 +41,44 @@ let private startProcess cmd args =
     proc
             
 
+type RemoteFhirRunner(baseUrl: string) =
+
+    let fhirClient() =
+            new FhirClient(baseUrl,
+                                verifyFhirVersion = false,
+                                PreferredFormat = ResourceFormat.Json,
+                                Timeout = 30 * 1000)
+
+    interface IFhirRunner with
+        member __.FhirClient() = fhirClient()
+        member __.Name() = "Remote " + baseUrl
+
+    interface IDisposable with
+        member __.Dispose() =
+            ()
+
+
 type GoFhirMongoRunner() as this =
     // Drop fhir-bench mongo database
-    let dropDatabaseProc = Process.Start(ProcessStartInfo("""c:\windows\system32\bash.exe""", """-c "mongo fhir-bench --eval db.dropDatabase\(\)" """))
+    let dropDatabaseProc =
+        let cmd = """-c "mongo fhir-bench --eval db.dropDatabase\(\)" """
+        if onWindows then
+            Process.Start(ProcessStartInfo("""c:\windows\system32\bash.exe""", cmd))
+        else
+            Process.Start(ProcessStartInfo("bash", cmd))
+
     do dropDatabaseProc.WaitForExit()
 
     // Run gofhir
-    //let path = """C:\Users\eug\go\src\github.com\eug48\fhir\fhir-server\fhir-server.exe"""
-    let path = Path.Combine("..", "..", "..", "..", "fhir-server", "fhir-server.exe")
-    let proc = startProcess path ["-port 5001 -mongodbHostPort localhost:27017 -enableXML -databaseName fhir-bench"]
-    let fhirBase = "http://localhost:5002"
-    //let fhirBase = "http://localhost:3002"
+    let path =
+        let path = Path.Combine("..", "..", "fhir-server", "fhir-server")
+        if onWindows then
+            path + ".exe"
+        else
+            path
+
+    let proc = startProcess path ["-port 5001 -mongodbURI mongodb://localhost:27017 -enableXML -databaseName fhir-bench -logtostderr -v 1 --requestsDumpDir /fhir_logs"]
+    let fhirBase = "http://localhost:5001"
     let fhirClient() =
         new FhirClient(fhirBase,
                             verifyFhirVersion = false,

@@ -56,7 +56,7 @@ module GetResource =
     let ViaGET (fhir: FhirClient) (resource: string) (id: string) (vid: string option) =
         fhir.Read(makeUrl resource id vid)
 
-    let private ViaBundle (bundleType: Bundle.BundleType) (fhir: FhirClient) (resource: string) (id: string) (vid: string option) : #Resource =
+    let private ViaBundle (bundleType: Bundle.BundleType) (fhir: FhirClient) (resource: string) (id: string) (vid: string option) : Resource =
         let b =
             Bundle(
                 Type = N bundleType,

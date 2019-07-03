@@ -8,9 +8,6 @@ let N = Nullable
 type L<'T> = ResizeArray<'T>
 let flatten x = Seq.collect id x |> ResizeArray
 
-let fhirClient() =
-    new FhirClient("http://localhost:3001", verifyFhirVersion = false, PreferredFormat = ResourceFormat.Json)
-
 type FhirAutoDelete(fhir: FhirClient) =
     do fhir.OnBeforeRequest.Add (fun r -> r.RawRequest.Proxy <- null)
     let created = L []
