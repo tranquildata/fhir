@@ -12,6 +12,7 @@ import (
 
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/stackdriver"
+	stackdriverPropagation "contrib.go.opencensus.io/exporter/stackdriver/propagation"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
@@ -129,7 +130,10 @@ func main() {
 	}
 	if tracingEnabled {
 		// receives and propagates distributed trace context
-		handler = &ochttp.Handler{Handler: handler}
+		handler = &ochttp.Handler{
+			Handler:     handler,
+			Propagation: &stackdriverPropagation.HTTPFormat{},
+		}
 	}
 
 	address := fmt.Sprintf(":%d", *port)
