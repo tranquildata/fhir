@@ -47,21 +47,21 @@ func (b *BSONQuery) DebugString() string {
 	out := bytes.Buffer{}
 	out.WriteString(fmt.Sprintf("Resource: %s; ", b.Resource))
 	if b.Query != nil {
+		out.WriteString("Query: ")
 		queryJSON, err := bson.MarshalExtJSON(b.Query, true, false)
 		if err != nil {
-			panic(err)
+			out.WriteString(" BSONQuery.DebugString error: " + err.Error())
 		}
-		out.WriteString("Query: ")
-		// out.WriteString(fmt.Sprintf("%+v; as JSON: ", b.Query))
 		out.Write(queryJSON)
 		out.WriteString("; ")
 	}
 	if b.Pipeline != nil {
-		pipelineJson, err := bson.MarshalExtJSON(b.Pipeline, true, false)
-		if err != nil {
-			panic(err)
-		}
 		out.WriteString("Pipeline: ")
+		doc := bson.M{"stages": b.Pipeline}
+		pipelineJson, err := bson.MarshalExtJSON(doc, true, false)
+		if err != nil {
+			out.WriteString(" BSONQuery.DebugString error: " + err.Error())
+		}
 		out.Write(pipelineJson)
 		out.WriteString("; ")
 	}
