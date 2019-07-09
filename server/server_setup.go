@@ -90,10 +90,11 @@ func NewServer(config Config) *FHIRServer {
 func (f *FHIRServer) InitEngine() {
 	var err error
 
-	// Register OpenCensus metrics
-	if err := mongowrapper.RegisterAllViews(); err != nil {
-		log.Fatalf("Failed to register all OpenCensus views: %v\n", err)
-	}
+	// TODO: Register OpenCensus metrics
+	// TODO: StackDriver currently throwing up errors like  InvalidArgument desc = Field timeSeries[0].points[0].distributionValue had an invalid value: Distribution value has 34 |bucket_counts| fields, which is more than the 33 buckets allowed by the bucketing options.
+	// if err := mongowrapper.RegisterAllViews(); err != nil {
+	// log.Fatalf("Failed to register all OpenCensus views: %v\n", err)
+	// }
 
 	// Establish initial connection to mongo
 	client, err := mongowrapper.Connect(context.Background(), options.Client().ApplyURI(f.Config.DatabaseURI))
