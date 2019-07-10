@@ -32,6 +32,7 @@ func main() {
 	databaseName := flag.String("databaseName", "fhir", "MongoDB database name to use by default")
 	enableMultiDB := flag.Bool("enableMultiDB", false, "Allow request to specify a specific Mongo database instead of the default, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex")
 	enableHistory := flag.Bool("enableHistory", true, "Keep previous versions of every resource")
+	tokenParametersCaseSensitive := flag.Bool("tokenParametersCaseSensitive", false, "Whether token-type search parameters should be case sensitive (faster and R4 leans towards case-sensitive, whereas STU3 text suggests case-insensitive)")
 	batchConcurrency := flag.Int("batchConcurrency", 1, "Number of concurrent database operations to do during batch bundle processing (1 to disable)")
 	databaseSuffix := flag.String("databaseSuffix", "", "Request-specific MongoDB database name has to end with this (optional, e.g. '_fhir')")
 	dontCreateIndexes := flag.Bool("dontCreateIndexes", false, "Don't create indexes for the 'fhr' database on startup")
@@ -92,25 +93,26 @@ func main() {
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
 	var MyConfig = server.Config{
-		CreateIndexes:         !*dontCreateIndexes,
-		IndexConfigPath:       "config/indexes.conf",
-		DatabaseURI:           *mongodbURI,
-		DefaultDatabaseName:   *databaseName,
-		EnableMultiDB:         *enableMultiDB,
-		DatabaseSuffix:        *databaseSuffix,
-		DatabaseSocketTimeout: 2 * time.Minute,
-		DatabaseOpTimeout:     90 * time.Second,
-		DatabaseKillOpPeriod:  10 * time.Second,
-		Auth:                  auth.None(),
-		EnableCISearches:      true,
-		CountTotalResults:     *disableSearchTotals == false,
-		ReadOnly:              false,
-		EnableXML:             *enableXML,
-		EnableHistory:         *enableHistory,
-		BatchConcurrency:      *batchConcurrency,
-		Debug:                 true,
-		ValidatorURL:          *validatorURL,
-		FailedRequestsDir:     *failedRequestsDir,
+		CreateIndexes:                !*dontCreateIndexes,
+		IndexConfigPath:              "config/indexes.conf",
+		DatabaseURI:                  *mongodbURI,
+		DefaultDatabaseName:          *databaseName,
+		EnableMultiDB:                *enableMultiDB,
+		DatabaseSuffix:               *databaseSuffix,
+		DatabaseSocketTimeout:        2 * time.Minute,
+		DatabaseOpTimeout:            90 * time.Second,
+		DatabaseKillOpPeriod:         10 * time.Second,
+		Auth:                         auth.None(),
+		EnableCISearches:             true,
+		TokenParametersCaseSensitive: *tokenParametersCaseSensitive,
+		CountTotalResults:            *disableSearchTotals == false,
+		ReadOnly:                     false,
+		EnableXML:                    *enableXML,
+		EnableHistory:                *enableHistory,
+		BatchConcurrency:             *batchConcurrency,
+		Debug:                        true,
+		ValidatorURL:                 *validatorURL,
+		FailedRequestsDir:            *failedRequestsDir,
 	}
 	s := server.NewServer(MyConfig)
 	if *reqLog {

@@ -27,15 +27,16 @@ import (
 )
 
 type mongoDataAccessLayer struct {
-	client            *mongowrapper.WrappedClient
-	defaultDbName     string
-	enableMultiDB     bool
-	dbSuffix          string
-	Interceptors      map[string]InterceptorList
-	countTotalResults bool
-	enableCISearches  bool
-	enableHistory     bool
-	readonly          bool
+	client                       *mongowrapper.WrappedClient
+	defaultDbName                string
+	enableMultiDB                bool
+	dbSuffix                     string
+	Interceptors                 map[string]InterceptorList
+	countTotalResults            bool
+	enableCISearches             bool
+	tokenParametersCaseSensitive bool
+	enableHistory                bool
+	readonly                     bool
 }
 
 type mongoSession struct {
@@ -147,15 +148,16 @@ func (ms *mongoSession) Finish() {
 // NewMongoDataAccessLayer returns an implementation of DataAccessLayer that is backed by a Mongo database
 func NewMongoDataAccessLayer(client *mongowrapper.WrappedClient, defaultDbName string, enableMultiDB bool, dbSuffix string, interceptors map[string]InterceptorList, config Config) DataAccessLayer {
 	return &mongoDataAccessLayer{
-		client:            client,
-		defaultDbName:     defaultDbName,
-		enableMultiDB:     enableMultiDB,
-		dbSuffix:          dbSuffix,
-		Interceptors:      interceptors,
-		countTotalResults: config.CountTotalResults,
-		enableCISearches:  config.EnableCISearches,
-		enableHistory:     config.EnableHistory,
-		readonly:          config.ReadOnly,
+		client:                       client,
+		defaultDbName:                defaultDbName,
+		enableMultiDB:                enableMultiDB,
+		dbSuffix:                     dbSuffix,
+		Interceptors:                 interceptors,
+		countTotalResults:            config.CountTotalResults,
+		enableCISearches:             config.EnableCISearches,
+		tokenParametersCaseSensitive: config.TokenParametersCaseSensitive,
+		enableHistory:                config.EnableHistory,
+		readonly:                     config.ReadOnly,
 	}
 }
 
@@ -992,7 +994,7 @@ func (ms *mongoSession) History(baseURL url.URL, resourceType string, id string)
 
 func (ms *mongoSession) Search(baseURL url.URL, searchQuery search.Query) (*models2.ShallowBundle, error) {
 
-	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
+	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.tokenParametersCaseSensitive, ms.dal.readonly)
 
 	resources, total, err := searcher.Search(searchQuery)
 	if err != nil {
@@ -1024,7 +1026,9 @@ func (ms *mongoSession) Search(baseURL url.URL, searchQuery search.Query) (*mode
 	}
 
 	for _, v := range includesMap {
-		glog.V(4).Infof("includesMap: %#v\n", v)
+		if glog.V(4) {
+			glog.V(4).Infof("includesMap: %s/%s/_history/%s\n", v.ResourceType(), v.Id(), v.VersionId())
+		}
 		var entry models2.ShallowBundleEntryComponent
 		entry.Resource = v
 		entry.Search = &models.BundleEntrySearchComponent{Mode: "include"}
@@ -1064,7 +1068,7 @@ func (ms *mongoSession) FindIDs(searchQuery search.Query) (IDs []string, err err
 	newQuery := search.Query{Resource: searchQuery.Resource, Query: newParams.Encode()}
 
 	// Now search on that query, unmarshaling to a temporary struct and converting results to []string
-	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.readonly)
+	searcher := search.NewMongoSearcher(ms.db, ms.context, ms.dal.countTotalResults, ms.dal.enableCISearches, ms.dal.tokenParametersCaseSensitive, ms.dal.readonly)
 	results, _, err := searcher.Search(newQuery)
 	if err != nil {
 		return nil, convertMongoErr(err)

@@ -132,6 +132,8 @@ Building and running from source
 				Keep previous versions of every resource
 		-disableSearchTotals
 				Don't query for all results of a search to return Bundle.total, only do paging
+		-tokenParametersCaseSensitive
+				Whether token-type search parameters should be case sensitive (faster and R4 leans towards case-sensitive, whereas STU3 text suggests case-insensitive)
 		-mongodbURI string
 				MongoDB connection URI - a replica set is required for transactions support (default "mongodb://mongo:27017/?replicaSet=rs0")
 		-port int

@@ -77,29 +77,31 @@ type CountCache struct {
 
 // MongoSearcher implements FHIR searches using the Mongo database.
 type MongoSearcher struct {
-	db                *mongowrapper.WrappedDatabase
-	ctx               context.Context
-	client            *mongo.Client // only non-nil for newly created sessions - Close() should be called
-	session           mongo.Session // only non-nil for newly created sessions - Close() should be called
-	countTotalResults bool
-	enableCISearches  bool
-	readonly          bool
+	db                           *mongowrapper.WrappedDatabase
+	ctx                          context.Context
+	client                       *mongo.Client // only non-nil for newly created sessions - Close() should be called
+	session                      mongo.Session // only non-nil for newly created sessions - Close() should be called
+	countTotalResults            bool
+	enableCISearches             bool
+	tokenParametersCaseSensitive bool
+	readonly                     bool
 }
 
 // NewMongoSearcher creates a new instance of a MongoSearcher for an already open session
-func NewMongoSearcher(db *mongowrapper.WrappedDatabase, ctx context.Context, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
+func NewMongoSearcher(db *mongowrapper.WrappedDatabase, ctx context.Context, countTotalResults, enableCISearches, tokenParametersCaseSensitive, readonly bool) *MongoSearcher {
 	return &MongoSearcher{
-		db:                db,
-		ctx:               ctx,
-		countTotalResults: countTotalResults,
-		enableCISearches:  enableCISearches,
-		readonly:          readonly,
+		db:                           db,
+		ctx:                          ctx,
+		countTotalResults:            countTotalResults,
+		enableCISearches:             enableCISearches,
+		tokenParametersCaseSensitive: tokenParametersCaseSensitive,
+		readonly:                     readonly,
 	}
 }
 
 // NewMongoSearcher creates a new instance of a MongoSearcher with a new connection
 // Call Close()
-func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTotalResults, enableCISearches, readonly bool) *MongoSearcher {
+func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTotalResults, enableCISearches, tokenParametersCaseSensitive, readonly bool) *MongoSearcher {
 
 	client, err := mongowrapper.Connect(context.Background(), moptions.Client().ApplyURI(mongoUri))
 	if err != nil {
@@ -114,12 +116,13 @@ func NewMongoSearcherForUri(mongoUri string, mongoDatabaseName string, countTota
 	db := client.Database(mongoDatabaseName)
 
 	return &MongoSearcher{
-		db:                db,
-		ctx:               context.TODO(),
-		session:           session,
-		countTotalResults: countTotalResults,
-		enableCISearches:  enableCISearches,
-		readonly:          readonly,
+		db:                           db,
+		ctx:                          context.TODO(),
+		session:                      session,
+		countTotalResults:            countTotalResults,
+		enableCISearches:             enableCISearches,
+		tokenParametersCaseSensitive: tokenParametersCaseSensitive,
+		readonly:                     readonly,
 	}
 }
 
@@ -1216,8 +1219,8 @@ func (m *MongoSearcher) createQuantityQueryObject(q *QuantityParam) bson.M {
 			// }
 
 		} else {
-			criteria["code"] = m.ci(q.Code)
-			criteria["system"] = m.ci(q.System)
+			criteria["code"] = m.ciToken(q.Code)
+			criteria["system"] = m.ciToken(q.System)
 		}
 		return buildBSON(p.Path, criteria)
 	}
@@ -1313,20 +1316,20 @@ func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
 	var codeCriteria interface{}
 	if t.Code == "" {
 		// [parameter]=[system]|
-		systemCriteria = m.ci(t.System)
+		systemCriteria = m.ciToken(t.System)
 	} else if t.System == "" {
 		if t.AnySystem {
 			// [parameter]=[code]
-			codeCriteria = m.ci(t.Code)
+			codeCriteria = m.ciToken(t.Code)
 		} else {
 			// [parameter]=|[code]
-			codeCriteria = m.ci(t.Code)
+			codeCriteria = m.ciToken(t.Code)
 			systemCriteria = bson.M{"$exists": false}
 		}
 	} else {
 		// [parameter]=[system]|[code]
-		codeCriteria = m.ci(t.Code)
-		systemCriteria = m.ci(t.System)
+		codeCriteria = m.ciToken(t.Code)
+		systemCriteria = m.ciToken(t.System)
 	}
 
 	single := func(p SearchParamPath) bson.M {
@@ -1361,7 +1364,7 @@ func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
 		case "ContactPoint":
 			criteria["value"] = m.ci(t.Code)
 			if !t.AnySystem {
-				criteria["use"] = m.ci(t.System)
+				criteria["use"] = m.ciToken(t.System)
 			}
 		case "boolean":
 			switch t.Code {
@@ -1372,9 +1375,10 @@ func (m *MongoSearcher) createTokenQueryObject(t *TokenParam) bson.M {
 			default:
 				panic(createInvalidSearchError("MSG_PARAM_INVALID", fmt.Sprintf("Parameter \"%s\" content is invalid", t.Name)))
 			}
-		case "code", "string":
+		case "string":
 			return buildBSON(p.Path, m.ci(t.Code))
-
+		case "code":
+			return buildBSON(p.Path, m.ciToken(t.Code))
 		case "id":
 			// IDs do not need the case-insensitive match.
 			return buildBSON(p.Path, t.Code)
@@ -1580,6 +1584,18 @@ func processOrCriteria(path string, orValue interface{}, result bson.M) {
 // TODO: consider case-insensitive indexes in MongoDB 3.4 (https://docs.mongodb.com/manual/core/index-case-insensitive/)
 func (m *MongoSearcher) ci(s string) interface{} {
 	if m.enableCISearches {
+		return primitive.Regex{Pattern: fmt.Sprintf("^%s$", regexp.QuoteMeta(s)), Options: "i"}
+	}
+	return s
+}
+
+// Case-insensitive match for token-type search parameters
+func (m *MongoSearcher) ciToken(s string) interface{} {
+
+	// R4 leans towards case-sensitive, whereas STU3 text suggests case-insensitive
+	// https://github.com/HL7/fhir/commit/13fb1c1f102caf7de7266d6e78ab261efac06a1f
+
+	if !m.tokenParametersCaseSensitive && m.enableCISearches {
 		return primitive.Regex{Pattern: fmt.Sprintf("^%s$", regexp.QuoteMeta(s)), Options: "i"}
 	}
 	return s

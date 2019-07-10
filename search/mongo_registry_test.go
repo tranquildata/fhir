@@ -2,8 +2,8 @@ package search
 
 import (
 	"github.com/pebbe/util"
-	. "gopkg.in/check.v1"
 	"go.mongodb.org/mongo-driver/bson"
+	. "gopkg.in/check.v1"
 )
 
 type MongoRegistrySuite struct{}
@@ -18,7 +18,7 @@ func (s *MongoRegistrySuite) TestRegisterAndLookupBSONBuilder(c *C) {
 	GlobalMongoRegistry().RegisterBSONBuilder("test", build)
 	obtained, err := GlobalMongoRegistry().LookupBSONBuilder("test")
 	util.CheckErr(err)
-	searcher := NewMongoSearcher(nil, nil, true, true, false) // countTotalResults = true, enableCISearches = true, readonly = false
+	searcher := NewMongoSearcher(nil, nil, true, true, false, false) // countTotalResults = true, enableCISearches = true, tokenParametersCaseSensitive = false, readonly = false
 	bmap, err := obtained(&StringParam{String: "bar"}, searcher)
 	util.CheckErr(err)
 	c.Assert(bmap, HasLen, 1)

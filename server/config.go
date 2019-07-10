@@ -63,6 +63,11 @@ type Config struct {
 	// case-insesitivity when performing searches on string fields, codes, etc.
 	EnableCISearches bool
 
+	// Whether to use case-sensitive search for token-type search parameters
+	// Slower but default off for backwards compatibility and strict STU3 support
+	// R4 leans towards case-sensitive, whereas STU3 text suggests case-insensitive (https://github.com/HL7/fhir/commit/13fb1c1f102caf7de7266d6e78ab261efac06a1f)
+	TokenParametersCaseSensitive bool
+
 	// Whether to support storing previous versions of each resource
 	EnableHistory bool
 
@@ -93,21 +98,22 @@ type Config struct {
 
 // DefaultConfig is the default server configuration
 var DefaultConfig = Config{
-	ServerURL:             "",
-	IndexConfigPath:       "config/indexes.conf",
-	DatabaseURI:           "mongodb://localhost:27017/?replicaSet=rs0",
-	DatabaseSuffix:        "_fhir",
-	DatabaseSocketTimeout: 2 * time.Minute,
-	DatabaseOpTimeout:     90 * time.Second,
-	DatabaseKillOpPeriod:  10 * time.Second,
-	Auth:                  auth.None(),
-	EnableCISearches:      true,
-	EnableHistory:         true,
-	BatchConcurrency:      1,
-	EnableXML:             true,
-	CountTotalResults:     true,
-	ReadOnly:              false,
-	Debug:                 false,
+	ServerURL:                    "",
+	IndexConfigPath:              "config/indexes.conf",
+	DatabaseURI:                  "mongodb://localhost:27017/?replicaSet=rs0",
+	DatabaseSuffix:               "_fhir",
+	DatabaseSocketTimeout:        2 * time.Minute,
+	DatabaseOpTimeout:            90 * time.Second,
+	DatabaseKillOpPeriod:         10 * time.Second,
+	Auth:                         auth.None(),
+	EnableCISearches:             true,
+	TokenParametersCaseSensitive: false,
+	EnableHistory:                true,
+	BatchConcurrency:             1,
+	EnableXML:                    true,
+	CountTotalResults:            true,
+	ReadOnly:                     false,
+	Debug:                        false,
 }
 
 func (config *Config) responseURL(r *http.Request, paths ...string) *url.URL {
