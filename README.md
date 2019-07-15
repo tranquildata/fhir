@@ -70,7 +70,7 @@ Multi-database mode
 
 A single server can store multiple datasets with the `--enableMultiDB` switch. This allows requests to specificy the name of a MongoDB database to use. This is done in the base URL, e.g. http://fhir-server/db/test4_fhir/Patient?name=alex
 
-The database should already exist and indexes will not be created automatically. MongoDB transactions also require that collections are pre-created. An existing database can be copied with MongoDB's `copyDatabase` command.
+The database should already exist and indexes will not be created automatically. MongoDB transactions also require that collections are pre-created. An existing database can be copied with MongoDB's `copyDatabase` command, or you can run this server with the `initdb --databaseName db-name` flags.
 
 
 ## Encryption

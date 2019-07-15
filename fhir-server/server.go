@@ -45,7 +45,14 @@ func main() {
 	enableStackdriverTracing := flag.Bool("enableStackdriverTracing", false, "Enable OpenCensus tracing to StackDriver")
 	enableJaegerTracing := flag.Bool("enableJaegerTracing", false, "Enable OpenCensus tracing to Jaeger")
 	startMongod := flag.Bool("startMongod", false, "Run mongod (for 'getting started' docker images - development only)")
-	flag.Parse()
+
+	onlyInitDB := false
+	if os.Args[1] == "initdb" {
+		onlyInitDB = true
+		flag.CommandLine.Parse(os.Args[2:])
+	} else {
+		flag.CommandLine.Parse(os.Args[1:])
+	}
 
 	if *startMongod {
 		startMongoDB()
@@ -117,6 +124,12 @@ func main() {
 	s := server.NewServer(MyConfig)
 	if *reqLog {
 		s.Engine.Use(server.RequestLoggerHandler)
+	}
+
+	if onlyInitDB {
+		fmt.Printf("Initialising MongoDB database %s\n", *databaseName)
+		s.InitDB(*databaseName)
+		return
 	}
 
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
