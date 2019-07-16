@@ -1195,6 +1195,9 @@ func updateResourceMeta(resource *models2.Resource, versionId int) {
 }
 
 func convertMongoErr(err error) error {
+	if err == nil {
+		return nil
+	}
 	switch err {
 	case mongo.ErrNoDocuments:
 		return ErrNotFound
