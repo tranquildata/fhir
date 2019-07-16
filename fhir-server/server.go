@@ -48,6 +48,9 @@ func main() {
 
 	onlyInitDB := false
 	if os.Args[1] == "initdb" {
+		// collections are now created automatically using PrecreateCollectionsMiddleware
+		// but this also creates indices and allows for cases when PrecreateCollectionsMiddleware
+		// doesn't have permissions to create collections
 		onlyInitDB = true
 		flag.CommandLine.Parse(os.Args[2:])
 	} else {
@@ -135,6 +138,10 @@ func main() {
 	// Mutex middleware to work around the lack of proper transactions in MongoDB
 	// (unless using a MongoDB >= 4.0 replica set)
 	s.Engine.Use(middleware.ClientSpecifiedMutexesMiddleware())
+
+	// Pre-create collections as required by MongoDB transactions
+	s.Engine.Use(middleware.PrecreateCollectionsMiddleware(*mongodbURI))
+
 	s.InitEngine()
 
 	var handler http.Handler
