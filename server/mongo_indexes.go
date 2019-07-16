@@ -9,8 +9,6 @@ import (
 	"os"
 	"strings"
 
-	// "time"
-
 	mongowrapper "github.com/opencensus-integrations/gomongowrapper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -90,7 +88,7 @@ func (i *Indexer) ConfigureIndexes(db *mongowrapper.WrappedDatabase) {
 
 		_, err = collection.Indexes().CreateMany(context.Background(), indexes)
 		if err != nil {
-			i.log(fmt.Sprintf("[WARNING] Could not ensure indexes for: %s.%s\n", i.dbName, k))
+			i.log(fmt.Sprintf("[WARNING] Could not ensure indexes for: %s.%s: %s\n", i.dbName, k, err.Error()))
 		}
 
 	}
@@ -210,5 +208,6 @@ func newParseIndexError(indexName, reason string) error {
 }
 
 func sprintIndexKeys(index *mongo.IndexModel) string {
-	return fmt.Sprintf("%+v (%+v)", index.Keys, index.Options)
+	return fmt.Sprintf("%v", index.Keys)
+	// return fmt.Sprintf("%+v (%+v)", index.Keys, index.Options)
 }
