@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/buger/jsonparser"
 	"github.com/eug48/fhir/utils"
 	"github.com/pkg/errors"
 
@@ -73,6 +75,7 @@ func (b *BatchController) Post(c *gin.Context) {
 	ctx, span := trace.StartSpan(c.Request.Context(), "FHIR POST")
 	defer span.End()
 	customDbName := c.GetHeader("Db")
+	provenanceHeader := strings.TrimSpace(c.GetHeader("X-Provenance"))
 
 	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
@@ -102,6 +105,11 @@ func (b *BatchController) Post(c *gin.Context) {
 	case "batch":
 		glog.V(2).Info("starting batch")
 		transaction = false
+
+		if provenanceHeader != "" {
+			abortWithBrokenInvariant(errors.Errorf("X-Provenance header is only supported from transactions"), c)
+		}
+
 		// TODO: If type is batch, ensure there are no interdependent resources
 
 	default:
@@ -380,6 +388,9 @@ func (b *BatchController) Post(c *gin.Context) {
 	if !transaction {
 		concurrency = b.Config.BatchConcurrency
 	}
+	if len(entries) <= 1 {
+		concurrency = 1
+	}
 	if proceed {
 		if concurrency == 1 {
 			glog.V(4).Info(" executing serially")
@@ -439,6 +450,11 @@ func (b *BatchController) Post(c *gin.Context) {
 				sendReply(c, status, entry.Response.Outcome)
 				return
 			}
+		}
+
+		err = b.processProvenanceHeader(provenanceHeader, c, entries, session)
+		if err != nil {
+			return // abort should have already happened
 		}
 
 		var start time.Time
@@ -783,6 +799,113 @@ func (b *BatchController) resolveConditionalPut(request *http.Request, session D
 	// Rewrite the FullUrl using the new ID
 	entry.FullUrl = b.Config.responseURL(request, query.Resource, id).String()
 
+	return nil
+}
+
+func (b *BatchController) processProvenanceHeader(provenanceHeader string, c *gin.Context, entries []*models2.ShallowBundleEntryComponent, session DataAccessSession) error {
+	// spec: http://www.hl7.org/fhir/provenance.html#header
+
+	if provenanceHeader != "" {
+		headerBytes := []byte(provenanceHeader)
+
+		// check resourceType
+		resourceType, dataType, _, err := jsonparser.Get(headerBytes, "resourceType")
+		if err != nil {
+			err = errors.Wrap(err, "error parsing X-Provenance header resourceType")
+			abortWithBadValue(err, c)
+			return err
+		}
+		if string(resourceType) != "Provenance" {
+			err = errors.Errorf("error parsing X-Provenance header: invalid resourceType")
+			abortWithBadValue(err, c)
+			return err
+		}
+
+		// make sure "target" is not set
+		_, dataType, _, err = jsonparser.Get(headerBytes, "target")
+		if dataType == jsonparser.NotExist {
+		} else if err != nil {
+			err = errors.Wrap(err, "error parsing X-Provenance header")
+			abortWithBadValue(err, c)
+			return err
+		} else {
+			err = errors.Errorf("error parsing X-Provenance header: target should not be set")
+			abortWithBadValue(err, c)
+			return err
+		}
+
+		if headerBytes[len(headerBytes)-1] != '}' {
+			err = errors.Errorf("error parsing X-Provenance header: doesn't end with }")
+			abortWithBadValue(err, c)
+			return err
+		}
+
+		// generate targets field
+		var sb bytes.Buffer
+		sb.Write(headerBytes[:len(headerBytes)-1]) // remove final '{'}
+		sb.WriteString(", \"target\": [")
+		addComma := false
+		for _, entry := range entries {
+			if entry.Resource == nil {
+				continue
+			}
+			if addComma {
+				sb.WriteString(", ")
+			}
+			addComma = true
+
+			if entry.Resource.ResourceType() == "" {
+				err = errors.Errorf("processProvenanceHeader: missing resourceType for %s", entry.FullUrl)
+				abortWithInternalError(err, c)
+				return err
+			}
+			if entry.Resource.Id() == "" {
+				err = errors.Errorf("processProvenanceHeader: missing id for %s", entry.FullUrl)
+				abortWithInternalError(err, c)
+				return err
+			}
+			if b.Config.EnableHistory && entry.Resource.VersionId() == "" {
+				err = errors.Errorf("processProvenanceHeader: missing versionId for %s", entry.FullUrl)
+				abortWithInternalError(err, c)
+				return err
+			}
+
+			sb.WriteString("{ \"reference\": \"")
+			sb.WriteString(entry.Resource.ResourceType())
+			sb.WriteString("/")
+			sb.WriteString(entry.Resource.Id())
+			if b.Config.EnableHistory {
+				sb.WriteString("/_history/")
+				sb.WriteString(entry.Resource.VersionId())
+			}
+			sb.WriteString("\" }")
+		}
+
+		sb.WriteString("] }")
+
+		if glog.V(8) {
+			glog.V(8).Info("  saving X-Provenance ", sb.String())
+		}
+
+		// load resource with target
+		provenanceResource, err := models2.NewResourceFromJsonBytes(sb.Bytes())
+		if err != nil {
+			err = errors.Wrap(err, "error loading X-Provenance header")
+			abortWithBadValue(err, c)
+			return err
+		}
+
+		// save
+		newId := bson.NewObjectId().Hex()
+		err = session.PostWithID(newId, provenanceResource)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to create provenanceResource")
+			abortWithInternalError(err, c)
+			return err
+		}
+
+		c.Header("X-GoFHIR-Provenance-Location", "Provenance/"+newId)
+	}
 	return nil
 }
 

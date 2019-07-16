@@ -16,6 +16,7 @@ Currently this server should be considered experimental, with preliminary suppor
 -	Conditional update and delete
 -	Resource-level history (basic support - lacks paging and filtering)
 -	Batch bundles (POST, PUT and DELETE entries)
+-	X-Provenance header (transactions only)
 -	Arbitrary-precision storage for decimals
 -	Some search features
 	-	All defined resource-specific search parameters except composite types and contact (email/phone) searches
