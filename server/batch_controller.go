@@ -72,19 +72,20 @@ func abortWithStatus(httpStatus int, err error, c *gin.Context) {
 // Handles batch and transaction requests
 func (b *BatchController) Post(c *gin.Context) {
 
+	// Start trace span
 	ctx, span := trace.StartSpan(c.Request.Context(), "FHIR POST")
 	defer span.End()
+
+	// Get HTTP headers
 	customDbName := c.GetHeader("Db")
 	provenanceHeader := strings.TrimSpace(c.GetHeader("X-Provenance"))
 
+	// Load FHIR request resource (should be a Bundle)
 	bundleResource, err := FHIRBind(c, b.Config.ValidatorURL)
 	if err != nil {
 		abortWithBadStructure(err, c)
 		return
 	}
-
-	session := b.DAL.StartSession(ctx, customDbName)
-	defer session.Finish()
 
 	bundle, err := bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)
 	if err != nil {
@@ -92,34 +93,7 @@ func (b *BatchController) Post(c *gin.Context) {
 		return
 	}
 
-	var transaction bool
-	switch bundle.Type {
-	case "transaction":
-		glog.V(2).Info("starting transaction")
-		transaction = true
-		err := session.StartTransaction()
-		if err != nil {
-			abortWithInternalError(errors.Wrap(err, "error starting MongoDB transaction"), c)
-			return
-		}
-	case "batch":
-		glog.V(2).Info("starting batch")
-		transaction = false
-
-		if provenanceHeader != "" {
-			abortWithBrokenInvariant(errors.Errorf("X-Provenance header is only supported from transactions"), c)
-		}
-
-		// TODO: If type is batch, ensure there are no interdependent resources
-
-	default:
-		abortWithBadValue(fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"), c)
-		return
-	}
-
-	span.AddAttributes(trace.BoolAttribute("transaction", transaction))
-
-	// Loop through the entries, ensuring they have a request and that we support the method,
+	// Validate bundle entries, ensuring they have a request and that we support the method,
 	// while also creating a new entries array that can be sorted by method.
 	entries := make([]*models2.ShallowBundleEntryComponent, len(bundle.Entry))
 	for i := range bundle.Entry {
@@ -160,7 +134,39 @@ func (b *BatchController) Post(c *gin.Context) {
 		entries[i] = &bundle.Entry[i]
 	}
 
+	// sort entries by request method as per FHIR spec
 	sort.Sort(byRequestMethod(entries))
+
+	// start DB session +- transaction
+	session := b.DAL.StartSession(ctx, customDbName)
+	defer session.Finish()
+
+	var transaction bool
+	switch bundle.Type {
+	case "transaction":
+		glog.V(2).Info("starting transaction")
+		transaction = true
+		err := session.StartTransaction()
+		if err != nil {
+			abortWithInternalError(errors.Wrap(err, "error starting MongoDB transaction"), c)
+			return
+		}
+	case "batch":
+		glog.V(2).Info("starting batch")
+		transaction = false
+
+		if provenanceHeader != "" {
+			abortWithBrokenInvariant(errors.Errorf("X-Provenance header is only supported from transactions"), c)
+		}
+
+		// TODO: If type is batch, ensure there are no interdependent resources
+
+	default:
+		abortWithBadValue(fmt.Errorf("Bundle type is neither 'batch' nor 'transaction'"), c)
+		return
+	}
+
+	span.AddAttributes(trace.BoolAttribute("transaction", transaction))
 
 	// Now loop through the entries, assigning new IDs to those that are POST or Conditional PUT and fixing any
 	// references to reference the new ID.
