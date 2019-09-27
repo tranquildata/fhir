@@ -113,11 +113,9 @@ func (ms *mongoSession) StartTransaction() error {
 }
 func (ms *mongoSession) CommmitIfTransaction() error {
 	if ms.inTransaction {
-		err := ms.session.CommitTransaction(ms.context)
 		glog.V(3).Infof("CommmitTransaction")
-		if err == nil {
-			ms.inTransaction = false
-		}
+		err := ms.session.CommitTransaction(ms.context)
+		ms.inTransaction = false
 		return errors.Wrap(err, "mongoSession.CommmitIfTransaction")
 	} else {
 		return nil
@@ -135,9 +133,14 @@ func (ms *mongoSession) Finish() {
 			if ok && commandErr.Name == "OperationNotSupportedInTransaction" {
 				// can ignore - occurs if we fail before issuing a command. msg is "Command is not supported as the first command in a transaction"
 				glog.V(5).Infof("ignoring failed AbortTransaction in mongoSession.Finish (%s %s)", commandErr.Name, commandErr.Message)
+			} else if ok && commandErr.Name == "NoSuchTransaction" {
+				/*
+					after any error in a transaction
+					AbortTransaction will fail with NoSuchTransaction
+					since the transaction gets aborted by the error
+				*/
+				glog.V(5).Infof("AbortTransaction in mongoSession.Finish failed: %T %v", err, err)
 			} else {
-				// don't know what to do - panic..
-				glog.Errorf("AbortTransaction in mongoSession.Finish failed: %T %v", err, err)
 				panic(fmt.Sprintf("AbortTransaction in mongoSession.Finish failed: %T %v", err, err))
 			}
 		}
@@ -293,7 +296,7 @@ func (ms *mongoSession) GetVersion(id, versionIdStr, resourceType string) (resou
 	curCollection := ms.CurrentVersionCollection(resourceType)
 	var result bson.D
 	err = curCollection.FindOne(ms.context, curQuery).Decode(&result)
-	// fmt.Printf("GetVersion: curQuery=%+v; err=%+v\n", curQuery, err)
+	// glog.Debugf("GetVersion: curQuery=%+v; err=%+v\n", curQuery, err)
 
 	if err == mongo.ErrNoDocuments {
 		// try to search for previous versions
@@ -343,7 +346,7 @@ func (ms *mongoSession) GetVersion(id, versionIdStr, resourceType string) (resou
 
 // Convert document stored in one of the _prev collections into a resource
 func unmarshalPreviousVersion(rawDoc *bson.Raw) (deleted bool, resource *models2.Resource, err error) {
-	// fmt.Printf("[unmarshalPreviousVersion] %+v\n", rawDoc)
+	// glog.Debugf("[unmarshalPreviousVersion] %+v\n", rawDoc)
 	// first we have to parse the vermongo-style id
 	idItem, err := rawDoc.IndexErr(0)
 	if err != nil {
@@ -527,18 +530,21 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 			// NOTE: currentDoc._id modified in-place
 
 			prevCollection := ms.PreviousVersionsCollection(resourceType)
-			_, err := prevCollection.InsertOne(ms.context, &currentDoc) // TODO: do concurrently with the main update
+
+			vermongoIdField := bson.D{currentDoc[0]}
+
+			// TODO: figure out why ReplaceOne isn't working (FindOneAndReplace returns a doc even though we don't need it)
+			res := prevCollection.FindOneAndReplace(ms.context, &vermongoIdField, &currentDoc, options.FindOneAndReplace().SetUpsert(true).SetReturnDocument(options.Before))
+			err = res.Err()
+			// _, err := prevCollection.ReplaceOne(ms.context, &vermongoIdField, &currentDoc, options.Replace().SetUpsert(true))
+			// if err != nil {
 			if err != nil && strings.Contains(err.Error(), "duplicate key") {
-				/* Ignore duplicate key error - these can happen if we successfully
-				insert into the prev collection but then fail to update the
-				current version - they are harmless in this case since the correct
-				data should have been written to prev.
-				Should be fixed by MongoDB 4.0 transactions. */
-				glog.V(3).Infof("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
-				fmt.Printf("Duplicate key error in prev version collection for PUT %s/%s (likely harmless & due to prev error)\n", resourceType, id)
-			} else if err != nil {
+				return false, ErrConflict{msg: fmt.Sprintf("duplicate key storing previous version for %s/%s", resourceType, id)}
+			}
+			if err != nil && err != mongo.ErrNoDocuments {
 				return false, errors.Wrap(convertMongoErr(err), "failed to store previous version")
 			}
+
 		}
 	}
 
@@ -592,7 +598,7 @@ func (ms *mongoSession) Put(id string, conditionalVersionId string, resource *mo
 		if err != nil {
 			err = errors.Wrap(err, "PUT handler: failed to update current document")
 		} else if updateOneInfo.ModifiedCount == 0 {
-			return false, fmt.Errorf("conflicting update for %+v", selector)
+			return false, ErrConflict{msg: fmt.Sprintf("conflicting update for %+v", selector)}
 		}
 		updated = 1
 	}
@@ -755,6 +761,21 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mong
 		setVermongoId(&currentDoc, curVersionId)
 		// NOTE: currentDoc._id modified in-place
 
+		vermongoIdField := bson.D{currentDoc[0]}
+
+		// TODO: figure out why ReplaceOne isn't working (FindOneAndReplace returns a doc even though we don't need it)
+		res := prevCollection.FindOneAndReplace(ms.context, &vermongoIdField, &currentDoc, options.FindOneAndReplace().SetUpsert(true).SetReturnDocument(options.Before))
+		err = res.Err()
+		if err == mongo.ErrNoDocuments {
+			err = nil
+		}
+		if err != nil && strings.Contains(err.Error(), "duplicate key") {
+			return "", ErrConflict{msg: fmt.Sprintf("Delete handler: duplicate key storing previous version for %s/%s", resourceType, id)}
+		}
+		if err != nil {
+			return "", errors.Wrap(convertMongoErr(err), "Delete handler: failed to store previous version")
+		}
+
 		// create a deletion record
 		now := time.Now()
 		deletionRecord := bson.D{
@@ -769,16 +790,19 @@ func saveDeletionIntoHistory(resourceType string, id string, curCollection *mong
 			}},
 		}
 
-		_, err = prevCollection.InsertMany(ms.context, []interface{}{&currentDoc, deletionRecord}) // TODO: do concurrently with the main deletion
+		vermongoIdField = bson.D{deletionRecord[0]}
+
+		// TODO: figure out why ReplaceOne isn't working (FindOneAndReplace returns a doc even though we don't need it)
+		res = prevCollection.FindOneAndReplace(ms.context, &vermongoIdField, &deletionRecord, options.FindOneAndReplace().SetUpsert(true).SetReturnDocument(options.Before))
+		err = res.Err()
+		if err == mongo.ErrNoDocuments {
+			err = nil
+		}
 		if err != nil && strings.Contains(err.Error(), "duplicate key") {
-			/* Ignore duplicate key error - these can happen if we successfully
-			insert into the prev collection but then fail to update the
-			current version - they are harmless in this case since the correct
-			data should have been written to prev.
-			Should be fixed by MongoDB 4.0 transactions. */
-			fmt.Printf("Duplicate key error in prev version collection for DELETE %s/%s (likely harmless & due to prev error)\n", resourceType, id)
-		} else if err != nil {
-			return "", errors.Wrap(convertMongoErr(err), "Delete handler: failed to store previous version")
+			return "", ErrConflict{msg: fmt.Sprintf("Delete handler: duplicate key storing deletion marker for %s/%s", resourceType, id)}
+		}
+		if err != nil {
+			return "", errors.Wrap(convertMongoErr(err), "Delete handler: failed to store deletion marker")
 		}
 	}
 	return
