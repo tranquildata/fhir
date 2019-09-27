@@ -1,14 +1,16 @@
 package server
 
 import (
-	"os"
 	"fmt"
 	"net/http"
 	runtime_debug "runtime/debug"
-	"github.com/pkg/errors"
+
+	"github.com/golang/glog"
+
 	"github.com/eug48/fhir/models"
 	"github.com/eug48/fhir/models2"
 	"github.com/eug48/fhir/search"
+	"github.com/pkg/errors"
 )
 
 func ErrorToOpOutcome(err interface{}) (statusCode int, outcome *models.OperationOutcome) {
@@ -26,15 +28,15 @@ func ErrorToOpOutcome(err interface{}) (statusCode int, outcome *models.Operatio
 			outcome := models.NewOperationOutcome("error", "conflict", cause.Error())
 			return http.StatusConflict, outcome // TODO (FHIR R4): changed to 412
 		} else {
-			stacktrace := "    " + string(runtime_debug.Stack())
-			fmt.Fprintf(os.Stderr, "handlePanics: recovered: %+v\n%s", x, stacktrace)
+			stacktrace := string(runtime_debug.Stack())
+			glog.Errorf("ErrorToOpOutcome: %+v\n%s", x, stacktrace)
 
-			outcome := models.NewOperationOutcome("fatal", "exception", x.Error() + stacktrace)
+			outcome := models.NewOperationOutcome("fatal", "exception", x.Error()+stacktrace)
 			return http.StatusInternalServerError, outcome
 		}
 	default:
-		fmt.Printf("handlePanics: recovered: %+v\n", x)
-		runtime_debug.PrintStack()
+		stacktrace := string(runtime_debug.Stack())
+		glog.Errorf("ErrorToOpOutcome: %+v\n%s", x, stacktrace)
 
 		str := fmt.Sprintf("%#v", err)
 		outcome := models.NewOperationOutcome("fatal", "exception", str)
