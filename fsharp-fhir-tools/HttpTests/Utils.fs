@@ -6,7 +6,7 @@ open Hl7.Fhir.Rest
 
 let N = Nullable
 type L<'T> = ResizeArray<'T>
-let flatten x = Seq.collect id x |> ResizeArray
+let flatten x = Seq.collect id x |> L
 
 type FhirAutoDelete(fhir: FhirClient) =
     do fhir.OnBeforeRequest.Add (fun r -> r.RawRequest.Proxy <- null)
@@ -19,5 +19,6 @@ type FhirAutoDelete(fhir: FhirClient) =
     interface IDisposable with
         member __.Dispose() =
             for r in created do
+                // printfn "Deleting: %A/%s" r.ResourceType r.Id
                 fhir.Delete r
     member this.DeleteAll() = (this :> IDisposable).Dispose()

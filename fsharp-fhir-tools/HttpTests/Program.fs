@@ -61,7 +61,11 @@ let main argv =
         Environment.Exit(1)
 
     let expectoArgs = args.GetResult(Expecto_Args, defaultValue = "").Split(" ") |> Array.filter (fun s -> s.Trim().Length > 0)
-    let expectoConfig = { defaultConfig with ``parallel`` = false; verbosity = Expecto.Logging.Verbose }
+    let expectoConfig = {
+        defaultConfig with
+            ``parallel`` = false
+            verbosity = Expecto.Logging.Info
+        }
 
     let r = Tests.runTestsInAssembly expectoConfig expectoArgs
     FhirServer.Current.Dispose()
