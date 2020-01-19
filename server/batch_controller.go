@@ -140,6 +140,15 @@ func (b *BatchController) Post(c *gin.Context) {
 
 		if response.err != nil && strings.Contains(response.err.Error(), "WriteConflict") {
 			// retry
+
+			// must reload bundle since it gets modified in placed (e.g. entry.Request = nil)
+			bundle, err = bundleResource.AsShallowBundle(b.Config.FailedRequestsDir)
+			if err != nil {
+				response := badStructure(errors.Wrap(err, "subsequent AsShallowBundle failed"))
+				c.JSON(response.httpStatus, response.reply)
+				return
+			}
+
 			continue
 		} else {
 			break
