@@ -18,9 +18,7 @@ require (
 	github.com/gin-gonic/contrib v0.0.0-20180614032058-39cfb9727134
 	github.com/gin-gonic/gin v0.0.0-20181126150151-b97ccf3a43d2
 	github.com/go-sourcemap/sourcemap v2.1.2+incompatible // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.1.0
 	github.com/gorilla/sessions v1.1.1 // indirect
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428
@@ -39,7 +37,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/tidwall/pretty v1.0.0 // indirect
 	github.com/ugorji/go v1.1.5-pre // indirect
-	go.mongodb.org/mongo-driver v1.0.3
+	go.mongodb.org/mongo-driver v1.1.4
 	go.opencensus.io v0.22.0
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
 	golang.org/x/lint v0.0.0-20190409202823-959b441ac422 // indirect
@@ -57,6 +55,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
 
-replace github.com/opencensus-integrations/gomongowrapper => github.com/eug48/gomongowrapper v0.0.2
+replace github.com/opencensus-integrations/gomongowrapper => github.com/eug48/gomongowrapper v0.0.3
 
 //replace github.com/opencensus-integrations/gomongowrapper => /home/user/src/gomongowrapper-eug48
