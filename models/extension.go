@@ -27,6 +27,7 @@
 package models
 
 type Extension struct {
+	parent 		     *Extension
 	Url                  string           `bson:"url,omitempty" json:"url,omitempty"`
 	ValueAddress         *Address         `bson:"valueAddress,omitempty" json:"valueAddress,omitempty"`
 	ValueAnnotation      *Annotation      `bson:"valueAnnotation,omitempty" json:"valueAnnotation,omitempty"`
