@@ -10,7 +10,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
 	github.com/buger/jsonparser v0.0.0-20180318095312-2cac668e8456
-	github.com/campoy/embedmd v0.0.0-20181127030611-97c13d6e // indirect
+	github.com/campoy/embedmd v0.0.0-20181127031020-97c13d6e4160 // indirect
 	github.com/corpix/uarand v0.0.0-20170903190822-2b8494104d86 // indirect
 	github.com/dlclark/regexp2 v1.1.6 // indirect
 	github.com/dop251/goja v0.0.0-20180304123926-9183045acc25
@@ -49,7 +49,7 @@ require (
 	google.golang.org/genproto v0.0.0-20190627203621-eb59cef1c072 // indirect
 	google.golang.org/grpc v1.21.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/square/go-jose.v1 v1.1.1 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
