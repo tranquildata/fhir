@@ -28,6 +28,22 @@ func (fhirVal *Subscription) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "status":
+		return fhirVal.Status, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "end":
+		return fhirVal.End, true
+	case "reason":
+		return fhirVal.Reason, true
+	case "criteria":
+		return fhirVal.Criteria, true
+	case "error":
+		return fhirVal.Error, true
+	case "channel":
+		return fhirVal.Channel, true
+	case "tag":
+		return fhirVal.Tag, true
 
 	default:
 		return nil, false
@@ -47,14 +63,14 @@ func (fhirVal *Subscription) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"error": &FieldTypeSupport{"string", false, false},
-		"channel": &FieldTypeSupport{"SubscriptionChannelComponent", false, true},
-		"tag": &FieldTypeSupport{"Coding", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"contact": &FieldTypeSupport{"ContactPoint", true, false},
 		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"reason": &FieldTypeSupport{"string", false, false},
 		"criteria": &FieldTypeSupport{"string", false, false},
+		"error": &FieldTypeSupport{"string", false, false},
+		"channel": &FieldTypeSupport{"SubscriptionChannelComponent", false, true},
+		"tag": &FieldTypeSupport{"Coding", true, false},
 
 	}
 }

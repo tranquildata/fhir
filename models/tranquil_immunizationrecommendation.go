@@ -28,6 +28,12 @@ func (fhirVal *ImmunizationRecommendation) FieldByLowerName(nameLower string) (i
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "recommendation":
+		return fhirVal.Recommendation, true
 
 	default:
 		return nil, false

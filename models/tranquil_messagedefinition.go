@@ -28,6 +28,52 @@ func (fhirVal *MessageDefinition) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "focus":
+		return fhirVal.Focus, true
+	case "responserequired":
+		return fhirVal.ResponseRequired, true
+	case "allowedresponse":
+		return fhirVal.AllowedResponse, true
+	case "url":
+		return fhirVal.Url, true
+	case "date":
+		return fhirVal.Date, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "category":
+		return fhirVal.Category, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "copyright":
+		return fhirVal.Copyright, true
+	case "parent":
+		return fhirVal.Parent, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "purpose":
+		return fhirVal.Purpose, true
+	case "base":
+		return fhirVal.Base, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "event":
+		return fhirVal.Event, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "version":
+		return fhirVal.Version, true
+	case "name":
+		return fhirVal.Name, true
+	case "title":
+		return fhirVal.Title, true
+	case "status":
+		return fhirVal.Status, true
+	case "description":
+		return fhirVal.Description, true
 
 	default:
 		return nil, false
@@ -47,29 +93,29 @@ func (fhirVal *MessageDefinition) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"url": &FieldTypeSupport{"string", false, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"parent": &FieldTypeSupport{"Reference", true, false},
+		"focus": &FieldTypeSupport{"MessageDefinitionFocusComponent", true, false},
 		"responserequired": &FieldTypeSupport{"bool", false, true},
-		"event": &FieldTypeSupport{"Coding", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"name": &FieldTypeSupport{"string", false, false},
+		"allowedresponse": &FieldTypeSupport{"MessageDefinitionAllowedResponseComponent", true, false},
+		"url": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"category": &FieldTypeSupport{"string", false, false},
 		"experimental": &FieldTypeSupport{"bool", false, true},
 		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
 		"copyright": &FieldTypeSupport{"string", false, false},
-		"base": &FieldTypeSupport{"Reference", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"allowedresponse": &FieldTypeSupport{"MessageDefinitionAllowedResponseComponent", true, false},
-		"category": &FieldTypeSupport{"string", false, false},
-		"focus": &FieldTypeSupport{"MessageDefinitionFocusComponent", true, false},
-		"version": &FieldTypeSupport{"string", false, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"parent": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"purpose": &FieldTypeSupport{"string", false, false},
+		"base": &FieldTypeSupport{"Reference", false, true},
 		"replaces": &FieldTypeSupport{"Reference", true, false},
+		"event": &FieldTypeSupport{"Coding", false, true},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"version": &FieldTypeSupport{"string", false, false},
+		"name": &FieldTypeSupport{"string", false, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
 
 	}
 }

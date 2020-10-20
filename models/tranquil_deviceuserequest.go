@@ -28,6 +28,52 @@ func (fhirVal *DeviceUseRequest) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "requisition":
+		return fhirVal.Requisition, true
+	case "authored":
+		return fhirVal.Authored, true
+	case "reasoncode":
+		return fhirVal.ReasonCode, true
+	case "requester":
+		return fhirVal.Requester, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "status":
+		return fhirVal.Status, true
+	case "devicereference":
+		return fhirVal.DeviceReference, true
+	case "devicecodeableconcept":
+		return fhirVal.DeviceCodeableConcept, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
+	case "occurrencetiming":
+		return fhirVal.OccurrenceTiming, true
+	case "performertype":
+		return fhirVal.PerformerType, true
+	case "performer":
+		return fhirVal.Performer, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
+	case "relevanthistory":
+		return fhirVal.RelevantHistory, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "stage":
+		return fhirVal.Stage, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "context":
+		return fhirVal.Context, true
+	case "supportinginfo":
+		return fhirVal.SupportingInfo, true
+	case "note":
+		return fhirVal.Note, true
 
 	default:
 		return nil, false
@@ -47,29 +93,29 @@ func (fhirVal *DeviceUseRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"performer": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"definition": &FieldTypeSupport{"Reference", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"devicecodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
-		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
 		"replaces": &FieldTypeSupport{"Reference", true, false},
 		"requisition": &FieldTypeSupport{"Identifier", false, true},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"reasonreference": &FieldTypeSupport{"Reference", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"stage": &FieldTypeSupport{"CodeableConcept", false, true},
 		"authored": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"devicereference": &FieldTypeSupport{"Reference", false, true},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"requester": &FieldTypeSupport{"Reference", false, true},
-		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
 		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"requester": &FieldTypeSupport{"Reference", false, true},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"devicereference": &FieldTypeSupport{"Reference", false, true},
+		"devicecodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
+		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"performer": &FieldTypeSupport{"Reference", false, true},
+		"reasonreference": &FieldTypeSupport{"Reference", true, false},
 		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
+		"definition": &FieldTypeSupport{"Reference", true, false},
+		"stage": &FieldTypeSupport{"CodeableConcept", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
 
 	}
 }

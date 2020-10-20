@@ -28,6 +28,32 @@ func (fhirVal *EligibilityResponse) FieldByLowerName(nameLower string) (interfac
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "requestorganization":
+		return fhirVal.RequestOrganization, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "created":
+		return fhirVal.Created, true
+	case "requestprovider":
+		return fhirVal.RequestProvider, true
+	case "request":
+		return fhirVal.Request, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "disposition":
+		return fhirVal.Disposition, true
+	case "insurer":
+		return fhirVal.Insurer, true
+	case "inforce":
+		return fhirVal.Inforce, true
+	case "status":
+		return fhirVal.Status, true
+	case "form":
+		return fhirVal.Form, true
+	case "error":
+		return fhirVal.Error, true
+	case "insurance":
+		return fhirVal.Insurance, true
 
 	default:
 		return nil, false
@@ -47,19 +73,19 @@ func (fhirVal *EligibilityResponse) FieldsToTypes() map[string]*FieldTypeSupport
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"disposition": &FieldTypeSupport{"string", false, false},
+		"requestorganization": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"requestprovider": &FieldTypeSupport{"Reference", false, true},
-		"requestorganization": &FieldTypeSupport{"Reference", false, true},
 		"request": &FieldTypeSupport{"Reference", false, true},
 		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
+		"disposition": &FieldTypeSupport{"string", false, false},
 		"insurer": &FieldTypeSupport{"Reference", false, true},
 		"inforce": &FieldTypeSupport{"bool", false, true},
-		"insurance": &FieldTypeSupport{"EligibilityResponseInsuranceComponent", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"form": &FieldTypeSupport{"CodeableConcept", false, true},
 		"error": &FieldTypeSupport{"EligibilityResponseErrorsComponent", true, false},
+		"insurance": &FieldTypeSupport{"EligibilityResponseInsuranceComponent", true, false},
 
 	}
 }

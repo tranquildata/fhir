@@ -28,6 +28,28 @@ func (fhirVal *Slot) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "servicetype":
+		return fhirVal.ServiceType, true
+	case "specialty":
+		return fhirVal.Specialty, true
+	case "appointmenttype":
+		return fhirVal.AppointmentType, true
+	case "schedule":
+		return fhirVal.Schedule, true
+	case "status":
+		return fhirVal.Status, true
+	case "start":
+		return fhirVal.Start, true
+	case "end":
+		return fhirVal.End, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "comment":
+		return fhirVal.Comment, true
+	case "overbooked":
+		return fhirVal.Overbooked, true
+	case "servicecategory":
+		return fhirVal.ServiceCategory, true
 
 	default:
 		return nil, false
@@ -47,17 +69,17 @@ func (fhirVal *Slot) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"appointmenttype": &FieldTypeSupport{"CodeableConcept", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"overbooked": &FieldTypeSupport{"bool", false, true},
-		"comment": &FieldTypeSupport{"string", false, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
 		"servicetype": &FieldTypeSupport{"CodeableConcept", true, false},
 		"specialty": &FieldTypeSupport{"CodeableConcept", true, false},
+		"appointmenttype": &FieldTypeSupport{"CodeableConcept", false, true},
 		"schedule": &FieldTypeSupport{"Reference", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
 		"start": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"comment": &FieldTypeSupport{"string", false, false},
+		"overbooked": &FieldTypeSupport{"bool", false, true},
+		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

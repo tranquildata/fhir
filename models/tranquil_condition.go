@@ -28,6 +28,56 @@ func (fhirVal *Condition) FieldByLowerName(nameLower string) (interface{}, bool)
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "asserteddate":
+		return fhirVal.AssertedDate, true
+	case "clinicalstatus":
+		return fhirVal.ClinicalStatus, true
+	case "context":
+		return fhirVal.Context, true
+	case "onsetperiod":
+		return fhirVal.OnsetPeriod, true
+	case "abatementperiod":
+		return fhirVal.AbatementPeriod, true
+	case "abatementrange":
+		return fhirVal.AbatementRange, true
+	case "abatementstring":
+		return fhirVal.AbatementString, true
+	case "abatementage":
+		return fhirVal.AbatementAge, true
+	case "stage":
+		return fhirVal.Stage, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "verificationstatus":
+		return fhirVal.VerificationStatus, true
+	case "bodysite":
+		return fhirVal.BodySite, true
+	case "onsetdatetime":
+		return fhirVal.OnsetDateTime, true
+	case "onsetstring":
+		return fhirVal.OnsetString, true
+	case "abatementdatetime":
+		return fhirVal.AbatementDateTime, true
+	case "evidence":
+		return fhirVal.Evidence, true
+	case "category":
+		return fhirVal.Category, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "note":
+		return fhirVal.Note, true
+	case "severity":
+		return fhirVal.Severity, true
+	case "code":
+		return fhirVal.Code, true
+	case "onsetage":
+		return fhirVal.OnsetAge, true
+	case "onsetrange":
+		return fhirVal.OnsetRange, true
+	case "abatementboolean":
+		return fhirVal.AbatementBoolean, true
+	case "asserter":
+		return fhirVal.Asserter, true
 
 	default:
 		return nil, false
@@ -47,31 +97,31 @@ func (fhirVal *Condition) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"verificationstatus": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"bodysite": &FieldTypeSupport{"CodeableConcept", true, false},
-		"onsetstring": &FieldTypeSupport{"string", false, false},
-		"abatementage": &FieldTypeSupport{"Quantity", false, true},
-		"abatementboolean": &FieldTypeSupport{"bool", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"severity": &FieldTypeSupport{"CodeableConcept", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"onsetage": &FieldTypeSupport{"Quantity", false, true},
-		"onsetperiod": &FieldTypeSupport{"Period", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
+		"asserteddate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"clinicalstatus": &FieldTypeSupport{"string", false, false},
 		"context": &FieldTypeSupport{"Reference", false, true},
-		"onsetrange": &FieldTypeSupport{"Range", false, true},
-		"abatementdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"onsetperiod": &FieldTypeSupport{"Period", false, true},
 		"abatementperiod": &FieldTypeSupport{"Period", false, true},
-		"asserter": &FieldTypeSupport{"Reference", false, true},
-		"evidence": &FieldTypeSupport{"ConditionEvidenceComponent", true, false},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"onsetdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"abatementrange": &FieldTypeSupport{"Range", false, true},
 		"abatementstring": &FieldTypeSupport{"string", false, false},
-		"asserteddate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"abatementage": &FieldTypeSupport{"Quantity", false, true},
 		"stage": &FieldTypeSupport{"ConditionStageComponent", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"verificationstatus": &FieldTypeSupport{"string", false, false},
+		"bodysite": &FieldTypeSupport{"CodeableConcept", true, false},
+		"onsetdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"onsetstring": &FieldTypeSupport{"string", false, false},
+		"abatementdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"evidence": &FieldTypeSupport{"ConditionEvidenceComponent", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"severity": &FieldTypeSupport{"CodeableConcept", false, true},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"onsetage": &FieldTypeSupport{"Quantity", false, true},
+		"onsetrange": &FieldTypeSupport{"Range", false, true},
+		"abatementboolean": &FieldTypeSupport{"bool", false, true},
+		"asserter": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

@@ -28,6 +28,52 @@ func (fhirVal *DiagnosticRequest) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "requisition":
+		return fhirVal.Requisition, true
+	case "priority":
+		return fhirVal.Priority, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "requester":
+		return fhirVal.Requester, true
+	case "supportinginformation":
+		return fhirVal.SupportingInformation, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "context":
+		return fhirVal.Context, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
+	case "performer":
+		return fhirVal.Performer, true
+	case "note":
+		return fhirVal.Note, true
+	case "relevanthistory":
+		return fhirVal.RelevantHistory, true
+	case "intent":
+		return fhirVal.Intent, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "status":
+		return fhirVal.Status, true
+	case "code":
+		return fhirVal.Code, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
+	case "occurrencetiming":
+		return fhirVal.OccurrenceTiming, true
+	case "performertype":
+		return fhirVal.PerformerType, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "authoredon":
+		return fhirVal.AuthoredOn, true
+	case "reasoncode":
+		return fhirVal.ReasonCode, true
+	case "identifier":
+		return fhirVal.Identifier, true
 
 	default:
 		return nil, false
@@ -47,29 +93,29 @@ func (fhirVal *DiagnosticRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"definition": &FieldTypeSupport{"Reference", true, false},
-		"requester": &FieldTypeSupport{"Reference", false, true},
+		"requisition": &FieldTypeSupport{"Identifier", false, true},
+		"priority": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
-		"performer": &FieldTypeSupport{"Reference", false, true},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"replaces": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"intent": &FieldTypeSupport{"string", false, false},
+		"requester": &FieldTypeSupport{"Reference", false, true},
 		"supportinginformation": &FieldTypeSupport{"Reference", true, false},
+		"replaces": &FieldTypeSupport{"Reference", true, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"performer": &FieldTypeSupport{"Reference", false, true},
 		"note": &FieldTypeSupport{"Annotation", true, false},
 		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
-		"requisition": &FieldTypeSupport{"Identifier", false, true},
+		"intent": &FieldTypeSupport{"string", false, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
+		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
 		"reasonreference": &FieldTypeSupport{"Reference", true, false},
-		"priority": &FieldTypeSupport{"string", false, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
+		"definition": &FieldTypeSupport{"Reference", true, false},
 		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 
 	}
 }

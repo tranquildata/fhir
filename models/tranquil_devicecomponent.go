@@ -28,6 +28,26 @@ func (fhirVal *DeviceComponent) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "type":
+		return fhirVal.Type, true
+	case "lastsystemchange":
+		return fhirVal.LastSystemChange, true
+	case "operationalstatus":
+		return fhirVal.OperationalStatus, true
+	case "measurementprinciple":
+		return fhirVal.MeasurementPrinciple, true
+	case "languagecode":
+		return fhirVal.LanguageCode, true
+	case "source":
+		return fhirVal.Source, true
+	case "parent":
+		return fhirVal.Parent, true
+	case "parametergroup":
+		return fhirVal.ParameterGroup, true
+	case "productionspecification":
+		return fhirVal.ProductionSpecification, true
 
 	default:
 		return nil, false
@@ -47,16 +67,16 @@ func (fhirVal *DeviceComponent) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"parent": &FieldTypeSupport{"Reference", false, true},
-		"parametergroup": &FieldTypeSupport{"CodeableConcept", false, true},
-		"measurementprinciple": &FieldTypeSupport{"string", false, false},
-		"productionspecification": &FieldTypeSupport{"DeviceComponentProductionSpecificationComponent", true, false},
-		"languagecode": &FieldTypeSupport{"CodeableConcept", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
 		"lastsystemchange": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"source": &FieldTypeSupport{"Reference", false, true},
 		"operationalstatus": &FieldTypeSupport{"CodeableConcept", true, false},
+		"measurementprinciple": &FieldTypeSupport{"string", false, false},
+		"languagecode": &FieldTypeSupport{"CodeableConcept", false, true},
+		"source": &FieldTypeSupport{"Reference", false, true},
+		"parent": &FieldTypeSupport{"Reference", false, true},
+		"parametergroup": &FieldTypeSupport{"CodeableConcept", false, true},
+		"productionspecification": &FieldTypeSupport{"DeviceComponentProductionSpecificationComponent", true, false},
 
 	}
 }

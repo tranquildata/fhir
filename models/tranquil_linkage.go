@@ -28,6 +28,12 @@ func (fhirVal *Linkage) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "active":
+		return fhirVal.Active, true
+	case "author":
+		return fhirVal.Author, true
+	case "item":
+		return fhirVal.Item, true
 
 	default:
 		return nil, false
@@ -47,9 +53,9 @@ func (fhirVal *Linkage) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"item": &FieldTypeSupport{"LinkageItemComponent", true, false},
 		"active": &FieldTypeSupport{"bool", false, true},
 		"author": &FieldTypeSupport{"Reference", false, true},
+		"item": &FieldTypeSupport{"LinkageItemComponent", true, false},
 
 	}
 }

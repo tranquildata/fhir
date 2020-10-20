@@ -28,6 +28,26 @@ func (fhirVal *Practitioner) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "photo":
+		return fhirVal.Photo, true
+	case "communication":
+		return fhirVal.Communication, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "telecom":
+		return fhirVal.Telecom, true
+	case "address":
+		return fhirVal.Address, true
+	case "birthdate":
+		return fhirVal.BirthDate, true
+	case "active":
+		return fhirVal.Active, true
+	case "name":
+		return fhirVal.Name, true
+	case "gender":
+		return fhirVal.Gender, true
+	case "qualification":
+		return fhirVal.Qualification, true
 
 	default:
 		return nil, false
@@ -47,16 +67,16 @@ func (fhirVal *Practitioner) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"name": &FieldTypeSupport{"HumanName", true, false},
 		"photo": &FieldTypeSupport{"Attachment", true, false},
-		"qualification": &FieldTypeSupport{"PractitionerQualificationComponent", true, false},
-		"address": &FieldTypeSupport{"Address", true, false},
-		"gender": &FieldTypeSupport{"string", false, false},
-		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"communication": &FieldTypeSupport{"CodeableConcept", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"active": &FieldTypeSupport{"bool", false, true},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
+		"address": &FieldTypeSupport{"Address", true, false},
+		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"active": &FieldTypeSupport{"bool", false, true},
+		"name": &FieldTypeSupport{"HumanName", true, false},
+		"gender": &FieldTypeSupport{"string", false, false},
+		"qualification": &FieldTypeSupport{"PractitionerQualificationComponent", true, false},
 
 	}
 }

@@ -28,6 +28,30 @@ func (fhirVal *Account) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "period":
+		return fhirVal.Period, true
+	case "balance":
+		return fhirVal.Balance, true
+	case "owner":
+		return fhirVal.Owner, true
+	case "description":
+		return fhirVal.Description, true
+	case "guarantor":
+		return fhirVal.Guarantor, true
+	case "status":
+		return fhirVal.Status, true
+	case "type":
+		return fhirVal.Type, true
+	case "active":
+		return fhirVal.Active, true
+	case "coverage":
+		return fhirVal.Coverage, true
 
 	default:
 		return nil, false
@@ -47,18 +71,18 @@ func (fhirVal *Account) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"name": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"active": &FieldTypeSupport{"Period", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"balance": &FieldTypeSupport{"Quantity", false, true},
 		"owner": &FieldTypeSupport{"Reference", false, true},
 		"description": &FieldTypeSupport{"string", false, false},
 		"guarantor": &FieldTypeSupport{"AccountGuarantorComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"balance": &FieldTypeSupport{"Quantity", false, true},
-		"coverage": &FieldTypeSupport{"AccountCoverageComponent", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
-		"period": &FieldTypeSupport{"Period", false, true},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"active": &FieldTypeSupport{"Period", false, true},
+		"coverage": &FieldTypeSupport{"AccountCoverageComponent", true, false},
 
 	}
 }

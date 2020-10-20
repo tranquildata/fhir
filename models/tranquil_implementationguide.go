@@ -28,6 +28,42 @@ func (fhirVal *ImplementationGuide) FieldByLowerName(nameLower string) (interfac
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "version":
+		return fhirVal.Version, true
+	case "name":
+		return fhirVal.Name, true
+	case "date":
+		return fhirVal.Date, true
+	case "dependency":
+		return fhirVal.Dependency, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "copyright":
+		return fhirVal.Copyright, true
+	case "url":
+		return fhirVal.Url, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "description":
+		return fhirVal.Description, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "global":
+		return fhirVal.Global, true
+	case "binary":
+		return fhirVal.Binary, true
+	case "page":
+		return fhirVal.Page, true
+	case "status":
+		return fhirVal.Status, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "fhirversion":
+		return fhirVal.FhirVersion, true
+	case "package":
+		return fhirVal.Package, true
 
 	default:
 		return nil, false
@@ -47,24 +83,24 @@ func (fhirVal *ImplementationGuide) FieldsToTypes() map[string]*FieldTypeSupport
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"page": &FieldTypeSupport{"ImplementationGuidePageComponent", false, true},
 		"version": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"dependency": &FieldTypeSupport{"ImplementationGuideDependencyComponent", true, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"copyright": &FieldTypeSupport{"string", false, false},
-		"binary": &FieldTypeSupport{"string", true, false},
 		"name": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"experimental": &FieldTypeSupport{"bool", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"global": &FieldTypeSupport{"ImplementationGuideGlobalComponent", true, false},
-		"package": &FieldTypeSupport{"ImplementationGuidePackageComponent", true, false},
+		"dependency": &FieldTypeSupport{"ImplementationGuideDependencyComponent", true, false},
+		"experimental": &FieldTypeSupport{"bool", false, true},
+		"copyright": &FieldTypeSupport{"string", false, false},
 		"url": &FieldTypeSupport{"string", false, false},
 		"publisher": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
 		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"global": &FieldTypeSupport{"ImplementationGuideGlobalComponent", true, false},
+		"binary": &FieldTypeSupport{"string", true, false},
+		"page": &FieldTypeSupport{"ImplementationGuidePageComponent", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 		"fhirversion": &FieldTypeSupport{"string", false, false},
+		"package": &FieldTypeSupport{"ImplementationGuidePackageComponent", true, false},
 
 	}
 }

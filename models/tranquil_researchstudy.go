@@ -28,6 +28,46 @@ func (fhirVal *ResearchStudy) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "protocol":
+		return fhirVal.Protocol, true
+	case "description":
+		return fhirVal.Description, true
+	case "arm":
+		return fhirVal.Arm, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "relatedartifact":
+		return fhirVal.RelatedArtifact, true
+	case "keyword":
+		return fhirVal.Keyword, true
+	case "site":
+		return fhirVal.Site, true
+	case "category":
+		return fhirVal.Category, true
+	case "focus":
+		return fhirVal.Focus, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "period":
+		return fhirVal.Period, true
+	case "principalinvestigator":
+		return fhirVal.PrincipalInvestigator, true
+	case "note":
+		return fhirVal.Note, true
+	case "title":
+		return fhirVal.Title, true
+	case "status":
+		return fhirVal.Status, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "enrollment":
+		return fhirVal.Enrollment, true
+	case "sponsor":
+		return fhirVal.Sponsor, true
+	case "reasonstopped":
+		return fhirVal.ReasonStopped, true
+	case "partof":
+		return fhirVal.PartOf, true
 
 	default:
 		return nil, false
@@ -47,26 +87,26 @@ func (fhirVal *ResearchStudy) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"focus": &FieldTypeSupport{"CodeableConcept", true, false},
-		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"sponsor": &FieldTypeSupport{"Reference", false, true},
-		"title": &FieldTypeSupport{"string", false, false},
 		"protocol": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"site": &FieldTypeSupport{"Reference", true, false},
-		"reasonstopped": &FieldTypeSupport{"CodeableConcept", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"partof": &FieldTypeSupport{"Reference", true, false},
 		"description": &FieldTypeSupport{"string", false, false},
-		"principalinvestigator": &FieldTypeSupport{"Reference", false, true},
-		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
-		"enrollment": &FieldTypeSupport{"Reference", true, false},
-		"period": &FieldTypeSupport{"Period", false, true},
 		"arm": &FieldTypeSupport{"ResearchStudyArmComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
+		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
+		"site": &FieldTypeSupport{"Reference", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"focus": &FieldTypeSupport{"CodeableConcept", true, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"principalinvestigator": &FieldTypeSupport{"Reference", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"enrollment": &FieldTypeSupport{"Reference", true, false},
+		"sponsor": &FieldTypeSupport{"Reference", false, true},
+		"reasonstopped": &FieldTypeSupport{"CodeableConcept", false, true},
+		"partof": &FieldTypeSupport{"Reference", true, false},
 
 	}
 }

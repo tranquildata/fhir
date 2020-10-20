@@ -28,6 +28,16 @@ func (fhirVal *Basic) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "created":
+		return fhirVal.Created, true
+	case "author":
+		return fhirVal.Author, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "code":
+		return fhirVal.Code, true
+	case "subject":
+		return fhirVal.Subject, true
 
 	default:
 		return nil, false
@@ -47,11 +57,11 @@ func (fhirVal *Basic) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"author": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"author": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

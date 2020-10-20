@@ -28,6 +28,38 @@ func (fhirVal *DataElement) FieldByLowerName(nameLower string) (interface{}, boo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "status":
+		return fhirVal.Status, true
+	case "title":
+		return fhirVal.Title, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "date":
+		return fhirVal.Date, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "copyright":
+		return fhirVal.Copyright, true
+	case "mapping":
+		return fhirVal.Mapping, true
+	case "url":
+		return fhirVal.Url, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "version":
+		return fhirVal.Version, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "name":
+		return fhirVal.Name, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "stringency":
+		return fhirVal.Stringency, true
+	case "element":
+		return fhirVal.Element, true
 
 	default:
 		return nil, false
@@ -47,21 +79,21 @@ func (fhirVal *DataElement) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"name": &FieldTypeSupport{"string", false, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
 		"experimental": &FieldTypeSupport{"bool", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 		"copyright": &FieldTypeSupport{"string", false, false},
-		"stringency": &FieldTypeSupport{"string", false, false},
 		"mapping": &FieldTypeSupport{"DataElementMappingComponent", true, false},
 		"url": &FieldTypeSupport{"string", false, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"version": &FieldTypeSupport{"string", false, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"name": &FieldTypeSupport{"string", false, false},
 		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"title": &FieldTypeSupport{"string", false, false},
+		"stringency": &FieldTypeSupport{"string", false, false},
 		"element": &FieldTypeSupport{"ElementDefinition", true, false},
 
 	}

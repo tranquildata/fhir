@@ -28,6 +28,36 @@ func (fhirVal *CompartmentDefinition) FieldByLowerName(nameLower string) (interf
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "resource":
+		return fhirVal.Resource, true
+	case "title":
+		return fhirVal.Title, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "code":
+		return fhirVal.Code, true
+	case "search":
+		return fhirVal.Search, true
+	case "url":
+		return fhirVal.Url, true
+	case "name":
+		return fhirVal.Name, true
+	case "status":
+		return fhirVal.Status, true
+	case "description":
+		return fhirVal.Description, true
+	case "purpose":
+		return fhirVal.Purpose, true
+	case "date":
+		return fhirVal.Date, true
+	case "publisher":
+		return fhirVal.Publisher, true
 
 	default:
 		return nil, false
@@ -47,21 +77,21 @@ func (fhirVal *CompartmentDefinition) FieldsToTypes() map[string]*FieldTypeSuppo
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"code": &FieldTypeSupport{"string", false, false},
-		"url": &FieldTypeSupport{"string", false, false},
-		"name": &FieldTypeSupport{"string", false, false},
+		"resource": &FieldTypeSupport{"CompartmentDefinitionResourceComponent", true, false},
+		"title": &FieldTypeSupport{"string", false, false},
 		"experimental": &FieldTypeSupport{"bool", false, true},
 		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"purpose": &FieldTypeSupport{"string", false, false},
 		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"code": &FieldTypeSupport{"string", false, false},
 		"search": &FieldTypeSupport{"bool", false, true},
-		"resource": &FieldTypeSupport{"CompartmentDefinitionResourceComponent", true, false},
+		"url": &FieldTypeSupport{"string", false, false},
+		"name": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"purpose": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"publisher": &FieldTypeSupport{"string", false, false},
 
 	}
 }

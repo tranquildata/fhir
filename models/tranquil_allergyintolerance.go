@@ -28,6 +28,44 @@ func (fhirVal *AllergyIntolerance) FieldByLowerName(nameLower string) (interface
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "verificationstatus":
+		return fhirVal.VerificationStatus, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "onsetperiod":
+		return fhirVal.OnsetPeriod, true
+	case "clinicalstatus":
+		return fhirVal.ClinicalStatus, true
+	case "onsetdatetime":
+		return fhirVal.OnsetDateTime, true
+	case "onsetrange":
+		return fhirVal.OnsetRange, true
+	case "asserter":
+		return fhirVal.Asserter, true
+	case "criticality":
+		return fhirVal.Criticality, true
+	case "code":
+		return fhirVal.Code, true
+	case "onsetstring":
+		return fhirVal.OnsetString, true
+	case "asserteddate":
+		return fhirVal.AssertedDate, true
+	case "reaction":
+		return fhirVal.Reaction, true
+	case "category":
+		return fhirVal.Category, true
+	case "type":
+		return fhirVal.Type, true
+	case "onsetage":
+		return fhirVal.OnsetAge, true
+	case "recorder":
+		return fhirVal.Recorder, true
+	case "lastoccurrence":
+		return fhirVal.LastOccurrence, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
 
 	default:
 		return nil, false
@@ -47,25 +85,25 @@ func (fhirVal *AllergyIntolerance) FieldsToTypes() map[string]*FieldTypeSupport 
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"verificationstatus": &FieldTypeSupport{"string", false, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"onsetperiod": &FieldTypeSupport{"Period", false, true},
+		"clinicalstatus": &FieldTypeSupport{"string", false, false},
+		"onsetdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"onsetrange": &FieldTypeSupport{"Range", false, true},
+		"asserter": &FieldTypeSupport{"Reference", false, true},
 		"criticality": &FieldTypeSupport{"string", false, false},
 		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"recorder": &FieldTypeSupport{"Reference", false, true},
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"onsetrange": &FieldTypeSupport{"Range", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"asserter": &FieldTypeSupport{"Reference", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"verificationstatus": &FieldTypeSupport{"string", false, false},
-		"type": &FieldTypeSupport{"string", false, false},
-		"onsetdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"onsetage": &FieldTypeSupport{"Quantity", false, true},
 		"onsetstring": &FieldTypeSupport{"string", false, false},
-		"clinicalstatus": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"string", true, false},
-		"onsetperiod": &FieldTypeSupport{"Period", false, true},
 		"asserteddate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"lastoccurrence": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"reaction": &FieldTypeSupport{"AllergyIntoleranceReactionComponent", true, false},
+		"category": &FieldTypeSupport{"string", true, false},
+		"type": &FieldTypeSupport{"string", false, false},
+		"onsetage": &FieldTypeSupport{"Quantity", false, true},
+		"recorder": &FieldTypeSupport{"Reference", false, true},
+		"lastoccurrence": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 
 	}
 }

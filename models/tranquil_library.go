@@ -28,6 +28,58 @@ func (fhirVal *Library) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "date":
+		return fhirVal.Date, true
+	case "datarequirement":
+		return fhirVal.DataRequirement, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "type":
+		return fhirVal.Type, true
+	case "purpose":
+		return fhirVal.Purpose, true
+	case "effectiveperiod":
+		return fhirVal.EffectivePeriod, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "copyright":
+		return fhirVal.Copyright, true
+	case "topic":
+		return fhirVal.Topic, true
+	case "parameter":
+		return fhirVal.Parameter, true
+	case "version":
+		return fhirVal.Version, true
+	case "title":
+		return fhirVal.Title, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "description":
+		return fhirVal.Description, true
+	case "usage":
+		return fhirVal.Usage, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "content":
+		return fhirVal.Content, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "relatedartifact":
+		return fhirVal.RelatedArtifact, true
+	case "url":
+		return fhirVal.Url, true
+	case "name":
+		return fhirVal.Name, true
+	case "status":
+		return fhirVal.Status, true
+	case "approvaldate":
+		return fhirVal.ApprovalDate, true
+	case "lastreviewdate":
+		return fhirVal.LastReviewDate, true
+	case "contributor":
+		return fhirVal.Contributor, true
 
 	default:
 		return nil, false
@@ -47,32 +99,32 @@ func (fhirVal *Library) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"experimental": &FieldTypeSupport{"bool", false, true},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"datarequirement": &FieldTypeSupport{"DataRequirement", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"purpose": &FieldTypeSupport{"string", false, false},
+		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"copyright": &FieldTypeSupport{"string", false, false},
+		"topic": &FieldTypeSupport{"CodeableConcept", true, false},
+		"parameter": &FieldTypeSupport{"ParameterDefinition", true, false},
 		"version": &FieldTypeSupport{"string", false, false},
 		"title": &FieldTypeSupport{"string", false, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"contributor": &FieldTypeSupport{"Contributor", true, false},
-		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
-		"parameter": &FieldTypeSupport{"ParameterDefinition", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"experimental": &FieldTypeSupport{"bool", false, true},
 		"publisher": &FieldTypeSupport{"string", false, false},
-		"topic": &FieldTypeSupport{"CodeableConcept", true, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"content": &FieldTypeSupport{"Attachment", true, false},
-		"url": &FieldTypeSupport{"string", false, false},
 		"description": &FieldTypeSupport{"string", false, false},
-		"purpose": &FieldTypeSupport{"string", false, false},
 		"usage": &FieldTypeSupport{"string", false, false},
-		"lastreviewdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"copyright": &FieldTypeSupport{"string", false, false},
+		"content": &FieldTypeSupport{"Attachment", true, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
+		"url": &FieldTypeSupport{"string", false, false},
 		"name": &FieldTypeSupport{"string", false, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"approvaldate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"lastreviewdate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"contributor": &FieldTypeSupport{"Contributor", true, false},
 
 	}
 }

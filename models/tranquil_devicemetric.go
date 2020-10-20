@@ -28,6 +28,26 @@ func (fhirVal *DeviceMetric) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "category":
+		return fhirVal.Category, true
+	case "measurementperiod":
+		return fhirVal.MeasurementPeriod, true
+	case "type":
+		return fhirVal.Type, true
+	case "unit":
+		return fhirVal.Unit, true
+	case "source":
+		return fhirVal.Source, true
+	case "parent":
+		return fhirVal.Parent, true
+	case "operationalstatus":
+		return fhirVal.OperationalStatus, true
+	case "color":
+		return fhirVal.Color, true
+	case "calibration":
+		return fhirVal.Calibration, true
+	case "identifier":
+		return fhirVal.Identifier, true
 
 	default:
 		return nil, false
@@ -47,16 +67,16 @@ func (fhirVal *DeviceMetric) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"unit": &FieldTypeSupport{"CodeableConcept", false, true},
-		"parent": &FieldTypeSupport{"Reference", false, true},
-		"color": &FieldTypeSupport{"string", false, false},
 		"category": &FieldTypeSupport{"string", false, false},
 		"measurementperiod": &FieldTypeSupport{"Timing", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"source": &FieldTypeSupport{"Reference", false, true},
-		"operationalstatus": &FieldTypeSupport{"string", false, false},
-		"calibration": &FieldTypeSupport{"DeviceMetricCalibrationComponent", true, false},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"unit": &FieldTypeSupport{"CodeableConcept", false, true},
+		"source": &FieldTypeSupport{"Reference", false, true},
+		"parent": &FieldTypeSupport{"Reference", false, true},
+		"operationalstatus": &FieldTypeSupport{"string", false, false},
+		"color": &FieldTypeSupport{"string", false, false},
+		"calibration": &FieldTypeSupport{"DeviceMetricCalibrationComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
 
 	}
 }

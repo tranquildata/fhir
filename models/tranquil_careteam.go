@@ -28,6 +28,30 @@ func (fhirVal *CareTeam) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "name":
+		return fhirVal.Name, true
+	case "context":
+		return fhirVal.Context, true
+	case "reasoncode":
+		return fhirVal.ReasonCode, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
+	case "managingorganization":
+		return fhirVal.ManagingOrganization, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "category":
+		return fhirVal.Category, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "period":
+		return fhirVal.Period, true
+	case "participant":
+		return fhirVal.Participant, true
 
 	default:
 		return nil, false
@@ -47,18 +71,18 @@ func (fhirVal *CareTeam) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"period": &FieldTypeSupport{"Period", false, true},
-		"participant": &FieldTypeSupport{"CareTeamParticipantComponent", true, false},
-		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"name": &FieldTypeSupport{"string", false, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
 		"context": &FieldTypeSupport{"Reference", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
 		"reasonreference": &FieldTypeSupport{"Reference", true, false},
 		"managingorganization": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"participant": &FieldTypeSupport{"CareTeamParticipantComponent", true, false},
 
 	}
 }

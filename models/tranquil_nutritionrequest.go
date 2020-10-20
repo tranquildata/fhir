@@ -28,6 +28,30 @@ func (fhirVal *NutritionRequest) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "enteralformula":
+		return fhirVal.EnteralFormula, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "datetime":
+		return fhirVal.DateTime, true
+	case "orderer":
+		return fhirVal.Orderer, true
+	case "foodpreferencemodifier":
+		return fhirVal.FoodPreferenceModifier, true
+	case "excludefoodmodifier":
+		return fhirVal.ExcludeFoodModifier, true
+	case "supplement":
+		return fhirVal.Supplement, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "encounter":
+		return fhirVal.Encounter, true
+	case "allergyintolerance":
+		return fhirVal.AllergyIntolerance, true
+	case "oraldiet":
+		return fhirVal.OralDiet, true
 
 	default:
 		return nil, false
@@ -47,18 +71,18 @@ func (fhirVal *NutritionRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"supplement": &FieldTypeSupport{"NutritionRequestSupplementComponent", true, false},
+		"enteralformula": &FieldTypeSupport{"NutritionRequestEnteralFormulaComponent", false, true},
 		"patient": &FieldTypeSupport{"Reference", false, true},
-		"orderer": &FieldTypeSupport{"Reference", false, true},
-		"allergyintolerance": &FieldTypeSupport{"Reference", true, false},
 		"datetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"orderer": &FieldTypeSupport{"Reference", false, true},
 		"foodpreferencemodifier": &FieldTypeSupport{"CodeableConcept", true, false},
 		"excludefoodmodifier": &FieldTypeSupport{"CodeableConcept", true, false},
-		"oraldiet": &FieldTypeSupport{"NutritionRequestOralDietComponent", false, true},
-		"enteralformula": &FieldTypeSupport{"NutritionRequestEnteralFormulaComponent", false, true},
+		"supplement": &FieldTypeSupport{"NutritionRequestSupplementComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
+		"allergyintolerance": &FieldTypeSupport{"Reference", true, false},
+		"oraldiet": &FieldTypeSupport{"NutritionRequestOralDietComponent", false, true},
 
 	}
 }

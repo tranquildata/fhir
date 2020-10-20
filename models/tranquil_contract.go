@@ -28,6 +28,54 @@ func (fhirVal *Contract) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "issued":
+		return fhirVal.Issued, true
+	case "authority":
+		return fhirVal.Authority, true
+	case "type":
+		return fhirVal.Type, true
+	case "friendly":
+		return fhirVal.Friendly, true
+	case "rule":
+		return fhirVal.Rule, true
+	case "applies":
+		return fhirVal.Applies, true
+	case "domain":
+		return fhirVal.Domain, true
+	case "subtype":
+		return fhirVal.SubType, true
+	case "contentderivative":
+		return fhirVal.ContentDerivative, true
+	case "securitylabel":
+		return fhirVal.SecurityLabel, true
+	case "signer":
+		return fhirVal.Signer, true
+	case "term":
+		return fhirVal.Term, true
+	case "bindingreference":
+		return fhirVal.BindingReference, true
+	case "status":
+		return fhirVal.Status, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "topic":
+		return fhirVal.Topic, true
+	case "action":
+		return fhirVal.Action, true
+	case "decisiontype":
+		return fhirVal.DecisionType, true
+	case "agent":
+		return fhirVal.Agent, true
+	case "legal":
+		return fhirVal.Legal, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "actionreason":
+		return fhirVal.ActionReason, true
+	case "valueditem":
+		return fhirVal.ValuedItem, true
+	case "bindingattachment":
+		return fhirVal.BindingAttachment, true
 
 	default:
 		return nil, false
@@ -47,30 +95,30 @@ func (fhirVal *Contract) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"bindingreference": &FieldTypeSupport{"Reference", false, true},
-		"friendly": &FieldTypeSupport{"ContractFriendlyLanguageComponent", true, false},
-		"legal": &FieldTypeSupport{"ContractLegalLanguageComponent", true, false},
-		"rule": &FieldTypeSupport{"ContractComputableLanguageComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"authority": &FieldTypeSupport{"Reference", true, false},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"bindingattachment": &FieldTypeSupport{"Attachment", false, true},
-		"action": &FieldTypeSupport{"CodeableConcept", true, false},
-		"actionreason": &FieldTypeSupport{"CodeableConcept", true, false},
-		"decisiontype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"friendly": &FieldTypeSupport{"ContractFriendlyLanguageComponent", true, false},
+		"rule": &FieldTypeSupport{"ContractComputableLanguageComponent", true, false},
+		"applies": &FieldTypeSupport{"Period", false, true},
+		"domain": &FieldTypeSupport{"Reference", true, false},
+		"subtype": &FieldTypeSupport{"CodeableConcept", true, false},
 		"contentderivative": &FieldTypeSupport{"CodeableConcept", false, true},
-		"agent": &FieldTypeSupport{"ContractAgentComponent", true, false},
+		"securitylabel": &FieldTypeSupport{"Coding", true, false},
+		"signer": &FieldTypeSupport{"ContractSignatoryComponent", true, false},
+		"term": &FieldTypeSupport{"ContractTermComponent", true, false},
+		"bindingreference": &FieldTypeSupport{"Reference", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", true, false},
-		"domain": &FieldTypeSupport{"Reference", true, false},
-		"signer": &FieldTypeSupport{"ContractSignatoryComponent", true, false},
 		"topic": &FieldTypeSupport{"Reference", true, false},
-		"authority": &FieldTypeSupport{"Reference", true, false},
-		"securitylabel": &FieldTypeSupport{"Coding", true, false},
+		"action": &FieldTypeSupport{"CodeableConcept", true, false},
+		"decisiontype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"agent": &FieldTypeSupport{"ContractAgentComponent", true, false},
+		"legal": &FieldTypeSupport{"ContractLegalLanguageComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"actionreason": &FieldTypeSupport{"CodeableConcept", true, false},
 		"valueditem": &FieldTypeSupport{"ContractValuedItemComponent", true, false},
-		"term": &FieldTypeSupport{"ContractTermComponent", true, false},
-		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"applies": &FieldTypeSupport{"Period", false, true},
-		"subtype": &FieldTypeSupport{"CodeableConcept", true, false},
+		"bindingattachment": &FieldTypeSupport{"Attachment", false, true},
 
 	}
 }

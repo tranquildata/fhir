@@ -28,6 +28,20 @@ func (fhirVal *Substance) FieldByLowerName(nameLower string) (interface{}, bool)
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "category":
+		return fhirVal.Category, true
+	case "code":
+		return fhirVal.Code, true
+	case "description":
+		return fhirVal.Description, true
+	case "instance":
+		return fhirVal.Instance, true
+	case "ingredient":
+		return fhirVal.Ingredient, true
 
 	default:
 		return nil, false
@@ -47,13 +61,13 @@ func (fhirVal *Substance) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"instance": &FieldTypeSupport{"SubstanceInstanceComponent", true, false},
-		"ingredient": &FieldTypeSupport{"SubstanceIngredientComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"category": &FieldTypeSupport{"CodeableConcept", true, false},
 		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"description": &FieldTypeSupport{"string", false, false},
+		"instance": &FieldTypeSupport{"SubstanceInstanceComponent", true, false},
+		"ingredient": &FieldTypeSupport{"SubstanceIngredientComponent", true, false},
 
 	}
 }

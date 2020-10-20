@@ -28,6 +28,8 @@ func (fhirVal *OperationOutcome) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "issue":
+		return fhirVal.Issue, true
 
 	default:
 		return nil, false

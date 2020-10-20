@@ -55,6 +55,11 @@ const FieldByLowerNamePostamble = `
 }
 `
 
+//Need to format with lower name, struct type name, actual field name
+const FieldByLowerNameEntry = `	case "%s":
+		return fhirVal.%s, true
+`
+
 const ResourceFields = `
 	case "resourcetype":
 		return fhirVal.ResourceType, true
@@ -191,6 +196,11 @@ func EmitFieldByLowerNamePreamble(fhirType *fhirStruct) string {
 	return fmt.Sprintf(FieldByLowerNamePreamble, fhirType.name)
 }
 
+func EmitFieldByLowerNameEntry(fhirType *fhirStruct, fieldName string) string {
+	lower := strings.ToLower(fieldName)
+	return fmt.Sprintf(FieldByLowerNameEntry, lower, fieldName)
+}
+
 func EmitInlinedStructCode(inlinedStructName string) string {
 	switch inlinedStructName {
 	case "Resource":
@@ -260,7 +270,6 @@ func EmitTupleCode(fhirType *fhirStruct, destPackage string) (string, error) {
 		fieldByLowerBuilder.WriteString(EmitInlinedStructCode(includedStruct))
 		fieldToTypesBuilder.WriteString(EmitInlinedStructFieldEntries(includedStruct))
 	}
-	fieldByLowerBuilder.WriteString(FieldByLowerNamePostamble)
 	for fieldName, fieldTy := range fhirType.fieldNamesToTypes {
 		//add field type accessor stuff
 		if entry, err := EmitFieldToTypesEntry(fieldName, fieldTy); err == nil {
@@ -268,8 +277,10 @@ func EmitTupleCode(fhirType *fhirStruct, destPackage string) (string, error) {
 		} else {
 			return "", err
 		}
+		fieldByLowerBuilder.WriteString(EmitFieldByLowerNameEntry(fhirType, fieldName))
 	}
 	fieldToTypesBuilder.WriteString(FieldToTypesPostamble)
+	fieldByLowerBuilder.WriteString(FieldByLowerNamePostamble)
 	bldr.WriteString(fieldByLowerBuilder.String())
 	bldr.WriteString(fieldToTypesBuilder.String())
 	return bldr.String(), nil

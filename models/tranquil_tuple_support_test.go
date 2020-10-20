@@ -10,6 +10,7 @@ func TestTupleMethods(t *testing.T) {
 				Id:           "not a uuid",
 			},
 		},
+		Status: "foobar",
 	}
 	a, b := thingie.FieldByLowerName("foo")
 	if a != nil {
@@ -24,6 +25,13 @@ func TestTupleMethods(t *testing.T) {
 	}
 	if a != "blah" {
 		t.Errorf("Wrong resource type: %s", a)
+	}
+	a, b = thingie.FieldByLowerName("status")
+	if a == nil || !b {
+		t.Errorf("Returned false")
+	}
+	if a != "foobar" {
+		t.Errorf("Incorrect status value: %v", a)
 	}
 
 	typeMap := thingie.FieldsToTypes()

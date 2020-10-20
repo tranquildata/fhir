@@ -28,6 +28,36 @@ func (fhirVal *GraphDefinition) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "purpose":
+		return fhirVal.Purpose, true
+	case "version":
+		return fhirVal.Version, true
+	case "status":
+		return fhirVal.Status, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "start":
+		return fhirVal.Start, true
+	case "date":
+		return fhirVal.Date, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "profile":
+		return fhirVal.Profile, true
+	case "link":
+		return fhirVal.Link, true
+	case "url":
+		return fhirVal.Url, true
+	case "name":
+		return fhirVal.Name, true
+	case "description":
+		return fhirVal.Description, true
 
 	default:
 		return nil, false
@@ -48,20 +78,20 @@ func (fhirVal *GraphDefinition) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"experimental": &FieldTypeSupport{"bool", false, true},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"start": &FieldTypeSupport{"string", false, false},
-		"version": &FieldTypeSupport{"string", false, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 		"purpose": &FieldTypeSupport{"string", false, false},
+		"version": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"start": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"publisher": &FieldTypeSupport{"string", false, false},
 		"profile": &FieldTypeSupport{"string", false, false},
 		"link": &FieldTypeSupport{"GraphDefinitionLinkComponent", true, false},
 		"url": &FieldTypeSupport{"string", false, false},
 		"name": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"description": &FieldTypeSupport{"string", false, false},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 
 	}
 }
