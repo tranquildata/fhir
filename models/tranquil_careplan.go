@@ -28,46 +28,46 @@ func (fhirVal *CarePlan) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "category":
+		return fhirVal.Category, true
+	case "period":
+		return fhirVal.Period, true
+	case "careteam":
+		return fhirVal.CareTeam, true
+	case "supportinginfo":
+		return fhirVal.SupportingInfo, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "addresses":
+		return fhirVal.Addresses, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "title":
+		return fhirVal.Title, true
+	case "partof":
+		return fhirVal.PartOf, true
 	case "goal":
 		return fhirVal.Goal, true
+	case "intent":
+		return fhirVal.Intent, true
+	case "description":
+		return fhirVal.Description, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "context":
+		return fhirVal.Context, true
+	case "author":
+		return fhirVal.Author, true
 	case "activity":
 		return fhirVal.Activity, true
 	case "definition":
 		return fhirVal.Definition, true
 	case "status":
 		return fhirVal.Status, true
-	case "category":
-		return fhirVal.Category, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "supportinginfo":
-		return fhirVal.SupportingInfo, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "addresses":
-		return fhirVal.Addresses, true
 	case "note":
 		return fhirVal.Note, true
-	case "intent":
-		return fhirVal.Intent, true
-	case "author":
-		return fhirVal.Author, true
-	case "period":
-		return fhirVal.Period, true
-	case "careteam":
-		return fhirVal.CareTeam, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "replaces":
-		return fhirVal.Replaces, true
-	case "title":
-		return fhirVal.Title, true
-	case "description":
-		return fhirVal.Description, true
-	case "context":
-		return fhirVal.Context, true
 
 	default:
 		return nil, false
@@ -87,26 +87,26 @@ func (fhirVal *CarePlan) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"careteam": &FieldTypeSupport{"Reference", true, false},
+		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"addresses": &FieldTypeSupport{"Reference", true, false},
+		"replaces": &FieldTypeSupport{"Reference", true, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"partof": &FieldTypeSupport{"Reference", true, false},
 		"goal": &FieldTypeSupport{"Reference", true, false},
+		"intent": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"author": &FieldTypeSupport{"Reference", true, false},
 		"activity": &FieldTypeSupport{"CarePlanActivityComponent", true, false},
 		"definition": &FieldTypeSupport{"Reference", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"partof": &FieldTypeSupport{"Reference", true, false},
-		"addresses": &FieldTypeSupport{"Reference", true, false},
 		"note": &FieldTypeSupport{"Annotation", true, false},
-		"intent": &FieldTypeSupport{"string", false, false},
-		"author": &FieldTypeSupport{"Reference", true, false},
-		"period": &FieldTypeSupport{"Period", false, true},
-		"careteam": &FieldTypeSupport{"Reference", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"replaces": &FieldTypeSupport{"Reference", true, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

@@ -28,30 +28,30 @@ func (fhirVal *TestReport) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "testscript":
+		return fhirVal.TestScript, true
+	case "tester":
+		return fhirVal.Tester, true
+	case "participant":
+		return fhirVal.Participant, true
+	case "test":
+		return fhirVal.Test, true
 	case "teardown":
 		return fhirVal.Teardown, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "testscript":
-		return fhirVal.TestScript, true
+	case "status":
+		return fhirVal.Status, true
 	case "result":
 		return fhirVal.Result, true
 	case "score":
 		return fhirVal.Score, true
-	case "tester":
-		return fhirVal.Tester, true
-	case "setup":
-		return fhirVal.Setup, true
-	case "test":
-		return fhirVal.Test, true
-	case "name":
-		return fhirVal.Name, true
-	case "status":
-		return fhirVal.Status, true
 	case "issued":
 		return fhirVal.Issued, true
-	case "participant":
-		return fhirVal.Participant, true
+	case "setup":
+		return fhirVal.Setup, true
+	case "name":
+		return fhirVal.Name, true
 
 	default:
 		return nil, false
@@ -71,18 +71,18 @@ func (fhirVal *TestReport) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"testscript": &FieldTypeSupport{"Reference", false, true},
+		"tester": &FieldTypeSupport{"string", false, false},
+		"participant": &FieldTypeSupport{"TestReportParticipantComponent", true, false},
+		"test": &FieldTypeSupport{"TestReportTestComponent", true, false},
 		"teardown": &FieldTypeSupport{"TestReportTeardownComponent", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"testscript": &FieldTypeSupport{"Reference", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
 		"result": &FieldTypeSupport{"string", false, false},
 		"score": &FieldTypeSupport{"float64", false, true},
-		"tester": &FieldTypeSupport{"string", false, false},
-		"setup": &FieldTypeSupport{"TestReportSetupComponent", false, true},
-		"test": &FieldTypeSupport{"TestReportTestComponent", true, false},
-		"name": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"participant": &FieldTypeSupport{"TestReportParticipantComponent", true, false},
+		"setup": &FieldTypeSupport{"TestReportSetupComponent", false, true},
+		"name": &FieldTypeSupport{"string", false, false},
 
 	}
 }

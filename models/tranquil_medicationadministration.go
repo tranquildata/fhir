@@ -28,50 +28,50 @@ func (fhirVal *MedicationAdministration) FieldByLowerName(nameLower string) (int
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "medicationcodeableconcept":
-		return fhirVal.MedicationCodeableConcept, true
-	case "effectivedatetime":
-		return fhirVal.EffectiveDateTime, true
-	case "notgiven":
-		return fhirVal.NotGiven, true
-	case "note":
-		return fhirVal.Note, true
-	case "definition":
-		return fhirVal.Definition, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "status":
-		return fhirVal.Status, true
-	case "reasonnotgiven":
-		return fhirVal.ReasonNotGiven, true
 	case "effectiveperiod":
 		return fhirVal.EffectivePeriod, true
+	case "eventhistory":
+		return fhirVal.EventHistory, true
+	case "medicationcodeableconcept":
+		return fhirVal.MedicationCodeableConcept, true
+	case "reasonnotgiven":
+		return fhirVal.ReasonNotGiven, true
 	case "reasoncode":
 		return fhirVal.ReasonCode, true
 	case "reasonreference":
 		return fhirVal.ReasonReference, true
-	case "device":
-		return fhirVal.Device, true
+	case "note":
+		return fhirVal.Note, true
+	case "effectivedatetime":
+		return fhirVal.EffectiveDateTime, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "status":
+		return fhirVal.Status, true
 	case "category":
 		return fhirVal.Category, true
 	case "medicationreference":
 		return fhirVal.MedicationReference, true
-	case "context":
-		return fhirVal.Context, true
 	case "supportinginformation":
 		return fhirVal.SupportingInformation, true
-	case "dosage":
-		return fhirVal.Dosage, true
-	case "eventhistory":
-		return fhirVal.EventHistory, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "subject":
-		return fhirVal.Subject, true
 	case "performer":
 		return fhirVal.Performer, true
+	case "device":
+		return fhirVal.Device, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "dosage":
+		return fhirVal.Dosage, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "context":
+		return fhirVal.Context, true
+	case "notgiven":
+		return fhirVal.NotGiven, true
 	case "prescription":
 		return fhirVal.Prescription, true
+	case "partof":
+		return fhirVal.PartOf, true
 
 	default:
 		return nil, false
@@ -91,28 +91,28 @@ func (fhirVal *MedicationAdministration) FieldsToTypes() map[string]*FieldTypeSu
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"medicationcodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"notgiven": &FieldTypeSupport{"bool", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"definition": &FieldTypeSupport{"Reference", true, false},
-		"partof": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"reasonnotgiven": &FieldTypeSupport{"CodeableConcept", true, false},
 		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
+		"eventhistory": &FieldTypeSupport{"Reference", true, false},
+		"medicationcodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"reasonnotgiven": &FieldTypeSupport{"CodeableConcept", true, false},
 		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
 		"reasonreference": &FieldTypeSupport{"Reference", true, false},
-		"device": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"definition": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"category": &FieldTypeSupport{"CodeableConcept", false, true},
 		"medicationreference": &FieldTypeSupport{"Reference", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
 		"supportinginformation": &FieldTypeSupport{"Reference", true, false},
-		"dosage": &FieldTypeSupport{"MedicationAdministrationDosageComponent", false, true},
-		"eventhistory": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
 		"performer": &FieldTypeSupport{"MedicationAdministrationPerformerComponent", true, false},
+		"device": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"dosage": &FieldTypeSupport{"MedicationAdministrationDosageComponent", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"notgiven": &FieldTypeSupport{"bool", false, true},
 		"prescription": &FieldTypeSupport{"Reference", false, true},
+		"partof": &FieldTypeSupport{"Reference", true, false},
 
 	}
 }

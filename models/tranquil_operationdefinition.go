@@ -28,52 +28,52 @@ func (fhirVal *OperationDefinition) FieldByLowerName(nameLower string) (interfac
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "comment":
-		return fhirVal.Comment, true
-	case "url":
-		return fhirVal.Url, true
-	case "version":
-		return fhirVal.Version, true
-	case "kind":
-		return fhirVal.Kind, true
-	case "publisher":
-		return fhirVal.Publisher, true
-	case "jurisdiction":
-		return fhirVal.Jurisdiction, true
-	case "purpose":
-		return fhirVal.Purpose, true
 	case "code":
 		return fhirVal.Code, true
+	case "instance":
+		return fhirVal.Instance, true
 	case "name":
 		return fhirVal.Name, true
+	case "usecontext":
+		return fhirVal.UseContext, true
 	case "status":
 		return fhirVal.Status, true
 	case "experimental":
 		return fhirVal.Experimental, true
-	case "date":
-		return fhirVal.Date, true
-	case "instance":
-		return fhirVal.Instance, true
-	case "overload":
-		return fhirVal.Overload, true
 	case "contact":
 		return fhirVal.Contact, true
-	case "description":
-		return fhirVal.Description, true
-	case "usecontext":
-		return fhirVal.UseContext, true
-	case "idempotent":
-		return fhirVal.Idempotent, true
-	case "base":
-		return fhirVal.Base, true
+	case "purpose":
+		return fhirVal.Purpose, true
 	case "system":
 		return fhirVal.System, true
 	case "type":
 		return fhirVal.Type, true
+	case "url":
+		return fhirVal.Url, true
+	case "version":
+		return fhirVal.Version, true
 	case "resource":
 		return fhirVal.Resource, true
+	case "idempotent":
+		return fhirVal.Idempotent, true
+	case "comment":
+		return fhirVal.Comment, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "description":
+		return fhirVal.Description, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "base":
+		return fhirVal.Base, true
 	case "parameter":
 		return fhirVal.Parameter, true
+	case "overload":
+		return fhirVal.Overload, true
+	case "kind":
+		return fhirVal.Kind, true
+	case "date":
+		return fhirVal.Date, true
 
 	default:
 		return nil, false
@@ -93,29 +93,29 @@ func (fhirVal *OperationDefinition) FieldsToTypes() map[string]*FieldTypeSupport
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"comment": &FieldTypeSupport{"string", false, false},
-		"url": &FieldTypeSupport{"string", false, false},
-		"version": &FieldTypeSupport{"string", false, false},
-		"kind": &FieldTypeSupport{"string", false, false},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"purpose": &FieldTypeSupport{"string", false, false},
 		"code": &FieldTypeSupport{"string", false, false},
+		"instance": &FieldTypeSupport{"bool", false, true},
 		"name": &FieldTypeSupport{"string", false, false},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"experimental": &FieldTypeSupport{"bool", false, true},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"instance": &FieldTypeSupport{"bool", false, true},
-		"overload": &FieldTypeSupport{"OperationDefinitionOverloadComponent", true, false},
 		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"idempotent": &FieldTypeSupport{"bool", false, true},
-		"base": &FieldTypeSupport{"Reference", false, true},
+		"purpose": &FieldTypeSupport{"string", false, false},
 		"system": &FieldTypeSupport{"bool", false, true},
 		"type": &FieldTypeSupport{"bool", false, true},
+		"url": &FieldTypeSupport{"string", false, false},
+		"version": &FieldTypeSupport{"string", false, false},
 		"resource": &FieldTypeSupport{"string", true, false},
+		"idempotent": &FieldTypeSupport{"bool", false, true},
+		"comment": &FieldTypeSupport{"string", false, false},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"base": &FieldTypeSupport{"Reference", false, true},
 		"parameter": &FieldTypeSupport{"OperationDefinitionParameterComponent", true, false},
+		"overload": &FieldTypeSupport{"OperationDefinitionOverloadComponent", true, false},
+		"kind": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 
 	}
 }

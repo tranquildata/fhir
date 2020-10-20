@@ -28,24 +28,24 @@ func (fhirVal *Medication) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "code":
-		return fhirVal.Code, true
-	case "status":
-		return fhirVal.Status, true
 	case "isbrand":
 		return fhirVal.IsBrand, true
-	case "isoverthecounter":
-		return fhirVal.IsOverTheCounter, true
-	case "manufacturer":
-		return fhirVal.Manufacturer, true
-	case "package":
-		return fhirVal.Package, true
 	case "form":
 		return fhirVal.Form, true
 	case "ingredient":
 		return fhirVal.Ingredient, true
+	case "package":
+		return fhirVal.Package, true
 	case "image":
 		return fhirVal.Image, true
+	case "code":
+		return fhirVal.Code, true
+	case "status":
+		return fhirVal.Status, true
+	case "isoverthecounter":
+		return fhirVal.IsOverTheCounter, true
+	case "manufacturer":
+		return fhirVal.Manufacturer, true
 
 	default:
 		return nil, false
@@ -65,15 +65,15 @@ func (fhirVal *Medication) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
 		"isbrand": &FieldTypeSupport{"bool", false, true},
-		"isoverthecounter": &FieldTypeSupport{"bool", false, true},
-		"manufacturer": &FieldTypeSupport{"Reference", false, true},
-		"package": &FieldTypeSupport{"MedicationPackageComponent", false, true},
 		"form": &FieldTypeSupport{"CodeableConcept", false, true},
 		"ingredient": &FieldTypeSupport{"MedicationIngredientComponent", true, false},
+		"package": &FieldTypeSupport{"MedicationPackageComponent", false, true},
 		"image": &FieldTypeSupport{"Attachment", true, false},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"isoverthecounter": &FieldTypeSupport{"bool", false, true},
+		"manufacturer": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

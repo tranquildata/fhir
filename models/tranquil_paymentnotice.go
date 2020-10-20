@@ -28,18 +28,12 @@ func (fhirVal *PaymentNotice) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "request":
-		return fhirVal.Request, true
-	case "created":
-		return fhirVal.Created, true
 	case "provider":
 		return fhirVal.Provider, true
 	case "organization":
 		return fhirVal.Organization, true
 	case "paymentstatus":
 		return fhirVal.PaymentStatus, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "status":
 		return fhirVal.Status, true
 	case "response":
@@ -48,6 +42,12 @@ func (fhirVal *PaymentNotice) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.StatusDate, true
 	case "target":
 		return fhirVal.Target, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "request":
+		return fhirVal.Request, true
+	case "created":
+		return fhirVal.Created, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *PaymentNotice) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"request": &FieldTypeSupport{"Reference", false, true},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"provider": &FieldTypeSupport{"Reference", false, true},
 		"organization": &FieldTypeSupport{"Reference", false, true},
 		"paymentstatus": &FieldTypeSupport{"CodeableConcept", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"response": &FieldTypeSupport{"Reference", false, true},
 		"statusdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"target": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"request": &FieldTypeSupport{"Reference", false, true},
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 
 	}
 }

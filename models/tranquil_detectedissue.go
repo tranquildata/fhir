@@ -28,28 +28,28 @@ func (fhirVal *DetectedIssue) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "category":
-		return fhirVal.Category, true
+	case "author":
+		return fhirVal.Author, true
 	case "implicated":
 		return fhirVal.Implicated, true
 	case "detail":
 		return fhirVal.Detail, true
-	case "reference":
-		return fhirVal.Reference, true
-	case "mitigation":
-		return fhirVal.Mitigation, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "status":
 		return fhirVal.Status, true
+	case "category":
+		return fhirVal.Category, true
 	case "severity":
 		return fhirVal.Severity, true
-	case "patient":
-		return fhirVal.Patient, true
 	case "date":
 		return fhirVal.Date, true
-	case "author":
-		return fhirVal.Author, true
+	case "reference":
+		return fhirVal.Reference, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "mitigation":
+		return fhirVal.Mitigation, true
 
 	default:
 		return nil, false
@@ -69,17 +69,17 @@ func (fhirVal *DetectedIssue) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"category": &FieldTypeSupport{"CodeableConcept", false, true},
+		"author": &FieldTypeSupport{"Reference", false, true},
 		"implicated": &FieldTypeSupport{"Reference", true, false},
 		"detail": &FieldTypeSupport{"string", false, false},
-		"reference": &FieldTypeSupport{"string", false, false},
-		"mitigation": &FieldTypeSupport{"DetectedIssueMitigationComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
+		"category": &FieldTypeSupport{"CodeableConcept", false, true},
 		"severity": &FieldTypeSupport{"string", false, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"author": &FieldTypeSupport{"Reference", false, true},
+		"reference": &FieldTypeSupport{"string", false, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"mitigation": &FieldTypeSupport{"DetectedIssueMitigationComponent", true, false},
 
 	}
 }

@@ -28,46 +28,46 @@ func (fhirVal *Appointment) FieldByLowerName(nameLower string) (interface{}, boo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "servicetype":
-		return fhirVal.ServiceType, true
-	case "incomingreferral":
-		return fhirVal.IncomingReferral, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "specialty":
-		return fhirVal.Specialty, true
-	case "indication":
-		return fhirVal.Indication, true
-	case "description":
-		return fhirVal.Description, true
-	case "supportinginformation":
-		return fhirVal.SupportingInformation, true
-	case "minutesduration":
-		return fhirVal.MinutesDuration, true
 	case "participant":
 		return fhirVal.Participant, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "supportinginformation":
+		return fhirVal.SupportingInformation, true
+	case "created":
+		return fhirVal.Created, true
+	case "specialty":
+		return fhirVal.Specialty, true
+	case "minutesduration":
+		return fhirVal.MinutesDuration, true
+	case "requestedperiod":
+		return fhirVal.RequestedPeriod, true
+	case "slot":
+		return fhirVal.Slot, true
+	case "comment":
+		return fhirVal.Comment, true
+	case "servicecategory":
+		return fhirVal.ServiceCategory, true
+	case "servicetype":
+		return fhirVal.ServiceType, true
+	case "end":
+		return fhirVal.End, true
+	case "indication":
+		return fhirVal.Indication, true
+	case "priority":
+		return fhirVal.Priority, true
+	case "description":
+		return fhirVal.Description, true
+	case "start":
+		return fhirVal.Start, true
+	case "incomingreferral":
+		return fhirVal.IncomingReferral, true
+	case "status":
+		return fhirVal.Status, true
 	case "appointmenttype":
 		return fhirVal.AppointmentType, true
 	case "reason":
 		return fhirVal.Reason, true
-	case "end":
-		return fhirVal.End, true
-	case "slot":
-		return fhirVal.Slot, true
-	case "created":
-		return fhirVal.Created, true
-	case "comment":
-		return fhirVal.Comment, true
-	case "status":
-		return fhirVal.Status, true
-	case "servicecategory":
-		return fhirVal.ServiceCategory, true
-	case "priority":
-		return fhirVal.Priority, true
-	case "start":
-		return fhirVal.Start, true
-	case "requestedperiod":
-		return fhirVal.RequestedPeriod, true
 
 	default:
 		return nil, false
@@ -87,26 +87,26 @@ func (fhirVal *Appointment) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"servicetype": &FieldTypeSupport{"CodeableConcept", true, false},
-		"incomingreferral": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"specialty": &FieldTypeSupport{"CodeableConcept", true, false},
-		"indication": &FieldTypeSupport{"Reference", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"supportinginformation": &FieldTypeSupport{"Reference", true, false},
-		"minutesduration": &FieldTypeSupport{"uint32", false, true},
 		"participant": &FieldTypeSupport{"AppointmentParticipantComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"supportinginformation": &FieldTypeSupport{"Reference", true, false},
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"specialty": &FieldTypeSupport{"CodeableConcept", true, false},
+		"minutesduration": &FieldTypeSupport{"uint32", false, true},
+		"requestedperiod": &FieldTypeSupport{"Period", true, false},
+		"slot": &FieldTypeSupport{"Reference", true, false},
+		"comment": &FieldTypeSupport{"string", false, false},
+		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
+		"servicetype": &FieldTypeSupport{"CodeableConcept", true, false},
+		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"indication": &FieldTypeSupport{"Reference", true, false},
+		"priority": &FieldTypeSupport{"uint32", false, true},
+		"description": &FieldTypeSupport{"string", false, false},
+		"start": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"incomingreferral": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"appointmenttype": &FieldTypeSupport{"CodeableConcept", false, true},
 		"reason": &FieldTypeSupport{"CodeableConcept", true, false},
-		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"slot": &FieldTypeSupport{"Reference", true, false},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"comment": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
-		"priority": &FieldTypeSupport{"uint32", false, true},
-		"start": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"requestedperiod": &FieldTypeSupport{"Period", true, false},
 
 	}
 }

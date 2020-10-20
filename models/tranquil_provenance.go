@@ -30,12 +30,14 @@ func (fhirVal *Provenance) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.ModifierExtension, true
 	case "recorded":
 		return fhirVal.Recorded, true
-	case "reason":
-		return fhirVal.Reason, true
 	case "activity":
 		return fhirVal.Activity, true
 	case "agent":
 		return fhirVal.Agent, true
+	case "location":
+		return fhirVal.Location, true
+	case "reason":
+		return fhirVal.Reason, true
 	case "entity":
 		return fhirVal.Entity, true
 	case "signature":
@@ -46,8 +48,6 @@ func (fhirVal *Provenance) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.Period, true
 	case "policy":
 		return fhirVal.Policy, true
-	case "location":
-		return fhirVal.Location, true
 
 	default:
 		return nil, false
@@ -68,15 +68,15 @@ func (fhirVal *Provenance) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"recorded": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"reason": &FieldTypeSupport{"Coding", true, false},
 		"activity": &FieldTypeSupport{"Coding", false, true},
 		"agent": &FieldTypeSupport{"ProvenanceAgentComponent", true, false},
+		"location": &FieldTypeSupport{"Reference", false, true},
+		"reason": &FieldTypeSupport{"Coding", true, false},
 		"entity": &FieldTypeSupport{"ProvenanceEntityComponent", true, false},
 		"signature": &FieldTypeSupport{"Signature", true, false},
 		"target": &FieldTypeSupport{"Reference", true, false},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"policy": &FieldTypeSupport{"string", true, false},
-		"location": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

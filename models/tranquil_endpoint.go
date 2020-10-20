@@ -28,20 +28,14 @@ func (fhirVal *Endpoint) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "period":
-		return fhirVal.Period, true
-	case "payloadmimetype":
-		return fhirVal.PayloadMimeType, true
-	case "address":
-		return fhirVal.Address, true
 	case "status":
 		return fhirVal.Status, true
 	case "name":
 		return fhirVal.Name, true
-	case "contact":
-		return fhirVal.Contact, true
 	case "payloadtype":
 		return fhirVal.PayloadType, true
+	case "payloadmimetype":
+		return fhirVal.PayloadMimeType, true
 	case "header":
 		return fhirVal.Header, true
 	case "identifier":
@@ -50,6 +44,12 @@ func (fhirVal *Endpoint) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.ConnectionType, true
 	case "managingorganization":
 		return fhirVal.ManagingOrganization, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "period":
+		return fhirVal.Period, true
+	case "address":
+		return fhirVal.Address, true
 
 	default:
 		return nil, false
@@ -69,17 +69,17 @@ func (fhirVal *Endpoint) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"period": &FieldTypeSupport{"Period", false, true},
-		"payloadmimetype": &FieldTypeSupport{"string", true, false},
-		"address": &FieldTypeSupport{"string", false, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"name": &FieldTypeSupport{"string", false, false},
-		"contact": &FieldTypeSupport{"ContactPoint", true, false},
 		"payloadtype": &FieldTypeSupport{"CodeableConcept", true, false},
+		"payloadmimetype": &FieldTypeSupport{"string", true, false},
 		"header": &FieldTypeSupport{"string", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"connectiontype": &FieldTypeSupport{"Coding", false, true},
 		"managingorganization": &FieldTypeSupport{"Reference", false, true},
+		"contact": &FieldTypeSupport{"ContactPoint", true, false},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"address": &FieldTypeSupport{"string", false, false},
 
 	}
 }

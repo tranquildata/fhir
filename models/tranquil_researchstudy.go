@@ -30,44 +30,44 @@ func (fhirVal *ResearchStudy) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.ModifierExtension, true
 	case "protocol":
 		return fhirVal.Protocol, true
-	case "description":
-		return fhirVal.Description, true
-	case "arm":
-		return fhirVal.Arm, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "relatedartifact":
-		return fhirVal.RelatedArtifact, true
-	case "keyword":
-		return fhirVal.Keyword, true
-	case "site":
-		return fhirVal.Site, true
 	case "category":
 		return fhirVal.Category, true
 	case "focus":
 		return fhirVal.Focus, true
-	case "contact":
-		return fhirVal.Contact, true
+	case "relatedartifact":
+		return fhirVal.RelatedArtifact, true
 	case "period":
 		return fhirVal.Period, true
 	case "principalinvestigator":
 		return fhirVal.PrincipalInvestigator, true
-	case "note":
-		return fhirVal.Note, true
-	case "title":
-		return fhirVal.Title, true
-	case "status":
-		return fhirVal.Status, true
+	case "site":
+		return fhirVal.Site, true
 	case "jurisdiction":
 		return fhirVal.Jurisdiction, true
 	case "enrollment":
 		return fhirVal.Enrollment, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "keyword":
+		return fhirVal.Keyword, true
+	case "description":
+		return fhirVal.Description, true
 	case "sponsor":
 		return fhirVal.Sponsor, true
 	case "reasonstopped":
 		return fhirVal.ReasonStopped, true
-	case "partof":
-		return fhirVal.PartOf, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "title":
+		return fhirVal.Title, true
+	case "status":
+		return fhirVal.Status, true
+	case "arm":
+		return fhirVal.Arm, true
 
 	default:
 		return nil, false
@@ -88,25 +88,25 @@ func (fhirVal *ResearchStudy) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"protocol": &FieldTypeSupport{"Reference", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"arm": &FieldTypeSupport{"ResearchStudyArmComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
-		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
-		"site": &FieldTypeSupport{"Reference", true, false},
 		"category": &FieldTypeSupport{"CodeableConcept", true, false},
 		"focus": &FieldTypeSupport{"CodeableConcept", true, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"principalinvestigator": &FieldTypeSupport{"Reference", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
+		"site": &FieldTypeSupport{"Reference", true, false},
 		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 		"enrollment": &FieldTypeSupport{"Reference", true, false},
+		"partof": &FieldTypeSupport{"Reference", true, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
 		"sponsor": &FieldTypeSupport{"Reference", false, true},
 		"reasonstopped": &FieldTypeSupport{"CodeableConcept", false, true},
-		"partof": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"arm": &FieldTypeSupport{"ResearchStudyArmComponent", true, false},
 
 	}
 }

@@ -28,12 +28,6 @@ func (fhirVal *Schedule) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "active":
-		return fhirVal.Active, true
-	case "servicecategory":
-		return fhirVal.ServiceCategory, true
 	case "servicetype":
 		return fhirVal.ServiceType, true
 	case "specialty":
@@ -44,6 +38,12 @@ func (fhirVal *Schedule) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.PlanningHorizon, true
 	case "comment":
 		return fhirVal.Comment, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "active":
+		return fhirVal.Active, true
+	case "servicecategory":
+		return fhirVal.ServiceCategory, true
 
 	default:
 		return nil, false
@@ -63,14 +63,14 @@ func (fhirVal *Schedule) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"active": &FieldTypeSupport{"bool", false, true},
-		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
 		"servicetype": &FieldTypeSupport{"CodeableConcept", true, false},
 		"specialty": &FieldTypeSupport{"CodeableConcept", true, false},
 		"actor": &FieldTypeSupport{"Reference", true, false},
 		"planninghorizon": &FieldTypeSupport{"Period", false, true},
 		"comment": &FieldTypeSupport{"string", false, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"active": &FieldTypeSupport{"bool", false, true},
+		"servicecategory": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

@@ -28,34 +28,34 @@ func (fhirVal *PaymentReconciliation) FieldByLowerName(nameLower string) (interf
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "disposition":
+		return fhirVal.Disposition, true
+	case "form":
+		return fhirVal.Form, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "detail":
+		return fhirVal.Detail, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "period":
 		return fhirVal.Period, true
 	case "created":
 		return fhirVal.Created, true
-	case "outcome":
-		return fhirVal.Outcome, true
-	case "disposition":
-		return fhirVal.Disposition, true
-	case "total":
-		return fhirVal.Total, true
-	case "status":
-		return fhirVal.Status, true
 	case "request":
 		return fhirVal.Request, true
 	case "requestprovider":
 		return fhirVal.RequestProvider, true
-	case "form":
-		return fhirVal.Form, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "requestorganization":
 		return fhirVal.RequestOrganization, true
-	case "detail":
-		return fhirVal.Detail, true
-	case "processnote":
-		return fhirVal.ProcessNote, true
+	case "status":
+		return fhirVal.Status, true
 	case "organization":
 		return fhirVal.Organization, true
+	case "total":
+		return fhirVal.Total, true
+	case "processnote":
+		return fhirVal.ProcessNote, true
 
 	default:
 		return nil, false
@@ -75,20 +75,20 @@ func (fhirVal *PaymentReconciliation) FieldsToTypes() map[string]*FieldTypeSuppo
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"disposition": &FieldTypeSupport{"string", false, false},
+		"form": &FieldTypeSupport{"CodeableConcept", false, true},
+		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
+		"detail": &FieldTypeSupport{"PaymentReconciliationDetailsComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
-		"disposition": &FieldTypeSupport{"string", false, false},
-		"total": &FieldTypeSupport{"Quantity", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
 		"request": &FieldTypeSupport{"Reference", false, true},
 		"requestprovider": &FieldTypeSupport{"Reference", false, true},
-		"form": &FieldTypeSupport{"CodeableConcept", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"requestorganization": &FieldTypeSupport{"Reference", false, true},
-		"detail": &FieldTypeSupport{"PaymentReconciliationDetailsComponent", true, false},
-		"processnote": &FieldTypeSupport{"PaymentReconciliationNotesComponent", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"organization": &FieldTypeSupport{"Reference", false, true},
+		"total": &FieldTypeSupport{"Quantity", false, true},
+		"processnote": &FieldTypeSupport{"PaymentReconciliationNotesComponent", true, false},
 
 	}
 }

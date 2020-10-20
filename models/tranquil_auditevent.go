@@ -28,26 +28,26 @@ func (fhirVal *AuditEvent) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "action":
+		return fhirVal.Action, true
 	case "outcomedesc":
 		return fhirVal.OutcomeDesc, true
-	case "purposeofevent":
-		return fhirVal.PurposeOfEvent, true
 	case "agent":
 		return fhirVal.Agent, true
+	case "source":
+		return fhirVal.Source, true
 	case "entity":
 		return fhirVal.Entity, true
 	case "type":
 		return fhirVal.Type, true
-	case "outcome":
-		return fhirVal.Outcome, true
-	case "recorded":
-		return fhirVal.Recorded, true
-	case "source":
-		return fhirVal.Source, true
 	case "subtype":
 		return fhirVal.Subtype, true
-	case "action":
-		return fhirVal.Action, true
+	case "recorded":
+		return fhirVal.Recorded, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "purposeofevent":
+		return fhirVal.PurposeOfEvent, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *AuditEvent) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"action": &FieldTypeSupport{"string", false, false},
 		"outcomedesc": &FieldTypeSupport{"string", false, false},
-		"purposeofevent": &FieldTypeSupport{"CodeableConcept", true, false},
 		"agent": &FieldTypeSupport{"AuditEventAgentComponent", true, false},
+		"source": &FieldTypeSupport{"AuditEventSourceComponent", false, true},
 		"entity": &FieldTypeSupport{"AuditEventEntityComponent", true, false},
 		"type": &FieldTypeSupport{"Coding", false, true},
-		"outcome": &FieldTypeSupport{"string", false, false},
-		"recorded": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"source": &FieldTypeSupport{"AuditEventSourceComponent", false, true},
 		"subtype": &FieldTypeSupport{"Coding", true, false},
-		"action": &FieldTypeSupport{"string", false, false},
+		"recorded": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"outcome": &FieldTypeSupport{"string", false, false},
+		"purposeofevent": &FieldTypeSupport{"CodeableConcept", true, false},
 
 	}
 }

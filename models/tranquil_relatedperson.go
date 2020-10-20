@@ -28,28 +28,28 @@ func (fhirVal *RelatedPerson) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "active":
-		return fhirVal.Active, true
-	case "telecom":
-		return fhirVal.Telecom, true
-	case "gender":
-		return fhirVal.Gender, true
-	case "address":
-		return fhirVal.Address, true
-	case "photo":
-		return fhirVal.Photo, true
 	case "period":
 		return fhirVal.Period, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
+	case "gender":
+		return fhirVal.Gender, true
+	case "telecom":
+		return fhirVal.Telecom, true
+	case "birthdate":
+		return fhirVal.BirthDate, true
+	case "address":
+		return fhirVal.Address, true
+	case "photo":
+		return fhirVal.Photo, true
+	case "active":
+		return fhirVal.Active, true
 	case "patient":
 		return fhirVal.Patient, true
 	case "relationship":
 		return fhirVal.Relationship, true
-	case "name":
-		return fhirVal.Name, true
-	case "birthdate":
-		return fhirVal.BirthDate, true
 
 	default:
 		return nil, false
@@ -69,17 +69,17 @@ func (fhirVal *RelatedPerson) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"active": &FieldTypeSupport{"bool", false, true},
-		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
-		"gender": &FieldTypeSupport{"string", false, false},
-		"address": &FieldTypeSupport{"Address", true, false},
-		"photo": &FieldTypeSupport{"Attachment", true, false},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"name": &FieldTypeSupport{"HumanName", true, false},
+		"gender": &FieldTypeSupport{"string", false, false},
+		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
+		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"address": &FieldTypeSupport{"Address", true, false},
+		"photo": &FieldTypeSupport{"Attachment", true, false},
+		"active": &FieldTypeSupport{"bool", false, true},
 		"patient": &FieldTypeSupport{"Reference", false, true},
 		"relationship": &FieldTypeSupport{"CodeableConcept", false, true},
-		"name": &FieldTypeSupport{"HumanName", true, false},
-		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 
 	}
 }

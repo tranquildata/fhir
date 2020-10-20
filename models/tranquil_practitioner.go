@@ -34,18 +34,18 @@ func (fhirVal *Practitioner) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Communication, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
 	case "telecom":
 		return fhirVal.Telecom, true
 	case "address":
 		return fhirVal.Address, true
+	case "gender":
+		return fhirVal.Gender, true
 	case "birthdate":
 		return fhirVal.BirthDate, true
 	case "active":
 		return fhirVal.Active, true
-	case "name":
-		return fhirVal.Name, true
-	case "gender":
-		return fhirVal.Gender, true
 	case "qualification":
 		return fhirVal.Qualification, true
 
@@ -70,12 +70,12 @@ func (fhirVal *Practitioner) FieldsToTypes() map[string]*FieldTypeSupport {
 		"photo": &FieldTypeSupport{"Attachment", true, false},
 		"communication": &FieldTypeSupport{"CodeableConcept", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"name": &FieldTypeSupport{"HumanName", true, false},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
 		"address": &FieldTypeSupport{"Address", true, false},
+		"gender": &FieldTypeSupport{"string", false, false},
 		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"active": &FieldTypeSupport{"bool", false, true},
-		"name": &FieldTypeSupport{"HumanName", true, false},
-		"gender": &FieldTypeSupport{"string", false, false},
 		"qualification": &FieldTypeSupport{"PractitionerQualificationComponent", true, false},
 
 	}

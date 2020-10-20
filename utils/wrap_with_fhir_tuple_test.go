@@ -5,7 +5,6 @@
 package utils
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 )
@@ -31,6 +30,7 @@ func TestThatStructsCanBeParsed(t *testing.T) {
 	}
 }
 
+/*
 func TestThatProcessDirWorks(t *testing.T) {
 	processed, err := ProcessDirectory("../models", "models")
 	if err != nil {
@@ -41,3 +41,4 @@ func TestThatProcessDirWorks(t *testing.T) {
 	}
 	fmt.Printf("processed: %v\n", processed)
 }
+*/

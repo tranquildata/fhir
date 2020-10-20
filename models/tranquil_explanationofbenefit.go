@@ -28,84 +28,84 @@ func (fhirVal *ExplanationOfBenefit) FieldByLowerName(nameLower string) (interfa
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "billableperiod":
-		return fhirVal.BillablePeriod, true
-	case "careteam":
-		return fhirVal.CareTeam, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "insurance":
-		return fhirVal.Insurance, true
-	case "payment":
-		return fhirVal.Payment, true
-	case "precedence":
-		return fhirVal.Precedence, true
-	case "diagnosis":
-		return fhirVal.Diagnosis, true
-	case "unallocdeductable":
-		return fhirVal.UnallocDeductable, true
-	case "enterer":
-		return fhirVal.Enterer, true
-	case "totalbenefit":
-		return fhirVal.TotalBenefit, true
-	case "benefitbalance":
-		return fhirVal.BenefitBalance, true
-	case "claimresponse":
-		return fhirVal.ClaimResponse, true
-	case "outcome":
-		return fhirVal.Outcome, true
-	case "procedure":
-		return fhirVal.Procedure, true
-	case "processnote":
-		return fhirVal.ProcessNote, true
-	case "created":
-		return fhirVal.Created, true
-	case "facility":
-		return fhirVal.Facility, true
-	case "claim":
-		return fhirVal.Claim, true
-	case "payee":
-		return fhirVal.Payee, true
-	case "accident":
-		return fhirVal.Accident, true
-	case "item":
-		return fhirVal.Item, true
-	case "status":
-		return fhirVal.Status, true
-	case "subtype":
-		return fhirVal.SubType, true
-	case "insurer":
-		return fhirVal.Insurer, true
-	case "provider":
-		return fhirVal.Provider, true
-	case "related":
-		return fhirVal.Related, true
-	case "prescription":
-		return fhirVal.Prescription, true
-	case "originalprescription":
-		return fhirVal.OriginalPrescription, true
-	case "totalcost":
-		return fhirVal.TotalCost, true
-	case "type":
-		return fhirVal.Type, true
-	case "organization":
-		return fhirVal.Organization, true
 	case "referral":
 		return fhirVal.Referral, true
-	case "disposition":
-		return fhirVal.Disposition, true
 	case "information":
 		return fhirVal.Information, true
-	case "employmentimpacted":
-		return fhirVal.EmploymentImpacted, true
+	case "unallocdeductable":
+		return fhirVal.UnallocDeductable, true
+	case "organization":
+		return fhirVal.Organization, true
+	case "related":
+		return fhirVal.Related, true
+	case "careteam":
+		return fhirVal.CareTeam, true
+	case "procedure":
+		return fhirVal.Procedure, true
+	case "totalcost":
+		return fhirVal.TotalCost, true
+	case "totalbenefit":
+		return fhirVal.TotalBenefit, true
+	case "billableperiod":
+		return fhirVal.BillablePeriod, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "diagnosis":
+		return fhirVal.Diagnosis, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "payee":
+		return fhirVal.Payee, true
+	case "created":
+		return fhirVal.Created, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "provider":
+		return fhirVal.Provider, true
+	case "originalprescription":
+		return fhirVal.OriginalPrescription, true
+	case "insurance":
+		return fhirVal.Insurance, true
+	case "benefitbalance":
+		return fhirVal.BenefitBalance, true
+	case "type":
+		return fhirVal.Type, true
+	case "facility":
+		return fhirVal.Facility, true
+	case "item":
+		return fhirVal.Item, true
+	case "form":
+		return fhirVal.Form, true
+	case "processnote":
+		return fhirVal.ProcessNote, true
+	case "subtype":
+		return fhirVal.SubType, true
+	case "payment":
+		return fhirVal.Payment, true
+	case "status":
+		return fhirVal.Status, true
+	case "insurer":
+		return fhirVal.Insurer, true
+	case "claim":
+		return fhirVal.Claim, true
+	case "claimresponse":
+		return fhirVal.ClaimResponse, true
+	case "disposition":
+		return fhirVal.Disposition, true
+	case "prescription":
+		return fhirVal.Prescription, true
+	case "precedence":
+		return fhirVal.Precedence, true
+	case "accident":
+		return fhirVal.Accident, true
+	case "enterer":
+		return fhirVal.Enterer, true
 	case "hospitalization":
 		return fhirVal.Hospitalization, true
 	case "additem":
 		return fhirVal.AddItem, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "form":
-		return fhirVal.Form, true
+	case "employmentimpacted":
+		return fhirVal.EmploymentImpacted, true
 
 	default:
 		return nil, false
@@ -125,45 +125,45 @@ func (fhirVal *ExplanationOfBenefit) FieldsToTypes() map[string]*FieldTypeSuppor
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"billableperiod": &FieldTypeSupport{"Period", false, true},
-		"careteam": &FieldTypeSupport{"ExplanationOfBenefitCareTeamComponent", true, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"insurance": &FieldTypeSupport{"ExplanationOfBenefitInsuranceComponent", false, true},
-		"payment": &FieldTypeSupport{"ExplanationOfBenefitPaymentComponent", false, true},
-		"precedence": &FieldTypeSupport{"uint32", false, true},
-		"diagnosis": &FieldTypeSupport{"ExplanationOfBenefitDiagnosisComponent", true, false},
-		"unallocdeductable": &FieldTypeSupport{"Quantity", false, true},
-		"enterer": &FieldTypeSupport{"Reference", false, true},
-		"totalbenefit": &FieldTypeSupport{"Quantity", false, true},
-		"benefitbalance": &FieldTypeSupport{"ExplanationOfBenefitBenefitBalanceComponent", true, false},
-		"claimresponse": &FieldTypeSupport{"Reference", false, true},
-		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
-		"procedure": &FieldTypeSupport{"ExplanationOfBenefitProcedureComponent", true, false},
-		"processnote": &FieldTypeSupport{"ExplanationOfBenefitNoteComponent", true, false},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"facility": &FieldTypeSupport{"Reference", false, true},
-		"claim": &FieldTypeSupport{"Reference", false, true},
-		"payee": &FieldTypeSupport{"ExplanationOfBenefitPayeeComponent", false, true},
-		"accident": &FieldTypeSupport{"ExplanationOfBenefitAccidentComponent", false, true},
-		"item": &FieldTypeSupport{"ExplanationOfBenefitItemComponent", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"subtype": &FieldTypeSupport{"CodeableConcept", true, false},
-		"insurer": &FieldTypeSupport{"Reference", false, true},
-		"provider": &FieldTypeSupport{"Reference", false, true},
-		"related": &FieldTypeSupport{"ExplanationOfBenefitRelatedClaimComponent", true, false},
-		"prescription": &FieldTypeSupport{"Reference", false, true},
-		"originalprescription": &FieldTypeSupport{"Reference", false, true},
-		"totalcost": &FieldTypeSupport{"Quantity", false, true},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"organization": &FieldTypeSupport{"Reference", false, true},
 		"referral": &FieldTypeSupport{"Reference", false, true},
-		"disposition": &FieldTypeSupport{"string", false, false},
 		"information": &FieldTypeSupport{"ExplanationOfBenefitSupportingInformationComponent", true, false},
-		"employmentimpacted": &FieldTypeSupport{"Period", false, true},
+		"unallocdeductable": &FieldTypeSupport{"Quantity", false, true},
+		"organization": &FieldTypeSupport{"Reference", false, true},
+		"related": &FieldTypeSupport{"ExplanationOfBenefitRelatedClaimComponent", true, false},
+		"careteam": &FieldTypeSupport{"ExplanationOfBenefitCareTeamComponent", true, false},
+		"procedure": &FieldTypeSupport{"ExplanationOfBenefitProcedureComponent", true, false},
+		"totalcost": &FieldTypeSupport{"Quantity", false, true},
+		"totalbenefit": &FieldTypeSupport{"Quantity", false, true},
+		"billableperiod": &FieldTypeSupport{"Period", false, true},
+		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
+		"diagnosis": &FieldTypeSupport{"ExplanationOfBenefitDiagnosisComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"payee": &FieldTypeSupport{"ExplanationOfBenefitPayeeComponent", false, true},
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"provider": &FieldTypeSupport{"Reference", false, true},
+		"originalprescription": &FieldTypeSupport{"Reference", false, true},
+		"insurance": &FieldTypeSupport{"ExplanationOfBenefitInsuranceComponent", false, true},
+		"benefitbalance": &FieldTypeSupport{"ExplanationOfBenefitBenefitBalanceComponent", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"facility": &FieldTypeSupport{"Reference", false, true},
+		"item": &FieldTypeSupport{"ExplanationOfBenefitItemComponent", true, false},
+		"form": &FieldTypeSupport{"CodeableConcept", false, true},
+		"processnote": &FieldTypeSupport{"ExplanationOfBenefitNoteComponent", true, false},
+		"subtype": &FieldTypeSupport{"CodeableConcept", true, false},
+		"payment": &FieldTypeSupport{"ExplanationOfBenefitPaymentComponent", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"insurer": &FieldTypeSupport{"Reference", false, true},
+		"claim": &FieldTypeSupport{"Reference", false, true},
+		"claimresponse": &FieldTypeSupport{"Reference", false, true},
+		"disposition": &FieldTypeSupport{"string", false, false},
+		"prescription": &FieldTypeSupport{"Reference", false, true},
+		"precedence": &FieldTypeSupport{"uint32", false, true},
+		"accident": &FieldTypeSupport{"ExplanationOfBenefitAccidentComponent", false, true},
+		"enterer": &FieldTypeSupport{"Reference", false, true},
 		"hospitalization": &FieldTypeSupport{"Period", false, true},
 		"additem": &FieldTypeSupport{"ExplanationOfBenefitAddedItemComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"form": &FieldTypeSupport{"CodeableConcept", false, true},
+		"employmentimpacted": &FieldTypeSupport{"Period", false, true},
 
 	}
 }

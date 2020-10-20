@@ -28,36 +28,36 @@ func (fhirVal *Location) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "physicaltype":
-		return fhirVal.PhysicalType, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "name":
-		return fhirVal.Name, true
-	case "description":
-		return fhirVal.Description, true
-	case "endpoint":
-		return fhirVal.Endpoint, true
-	case "type":
-		return fhirVal.Type, true
-	case "position":
-		return fhirVal.Position, true
-	case "managingorganization":
-		return fhirVal.ManagingOrganization, true
-	case "status":
-		return fhirVal.Status, true
-	case "mode":
-		return fhirVal.Mode, true
-	case "alias":
-		return fhirVal.Alias, true
 	case "telecom":
 		return fhirVal.Telecom, true
 	case "address":
 		return fhirVal.Address, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "type":
+		return fhirVal.Type, true
+	case "physicaltype":
+		return fhirVal.PhysicalType, true
+	case "managingorganization":
+		return fhirVal.ManagingOrganization, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "endpoint":
+		return fhirVal.Endpoint, true
+	case "name":
+		return fhirVal.Name, true
 	case "operationalstatus":
 		return fhirVal.OperationalStatus, true
+	case "alias":
+		return fhirVal.Alias, true
+	case "description":
+		return fhirVal.Description, true
+	case "mode":
+		return fhirVal.Mode, true
+	case "position":
+		return fhirVal.Position, true
+	case "status":
+		return fhirVal.Status, true
 
 	default:
 		return nil, false
@@ -77,21 +77,21 @@ func (fhirVal *Location) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"physicaltype": &FieldTypeSupport{"CodeableConcept", false, true},
-		"partof": &FieldTypeSupport{"Reference", false, true},
-		"name": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"endpoint": &FieldTypeSupport{"Reference", true, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"position": &FieldTypeSupport{"LocationPositionComponent", false, true},
-		"managingorganization": &FieldTypeSupport{"Reference", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"mode": &FieldTypeSupport{"string", false, false},
-		"alias": &FieldTypeSupport{"string", true, false},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
 		"address": &FieldTypeSupport{"Address", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"physicaltype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"managingorganization": &FieldTypeSupport{"Reference", false, true},
+		"partof": &FieldTypeSupport{"Reference", false, true},
+		"endpoint": &FieldTypeSupport{"Reference", true, false},
+		"name": &FieldTypeSupport{"string", false, false},
 		"operationalstatus": &FieldTypeSupport{"Coding", false, true},
+		"alias": &FieldTypeSupport{"string", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"mode": &FieldTypeSupport{"string", false, false},
+		"position": &FieldTypeSupport{"LocationPositionComponent", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
 
 	}
 }

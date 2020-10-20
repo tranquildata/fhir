@@ -28,10 +28,6 @@ func (fhirVal *ResearchSubject) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "study":
-		return fhirVal.Study, true
-	case "individual":
-		return fhirVal.Individual, true
 	case "assignedarm":
 		return fhirVal.AssignedArm, true
 	case "actualarm":
@@ -44,6 +40,10 @@ func (fhirVal *ResearchSubject) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Status, true
 	case "period":
 		return fhirVal.Period, true
+	case "study":
+		return fhirVal.Study, true
+	case "individual":
+		return fhirVal.Individual, true
 
 	default:
 		return nil, false
@@ -63,14 +63,14 @@ func (fhirVal *ResearchSubject) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"study": &FieldTypeSupport{"Reference", false, true},
-		"individual": &FieldTypeSupport{"Reference", false, true},
 		"assignedarm": &FieldTypeSupport{"string", false, false},
 		"actualarm": &FieldTypeSupport{"string", false, false},
 		"consent": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
 		"period": &FieldTypeSupport{"Period", false, true},
+		"study": &FieldTypeSupport{"Reference", false, true},
+		"individual": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

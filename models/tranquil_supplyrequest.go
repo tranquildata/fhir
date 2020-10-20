@@ -28,36 +28,36 @@ func (fhirVal *SupplyRequest) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "occurrencetiming":
-		return fhirVal.OccurrenceTiming, true
-	case "authoredon":
-		return fhirVal.AuthoredOn, true
-	case "occurrencedatetime":
-		return fhirVal.OccurrenceDateTime, true
-	case "occurrenceperiod":
-		return fhirVal.OccurrencePeriod, true
-	case "priority":
-		return fhirVal.Priority, true
-	case "requester":
-		return fhirVal.Requester, true
-	case "supplier":
-		return fhirVal.Supplier, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "status":
-		return fhirVal.Status, true
-	case "reasoncodeableconcept":
-		return fhirVal.ReasonCodeableConcept, true
-	case "deliverto":
-		return fhirVal.DeliverTo, true
-	case "reasonreference":
-		return fhirVal.ReasonReference, true
-	case "deliverfrom":
-		return fhirVal.DeliverFrom, true
 	case "category":
 		return fhirVal.Category, true
+	case "priority":
+		return fhirVal.Priority, true
 	case "ordereditem":
 		return fhirVal.OrderedItem, true
+	case "deliverfrom":
+		return fhirVal.DeliverFrom, true
+	case "authoredon":
+		return fhirVal.AuthoredOn, true
+	case "deliverto":
+		return fhirVal.DeliverTo, true
+	case "status":
+		return fhirVal.Status, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
+	case "occurrencetiming":
+		return fhirVal.OccurrenceTiming, true
+	case "requester":
+		return fhirVal.Requester, true
+	case "reasoncodeableconcept":
+		return fhirVal.ReasonCodeableConcept, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
+	case "supplier":
+		return fhirVal.Supplier, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
 
 	default:
 		return nil, false
@@ -77,21 +77,21 @@ func (fhirVal *SupplyRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
-		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"priority": &FieldTypeSupport{"string", false, false},
-		"requester": &FieldTypeSupport{"SupplyRequestRequesterComponent", false, true},
-		"supplier": &FieldTypeSupport{"Reference", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"deliverto": &FieldTypeSupport{"Reference", false, true},
-		"reasonreference": &FieldTypeSupport{"Reference", false, true},
-		"deliverfrom": &FieldTypeSupport{"Reference", false, true},
 		"category": &FieldTypeSupport{"CodeableConcept", false, true},
+		"priority": &FieldTypeSupport{"string", false, false},
 		"ordereditem": &FieldTypeSupport{"SupplyRequestOrderedItemComponent", false, true},
+		"deliverfrom": &FieldTypeSupport{"Reference", false, true},
+		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"deliverto": &FieldTypeSupport{"Reference", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
+		"requester": &FieldTypeSupport{"SupplyRequestRequesterComponent", false, true},
+		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"supplier": &FieldTypeSupport{"Reference", true, false},
+		"reasonreference": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

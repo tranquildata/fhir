@@ -28,26 +28,26 @@ func (fhirVal *Person) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "name":
-		return fhirVal.Name, true
-	case "birthdate":
-		return fhirVal.BirthDate, true
-	case "address":
-		return fhirVal.Address, true
-	case "photo":
-		return fhirVal.Photo, true
-	case "managingorganization":
-		return fhirVal.ManagingOrganization, true
 	case "active":
 		return fhirVal.Active, true
 	case "link":
 		return fhirVal.Link, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
 	case "telecom":
 		return fhirVal.Telecom, true
+	case "birthdate":
+		return fhirVal.BirthDate, true
+	case "photo":
+		return fhirVal.Photo, true
+	case "managingorganization":
+		return fhirVal.ManagingOrganization, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "gender":
 		return fhirVal.Gender, true
+	case "address":
+		return fhirVal.Address, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *Person) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"name": &FieldTypeSupport{"HumanName", true, false},
-		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"address": &FieldTypeSupport{"Address", true, false},
-		"photo": &FieldTypeSupport{"Attachment", false, true},
-		"managingorganization": &FieldTypeSupport{"Reference", false, true},
 		"active": &FieldTypeSupport{"bool", false, true},
 		"link": &FieldTypeSupport{"PersonLinkComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"name": &FieldTypeSupport{"HumanName", true, false},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
+		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"photo": &FieldTypeSupport{"Attachment", false, true},
+		"managingorganization": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"gender": &FieldTypeSupport{"string", false, false},
+		"address": &FieldTypeSupport{"Address", true, false},
 
 	}
 }

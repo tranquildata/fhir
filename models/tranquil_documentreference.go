@@ -28,40 +28,40 @@ func (fhirVal *DocumentReference) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "custodian":
-		return fhirVal.Custodian, true
-	case "created":
-		return fhirVal.Created, true
-	case "authenticator":
-		return fhirVal.Authenticator, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "relatesto":
-		return fhirVal.RelatesTo, true
-	case "description":
-		return fhirVal.Description, true
-	case "securitylabel":
-		return fhirVal.SecurityLabel, true
-	case "content":
-		return fhirVal.Content, true
-	case "masteridentifier":
-		return fhirVal.MasterIdentifier, true
-	case "class":
-		return fhirVal.Class, true
-	case "docstatus":
-		return fhirVal.DocStatus, true
-	case "type":
-		return fhirVal.Type, true
-	case "indexed":
-		return fhirVal.Indexed, true
-	case "author":
-		return fhirVal.Author, true
-	case "context":
-		return fhirVal.Context, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "status":
 		return fhirVal.Status, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "created":
+		return fhirVal.Created, true
+	case "indexed":
+		return fhirVal.Indexed, true
+	case "authenticator":
+		return fhirVal.Authenticator, true
+	case "custodian":
+		return fhirVal.Custodian, true
+	case "securitylabel":
+		return fhirVal.SecurityLabel, true
+	case "masteridentifier":
+		return fhirVal.MasterIdentifier, true
+	case "relatesto":
+		return fhirVal.RelatesTo, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "type":
+		return fhirVal.Type, true
+	case "class":
+		return fhirVal.Class, true
+	case "author":
+		return fhirVal.Author, true
+	case "description":
+		return fhirVal.Description, true
+	case "context":
+		return fhirVal.Context, true
+	case "docstatus":
+		return fhirVal.DocStatus, true
+	case "content":
+		return fhirVal.Content, true
 
 	default:
 		return nil, false
@@ -81,23 +81,23 @@ func (fhirVal *DocumentReference) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"custodian": &FieldTypeSupport{"Reference", false, true},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"authenticator": &FieldTypeSupport{"Reference", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"relatesto": &FieldTypeSupport{"DocumentReferenceRelatesToComponent", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"securitylabel": &FieldTypeSupport{"CodeableConcept", true, false},
-		"content": &FieldTypeSupport{"DocumentReferenceContentComponent", true, false},
-		"masteridentifier": &FieldTypeSupport{"Identifier", false, true},
-		"class": &FieldTypeSupport{"CodeableConcept", false, true},
-		"docstatus": &FieldTypeSupport{"string", false, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"indexed": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"author": &FieldTypeSupport{"Reference", true, false},
-		"context": &FieldTypeSupport{"DocumentReferenceContextComponent", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"indexed": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"authenticator": &FieldTypeSupport{"Reference", false, true},
+		"custodian": &FieldTypeSupport{"Reference", false, true},
+		"securitylabel": &FieldTypeSupport{"CodeableConcept", true, false},
+		"masteridentifier": &FieldTypeSupport{"Identifier", false, true},
+		"relatesto": &FieldTypeSupport{"DocumentReferenceRelatesToComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"class": &FieldTypeSupport{"CodeableConcept", false, true},
+		"author": &FieldTypeSupport{"Reference", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"context": &FieldTypeSupport{"DocumentReferenceContextComponent", false, true},
+		"docstatus": &FieldTypeSupport{"string", false, false},
+		"content": &FieldTypeSupport{"DocumentReferenceContentComponent", true, false},
 
 	}
 }
