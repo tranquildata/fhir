@@ -49,7 +49,7 @@ type ExplanationOfBenefit struct {
 	Facility             *Reference                                           `bson:"facility,omitempty" json:"facility,omitempty"`
 	Claim                *Reference                                           `bson:"claim,omitempty" json:"claim,omitempty"`
 	ClaimResponse        *Reference                                           `bson:"claimResponse,omitempty" json:"claimResponse,omitempty"`
-	Outcome              *CodeableConcept                                     `bson:"outcome,omitempty" json:"outcome,omitempty"`
+	Outcome              string                                               `bson:"outcome,omitempty" json:"outcome,omitempty"` /*actually a code*/
 	Disposition          string                                               `bson:"disposition,omitempty" json:"disposition,omitempty"`
 	Related              []ExplanationOfBenefitRelatedClaimComponent          `bson:"related,omitempty" json:"related,omitempty"`
 	Prescription         *Reference                                           `bson:"prescription,omitempty" json:"prescription,omitempty"`
@@ -60,7 +60,7 @@ type ExplanationOfBenefit struct {
 	Diagnosis            []ExplanationOfBenefitDiagnosisComponent             `bson:"diagnosis,omitempty" json:"diagnosis,omitempty"`
 	Procedure            []ExplanationOfBenefitProcedureComponent             `bson:"procedure,omitempty" json:"procedure,omitempty"`
 	Precedence           *uint32                                              `bson:"precedence,omitempty" json:"precedence,omitempty"`
-	Insurance            *ExplanationOfBenefitInsuranceComponent              `bson:"insurance,omitempty" json:"insurance,omitempty"`
+	Insurance            []ExplanationOfBenefitInsuranceComponent             `bson:"insurance,omitempty" json:"insurance,omitempty"`
 	Accident             *ExplanationOfBenefitAccidentComponent               `bson:"accident,omitempty" json:"accident,omitempty"`
 	EmploymentImpacted   *Period                                              `bson:"employmentImpacted,omitempty" json:"employmentImpacted,omitempty"`
 	Hospitalization      *Period                                              `bson:"hospitalization,omitempty" json:"hospitalization,omitempty"`
@@ -176,6 +176,7 @@ type ExplanationOfBenefitProcedureComponent struct {
 
 type ExplanationOfBenefitInsuranceComponent struct {
 	BackboneElement `bson:",inline"`
+	Focal           bool       `json:"focal, omitempty"`
 	Coverage        *Reference `bson:"coverage,omitempty" json:"coverage,omitempty"`
 	PreAuthRef      []string   `bson:"preAuthRef,omitempty" json:"preAuthRef,omitempty"`
 }

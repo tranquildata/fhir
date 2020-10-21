@@ -35,8 +35,8 @@ import (
 type Condition struct {
 	DomainResource     `bson:",inline"`
 	Identifier         []Identifier                 `bson:"identifier,omitempty" json:"identifier,omitempty"`
-	ClinicalStatus     string                       `bson:"clinicalStatus,omitempty" json:"clinicalStatus,omitempty"`
-	VerificationStatus string                       `bson:"verificationStatus,omitempty" json:"verificationStatus,omitempty"`
+	ClinicalStatus     *CodeableConcept             `bson:"clinicalStatus,omitempty" json:"clinicalStatus,omitempty"`
+	VerificationStatus *CodeableConcept             `bson:"verificationStatus,omitempty" json:"verificationStatus,omitempty"`
 	Category           []CodeableConcept            `bson:"category,omitempty" json:"category,omitempty"`
 	Severity           *CodeableConcept             `bson:"severity,omitempty" json:"severity,omitempty"`
 	Code               *CodeableConcept             `bson:"code,omitempty" json:"code,omitempty"`

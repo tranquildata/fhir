@@ -32,11 +32,12 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
 	"gopkg.in/mgo.v2/bson"
 )
 
 type Bundle struct {
-	Resource   `bson:",inline"`
+	Resource   `bson:",inline" json:",inline"`
 	Identifier *Identifier            `bson:"identifier,omitempty" json:"identifier,omitempty"`
 	Type       string                 `bson:"type,omitempty" json:"type,omitempty"`
 	Total      *uint32                `bson:"total,omitempty" json:"total,omitempty"`
