@@ -30,6 +30,8 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.8 // indirect
 	github.com/mitre/heart v0.0.0-20160825192324-0c46b433a490
+	//github.com/opencensus-integrations/gomongowrapper v0.0.0
+	//github.com/opencensus-integrations/gomongowrapper v0.0.0-00010101000000-000000000000
 	github.com/pebbe/util v0.0.0-20140716220158-e0e04dfe647c
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.3.0

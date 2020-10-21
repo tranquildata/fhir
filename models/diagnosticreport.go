@@ -37,7 +37,7 @@ type DiagnosticReport struct {
 	Identifier        []Identifier                         `bson:"identifier,omitempty" json:"identifier,omitempty"`
 	BasedOn           []Reference                          `bson:"basedOn,omitempty" json:"basedOn,omitempty"`
 	Status            string                               `bson:"status,omitempty" json:"status,omitempty"`
-	Category          *CodeableConcept                     `bson:"category,omitempty" json:"category,omitempty"`
+	Category          []CodeableConcept                    `bson:"category,omitempty" json:"category,omitempty"`
 	Code              *CodeableConcept                     `bson:"code,omitempty" json:"code,omitempty"`
 	Subject           *Reference                           `bson:"subject,omitempty" json:"subject,omitempty"`
 	Context           *Reference                           `bson:"context,omitempty" json:"context,omitempty"`

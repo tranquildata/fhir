@@ -120,6 +120,6 @@ type ImagingStudySeriesInstanceComponent struct {
 	BackboneElement `bson:",inline"`
 	Uid             string  `bson:"uid,omitempty" json:"uid,omitempty"`
 	Number          *uint32 `bson:"number,omitempty" json:"number,omitempty"`
-	SopClass        string  `bson:"sopClass,omitempty" json:"sopClass,omitempty"`
+	SopClass        *Coding `bson:"sopClass,omitempty" json:"sopClass,omitempty"`
 	Title           string  `bson:"title,omitempty" json:"title,omitempty"`
 }
