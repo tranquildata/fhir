@@ -4,8 +4,9 @@ package models
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"reflect"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 func GetResourceID(resource interface{}) (id string, ok bool) {
@@ -975,7 +976,7 @@ func MapToResource(resourceMap interface{}, asPointer bool) (interface{}, error)
 // bson.M map to a specific resource type.
 func BSONMapToResource(bsonMap bson.M, asPointer bool) (interface{}, error) {
 	data, _ := bson.Marshal(bsonMap)
-	raw := bson.Raw{ Kind: 3, Data: data}
+	raw := bson.Raw{Kind: 3, Data: data}
 	t := bsonMap["resourceType"]
 	switch t {
 	case "Account":

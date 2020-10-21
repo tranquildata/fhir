@@ -28,48 +28,48 @@ func (fhirVal *Immunization) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "status":
-		return fhirVal.Status, true
-	case "reportorigin":
-		return fhirVal.ReportOrigin, true
-	case "dosequantity":
-		return fhirVal.DoseQuantity, true
-	case "explanation":
-		return fhirVal.Explanation, true
-	case "reaction":
-		return fhirVal.Reaction, true
 	case "vaccinecode":
 		return fhirVal.VaccineCode, true
 	case "date":
 		return fhirVal.Date, true
 	case "primarysource":
 		return fhirVal.PrimarySource, true
-	case "location":
-		return fhirVal.Location, true
-	case "route":
-		return fhirVal.Route, true
-	case "note":
-		return fhirVal.Note, true
-	case "vaccinationprotocol":
-		return fhirVal.VaccinationProtocol, true
-	case "notgiven":
-		return fhirVal.NotGiven, true
-	case "lotnumber":
-		return fhirVal.LotNumber, true
-	case "expirationdate":
-		return fhirVal.ExpirationDate, true
-	case "site":
-		return fhirVal.Site, true
+	case "dosequantity":
+		return fhirVal.DoseQuantity, true
 	case "practitioner":
 		return fhirVal.Practitioner, true
+	case "explanation":
+		return fhirVal.Explanation, true
+	case "notgiven":
+		return fhirVal.NotGiven, true
+	case "manufacturer":
+		return fhirVal.Manufacturer, true
+	case "lotnumber":
+		return fhirVal.LotNumber, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "patient":
 		return fhirVal.Patient, true
 	case "encounter":
 		return fhirVal.Encounter, true
-	case "manufacturer":
-		return fhirVal.Manufacturer, true
+	case "reportorigin":
+		return fhirVal.ReportOrigin, true
+	case "expirationdate":
+		return fhirVal.ExpirationDate, true
+	case "site":
+		return fhirVal.Site, true
+	case "route":
+		return fhirVal.Route, true
+	case "reaction":
+		return fhirVal.Reaction, true
+	case "vaccinationprotocol":
+		return fhirVal.VaccinationProtocol, true
+	case "status":
+		return fhirVal.Status, true
+	case "location":
+		return fhirVal.Location, true
 
 	default:
 		return nil, false
@@ -89,27 +89,27 @@ func (fhirVal *Immunization) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"reportorigin": &FieldTypeSupport{"CodeableConcept", false, true},
-		"dosequantity": &FieldTypeSupport{"Quantity", false, true},
-		"explanation": &FieldTypeSupport{"ImmunizationExplanationComponent", false, true},
-		"reaction": &FieldTypeSupport{"ImmunizationReactionComponent", true, false},
 		"vaccinecode": &FieldTypeSupport{"CodeableConcept", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"primarysource": &FieldTypeSupport{"bool", false, true},
-		"location": &FieldTypeSupport{"Reference", false, true},
-		"route": &FieldTypeSupport{"CodeableConcept", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"vaccinationprotocol": &FieldTypeSupport{"ImmunizationVaccinationProtocolComponent", true, false},
-		"notgiven": &FieldTypeSupport{"bool", false, true},
-		"lotnumber": &FieldTypeSupport{"string", false, false},
-		"expirationdate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"site": &FieldTypeSupport{"CodeableConcept", false, true},
+		"dosequantity": &FieldTypeSupport{"Quantity", false, true},
 		"practitioner": &FieldTypeSupport{"ImmunizationPractitionerComponent", true, false},
+		"explanation": &FieldTypeSupport{"ImmunizationExplanationComponent", false, true},
+		"notgiven": &FieldTypeSupport{"bool", false, true},
+		"manufacturer": &FieldTypeSupport{"Reference", false, true},
+		"lotnumber": &FieldTypeSupport{"string", false, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"patient": &FieldTypeSupport{"Reference", false, true},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
-		"manufacturer": &FieldTypeSupport{"Reference", false, true},
+		"reportorigin": &FieldTypeSupport{"CodeableConcept", false, true},
+		"expirationdate": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"site": &FieldTypeSupport{"CodeableConcept", false, true},
+		"route": &FieldTypeSupport{"CodeableConcept", false, true},
+		"reaction": &FieldTypeSupport{"ImmunizationReactionComponent", true, false},
+		"vaccinationprotocol": &FieldTypeSupport{"ImmunizationVaccinationProtocolComponent", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"location": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

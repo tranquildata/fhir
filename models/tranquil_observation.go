@@ -30,68 +30,68 @@ func (fhirVal *Observation) FieldByLowerName(nameLower string) (interface{}, boo
 		return fhirVal.ModifierExtension, true
 	case "effectivedatetime":
 		return fhirVal.EffectiveDateTime, true
-	case "valuerange":
-		return fhirVal.ValueRange, true
-	case "valueattachment":
-		return fhirVal.ValueAttachment, true
-	case "comment":
-		return fhirVal.Comment, true
-	case "code":
-		return fhirVal.Code, true
-	case "performer":
-		return fhirVal.Performer, true
-	case "dataabsentreason":
-		return fhirVal.DataAbsentReason, true
-	case "valueratio":
-		return fhirVal.ValueRatio, true
-	case "method":
-		return fhirVal.Method, true
-	case "referencerange":
-		return fhirVal.ReferenceRange, true
-	case "component":
-		return fhirVal.Component, true
-	case "context":
-		return fhirVal.Context, true
+	case "valuestring":
+		return fhirVal.ValueString, true
 	case "valueboolean":
 		return fhirVal.ValueBoolean, true
-	case "valuesampleddata":
-		return fhirVal.ValueSampledData, true
-	case "valuetime":
-		return fhirVal.ValueTime, true
-	case "interpretation":
-		return fhirVal.Interpretation, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "issued":
-		return fhirVal.Issued, true
+	case "valuerange":
+		return fhirVal.ValueRange, true
 	case "valuedatetime":
 		return fhirVal.ValueDateTime, true
+	case "issued":
+		return fhirVal.Issued, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "performer":
+		return fhirVal.Performer, true
+	case "valueratio":
+		return fhirVal.ValueRatio, true
+	case "valueattachment":
+		return fhirVal.ValueAttachment, true
 	case "valueperiod":
 		return fhirVal.ValuePeriod, true
 	case "device":
 		return fhirVal.Device, true
-	case "category":
-		return fhirVal.Category, true
-	case "effectiveperiod":
-		return fhirVal.EffectivePeriod, true
-	case "valuequantity":
-		return fhirVal.ValueQuantity, true
-	case "bodysite":
-		return fhirVal.BodySite, true
-	case "related":
-		return fhirVal.Related, true
-	case "status":
-		return fhirVal.Status, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "basedon":
 		return fhirVal.BasedOn, true
+	case "status":
+		return fhirVal.Status, true
+	case "category":
+		return fhirVal.Category, true
+	case "context":
+		return fhirVal.Context, true
+	case "effectiveperiod":
+		return fhirVal.EffectivePeriod, true
 	case "valuecodeableconcept":
 		return fhirVal.ValueCodeableConcept, true
-	case "valuestring":
-		return fhirVal.ValueString, true
+	case "dataabsentreason":
+		return fhirVal.DataAbsentReason, true
+	case "comment":
+		return fhirVal.Comment, true
 	case "specimen":
 		return fhirVal.Specimen, true
+	case "valuesampleddata":
+		return fhirVal.ValueSampledData, true
+	case "component":
+		return fhirVal.Component, true
+	case "interpretation":
+		return fhirVal.Interpretation, true
+	case "referencerange":
+		return fhirVal.ReferenceRange, true
+	case "related":
+		return fhirVal.Related, true
+	case "code":
+		return fhirVal.Code, true
+	case "valuequantity":
+		return fhirVal.ValueQuantity, true
+	case "valuetime":
+		return fhirVal.ValueTime, true
+	case "bodysite":
+		return fhirVal.BodySite, true
+	case "method":
+		return fhirVal.Method, true
 
 	default:
 		return nil, false
@@ -112,37 +112,37 @@ func (fhirVal *Observation) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"valuerange": &FieldTypeSupport{"Range", false, true},
-		"valueattachment": &FieldTypeSupport{"Attachment", false, true},
-		"comment": &FieldTypeSupport{"string", false, false},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"performer": &FieldTypeSupport{"Reference", true, false},
-		"dataabsentreason": &FieldTypeSupport{"CodeableConcept", false, true},
-		"valueratio": &FieldTypeSupport{"Ratio", false, true},
-		"method": &FieldTypeSupport{"CodeableConcept", false, true},
-		"referencerange": &FieldTypeSupport{"ObservationReferenceRangeComponent", true, false},
-		"component": &FieldTypeSupport{"ObservationComponentComponent", true, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
+		"valuestring": &FieldTypeSupport{"string", false, false},
 		"valueboolean": &FieldTypeSupport{"bool", false, true},
-		"valuesampleddata": &FieldTypeSupport{"SampledData", false, true},
-		"valuetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"interpretation": &FieldTypeSupport{"CodeableConcept", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"valuerange": &FieldTypeSupport{"Range", false, true},
 		"valuedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"performer": &FieldTypeSupport{"Reference", true, false},
+		"valueratio": &FieldTypeSupport{"Ratio", false, true},
+		"valueattachment": &FieldTypeSupport{"Attachment", false, true},
 		"valueperiod": &FieldTypeSupport{"Period", false, true},
 		"device": &FieldTypeSupport{"Reference", false, true},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
-		"valuequantity": &FieldTypeSupport{"Quantity", false, true},
-		"bodysite": &FieldTypeSupport{"CodeableConcept", false, true},
-		"related": &FieldTypeSupport{"ObservationRelatedComponent", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
 		"valuecodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"valuestring": &FieldTypeSupport{"string", false, false},
+		"dataabsentreason": &FieldTypeSupport{"CodeableConcept", false, true},
+		"comment": &FieldTypeSupport{"string", false, false},
 		"specimen": &FieldTypeSupport{"Reference", false, true},
+		"valuesampleddata": &FieldTypeSupport{"SampledData", false, true},
+		"component": &FieldTypeSupport{"ObservationComponentComponent", true, false},
+		"interpretation": &FieldTypeSupport{"CodeableConcept", false, true},
+		"referencerange": &FieldTypeSupport{"ObservationReferenceRangeComponent", true, false},
+		"related": &FieldTypeSupport{"ObservationRelatedComponent", true, false},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"valuequantity": &FieldTypeSupport{"Quantity", false, true},
+		"valuetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"bodysite": &FieldTypeSupport{"CodeableConcept", false, true},
+		"method": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

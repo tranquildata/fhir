@@ -28,14 +28,6 @@ func (fhirVal *Flag) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "author":
-		return fhirVal.Author, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "status":
-		return fhirVal.Status, true
-	case "category":
-		return fhirVal.Category, true
 	case "code":
 		return fhirVal.Code, true
 	case "subject":
@@ -44,6 +36,14 @@ func (fhirVal *Flag) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Period, true
 	case "encounter":
 		return fhirVal.Encounter, true
+	case "author":
+		return fhirVal.Author, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "category":
+		return fhirVal.Category, true
 
 	default:
 		return nil, false
@@ -63,14 +63,14 @@ func (fhirVal *Flag) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"author": &FieldTypeSupport{"Reference", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", false, true},
 		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subject": &FieldTypeSupport{"Reference", false, true},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
+		"author": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"category": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

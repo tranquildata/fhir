@@ -28,38 +28,38 @@ func (fhirVal *Coverage) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "sequence":
-		return fhirVal.Sequence, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "type":
-		return fhirVal.Type, true
-	case "beneficiary":
-		return fhirVal.Beneficiary, true
 	case "contract":
 		return fhirVal.Contract, true
-	case "relationship":
-		return fhirVal.Relationship, true
-	case "dependent":
-		return fhirVal.Dependent, true
-	case "payor":
-		return fhirVal.Payor, true
-	case "grouping":
-		return fhirVal.Grouping, true
-	case "order":
-		return fhirVal.Order, true
-	case "status":
-		return fhirVal.Status, true
-	case "policyholder":
-		return fhirVal.PolicyHolder, true
 	case "subscriber":
 		return fhirVal.Subscriber, true
+	case "sequence":
+		return fhirVal.Sequence, true
+	case "beneficiary":
+		return fhirVal.Beneficiary, true
+	case "relationship":
+		return fhirVal.Relationship, true
+	case "payor":
+		return fhirVal.Payor, true
+	case "order":
+		return fhirVal.Order, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
 	case "subscriberid":
 		return fhirVal.SubscriberId, true
-	case "period":
-		return fhirVal.Period, true
+	case "type":
+		return fhirVal.Type, true
+	case "policyholder":
+		return fhirVal.PolicyHolder, true
+	case "dependent":
+		return fhirVal.Dependent, true
 	case "network":
 		return fhirVal.Network, true
+	case "period":
+		return fhirVal.Period, true
+	case "grouping":
+		return fhirVal.Grouping, true
 
 	default:
 		return nil, false
@@ -79,22 +79,22 @@ func (fhirVal *Coverage) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"sequence": &FieldTypeSupport{"string", false, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"beneficiary": &FieldTypeSupport{"Reference", false, true},
 		"contract": &FieldTypeSupport{"Reference", true, false},
-		"relationship": &FieldTypeSupport{"CodeableConcept", false, true},
-		"dependent": &FieldTypeSupport{"string", false, false},
-		"payor": &FieldTypeSupport{"Reference", true, false},
-		"grouping": &FieldTypeSupport{"CoverageGroupComponent", false, true},
-		"order": &FieldTypeSupport{"uint32", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"policyholder": &FieldTypeSupport{"Reference", false, true},
 		"subscriber": &FieldTypeSupport{"Reference", false, true},
+		"sequence": &FieldTypeSupport{"string", false, false},
+		"beneficiary": &FieldTypeSupport{"Reference", false, true},
+		"relationship": &FieldTypeSupport{"CodeableConcept", false, true},
+		"payor": &FieldTypeSupport{"Reference", true, false},
+		"order": &FieldTypeSupport{"uint32", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"subscriberid": &FieldTypeSupport{"string", false, false},
-		"period": &FieldTypeSupport{"Period", false, true},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"policyholder": &FieldTypeSupport{"Reference", false, true},
+		"dependent": &FieldTypeSupport{"string", false, false},
 		"network": &FieldTypeSupport{"string", false, false},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"grouping": &FieldTypeSupport{"CoverageGroupComponent", false, true},
 
 	}
 }

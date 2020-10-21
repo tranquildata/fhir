@@ -28,36 +28,36 @@ func (fhirVal *ProcessRequest) FieldByLowerName(nameLower string) (interface{}, 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "response":
-		return fhirVal.Response, true
-	case "nullify":
-		return fhirVal.Nullify, true
-	case "status":
-		return fhirVal.Status, true
-	case "request":
-		return fhirVal.Request, true
+	case "target":
+		return fhirVal.Target, true
 	case "item":
 		return fhirVal.Item, true
-	case "include":
-		return fhirVal.Include, true
 	case "exclude":
 		return fhirVal.Exclude, true
 	case "period":
 		return fhirVal.Period, true
+	case "request":
+		return fhirVal.Request, true
+	case "status":
+		return fhirVal.Status, true
+	case "organization":
+		return fhirVal.Organization, true
+	case "nullify":
+		return fhirVal.Nullify, true
+	case "reference":
+		return fhirVal.Reference, true
+	case "include":
+		return fhirVal.Include, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "action":
 		return fhirVal.Action, true
-	case "target":
-		return fhirVal.Target, true
-	case "organization":
-		return fhirVal.Organization, true
-	case "reference":
-		return fhirVal.Reference, true
 	case "created":
 		return fhirVal.Created, true
 	case "provider":
 		return fhirVal.Provider, true
+	case "response":
+		return fhirVal.Response, true
 
 	default:
 		return nil, false
@@ -77,21 +77,21 @@ func (fhirVal *ProcessRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"response": &FieldTypeSupport{"Reference", false, true},
-		"nullify": &FieldTypeSupport{"bool", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"request": &FieldTypeSupport{"Reference", false, true},
+		"target": &FieldTypeSupport{"Reference", false, true},
 		"item": &FieldTypeSupport{"ProcessRequestItemsComponent", true, false},
-		"include": &FieldTypeSupport{"string", true, false},
 		"exclude": &FieldTypeSupport{"string", true, false},
 		"period": &FieldTypeSupport{"Period", false, true},
+		"request": &FieldTypeSupport{"Reference", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"organization": &FieldTypeSupport{"Reference", false, true},
+		"nullify": &FieldTypeSupport{"bool", false, true},
+		"reference": &FieldTypeSupport{"string", false, false},
+		"include": &FieldTypeSupport{"string", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"action": &FieldTypeSupport{"string", false, false},
-		"target": &FieldTypeSupport{"Reference", false, true},
-		"organization": &FieldTypeSupport{"Reference", false, true},
-		"reference": &FieldTypeSupport{"string", false, false},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"provider": &FieldTypeSupport{"Reference", false, true},
+		"response": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

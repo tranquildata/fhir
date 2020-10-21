@@ -32,26 +32,26 @@ func (fhirVal *EpisodeOfCare) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Patient, true
 	case "period":
 		return fhirVal.Period, true
-	case "caremanager":
-		return fhirVal.CareManager, true
 	case "team":
 		return fhirVal.Team, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
 	case "statushistory":
 		return fhirVal.StatusHistory, true
+	case "type":
+		return fhirVal.Type, true
 	case "diagnosis":
 		return fhirVal.Diagnosis, true
 	case "managingorganization":
 		return fhirVal.ManagingOrganization, true
 	case "referralrequest":
 		return fhirVal.ReferralRequest, true
+	case "caremanager":
+		return fhirVal.CareManager, true
 	case "account":
 		return fhirVal.Account, true
-	case "status":
-		return fhirVal.Status, true
-	case "type":
-		return fhirVal.Type, true
 
 	default:
 		return nil, false
@@ -73,16 +73,16 @@ func (fhirVal *EpisodeOfCare) FieldsToTypes() map[string]*FieldTypeSupport {
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"patient": &FieldTypeSupport{"Reference", false, true},
 		"period": &FieldTypeSupport{"Period", false, true},
-		"caremanager": &FieldTypeSupport{"Reference", false, true},
 		"team": &FieldTypeSupport{"Reference", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"statushistory": &FieldTypeSupport{"EpisodeOfCareStatusHistoryComponent", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", true, false},
 		"diagnosis": &FieldTypeSupport{"EpisodeOfCareDiagnosisComponent", true, false},
 		"managingorganization": &FieldTypeSupport{"Reference", false, true},
 		"referralrequest": &FieldTypeSupport{"Reference", true, false},
+		"caremanager": &FieldTypeSupport{"Reference", false, true},
 		"account": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"type": &FieldTypeSupport{"CodeableConcept", true, false},
 
 	}
 }

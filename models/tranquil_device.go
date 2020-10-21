@@ -28,40 +28,40 @@ func (fhirVal *Device) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "type":
-		return fhirVal.Type, true
+	case "udi":
+		return fhirVal.Udi, true
+	case "lotnumber":
+		return fhirVal.LotNumber, true
 	case "manufacturedate":
 		return fhirVal.ManufactureDate, true
-	case "version":
-		return fhirVal.Version, true
+	case "location":
+		return fhirVal.Location, true
 	case "patient":
 		return fhirVal.Patient, true
-	case "safety":
-		return fhirVal.Safety, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "url":
-		return fhirVal.Url, true
+	case "status":
+		return fhirVal.Status, true
+	case "type":
+		return fhirVal.Type, true
 	case "expirationdate":
 		return fhirVal.ExpirationDate, true
 	case "model":
 		return fhirVal.Model, true
+	case "version":
+		return fhirVal.Version, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "url":
+		return fhirVal.Url, true
+	case "safety":
+		return fhirVal.Safety, true
 	case "manufacturer":
 		return fhirVal.Manufacturer, true
-	case "status":
-		return fhirVal.Status, true
-	case "lotnumber":
-		return fhirVal.LotNumber, true
 	case "owner":
 		return fhirVal.Owner, true
 	case "contact":
 		return fhirVal.Contact, true
-	case "location":
-		return fhirVal.Location, true
 	case "note":
 		return fhirVal.Note, true
-	case "udi":
-		return fhirVal.Udi, true
 
 	default:
 		return nil, false
@@ -81,23 +81,23 @@ func (fhirVal *Device) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"udi": &FieldTypeSupport{"DeviceUdiComponent", false, true},
+		"lotnumber": &FieldTypeSupport{"string", false, false},
 		"manufacturedate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"version": &FieldTypeSupport{"string", false, false},
+		"location": &FieldTypeSupport{"Reference", false, true},
 		"patient": &FieldTypeSupport{"Reference", false, true},
-		"safety": &FieldTypeSupport{"CodeableConcept", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"url": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
 		"expirationdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"model": &FieldTypeSupport{"string", false, false},
+		"version": &FieldTypeSupport{"string", false, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"url": &FieldTypeSupport{"string", false, false},
+		"safety": &FieldTypeSupport{"CodeableConcept", true, false},
 		"manufacturer": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"lotnumber": &FieldTypeSupport{"string", false, false},
 		"owner": &FieldTypeSupport{"Reference", false, true},
 		"contact": &FieldTypeSupport{"ContactPoint", true, false},
-		"location": &FieldTypeSupport{"Reference", false, true},
 		"note": &FieldTypeSupport{"Annotation", true, false},
-		"udi": &FieldTypeSupport{"DeviceUdiComponent", false, true},
 
 	}
 }

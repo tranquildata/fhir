@@ -28,36 +28,36 @@ func (fhirVal *Composition) FieldByLowerName(nameLower string) (interface{}, boo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "date":
-		return fhirVal.Date, true
-	case "title":
-		return fhirVal.Title, true
-	case "event":
-		return fhirVal.Event, true
-	case "section":
-		return fhirVal.Section, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "type":
-		return fhirVal.Type, true
-	case "class":
-		return fhirVal.Class, true
-	case "encounter":
-		return fhirVal.Encounter, true
-	case "custodian":
-		return fhirVal.Custodian, true
 	case "relatesto":
 		return fhirVal.RelatesTo, true
 	case "status":
 		return fhirVal.Status, true
 	case "author":
 		return fhirVal.Author, true
-	case "attester":
-		return fhirVal.Attester, true
 	case "confidentiality":
 		return fhirVal.Confidentiality, true
+	case "attester":
+		return fhirVal.Attester, true
+	case "custodian":
+		return fhirVal.Custodian, true
+	case "section":
+		return fhirVal.Section, true
+	case "class":
+		return fhirVal.Class, true
+	case "encounter":
+		return fhirVal.Encounter, true
+	case "date":
+		return fhirVal.Date, true
+	case "title":
+		return fhirVal.Title, true
+	case "event":
+		return fhirVal.Event, true
+	case "type":
+		return fhirVal.Type, true
+	case "subject":
+		return fhirVal.Subject, true
 
 	default:
 		return nil, false
@@ -77,21 +77,21 @@ func (fhirVal *Composition) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"title": &FieldTypeSupport{"string", false, false},
-		"event": &FieldTypeSupport{"CompositionEventComponent", true, false},
-		"section": &FieldTypeSupport{"CompositionSectionComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"class": &FieldTypeSupport{"CodeableConcept", false, true},
-		"encounter": &FieldTypeSupport{"Reference", false, true},
-		"custodian": &FieldTypeSupport{"Reference", false, true},
 		"relatesto": &FieldTypeSupport{"CompositionRelatesToComponent", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"author": &FieldTypeSupport{"Reference", true, false},
-		"attester": &FieldTypeSupport{"CompositionAttesterComponent", true, false},
 		"confidentiality": &FieldTypeSupport{"string", false, false},
+		"attester": &FieldTypeSupport{"CompositionAttesterComponent", true, false},
+		"custodian": &FieldTypeSupport{"Reference", false, true},
+		"section": &FieldTypeSupport{"CompositionSectionComponent", true, false},
+		"class": &FieldTypeSupport{"CodeableConcept", false, true},
+		"encounter": &FieldTypeSupport{"Reference", false, true},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"title": &FieldTypeSupport{"string", false, false},
+		"event": &FieldTypeSupport{"CompositionEventComponent", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

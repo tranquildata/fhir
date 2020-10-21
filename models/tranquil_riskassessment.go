@@ -28,42 +28,42 @@ func (fhirVal *RiskAssessment) FieldByLowerName(nameLower string) (interface{}, 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "status":
 		return fhirVal.Status, true
-	case "method":
-		return fhirVal.Method, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "occurrenceperiod":
-		return fhirVal.OccurrencePeriod, true
-	case "reasoncodeableconcept":
-		return fhirVal.ReasonCodeableConcept, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "code":
-		return fhirVal.Code, true
 	case "occurrencedatetime":
 		return fhirVal.OccurrenceDateTime, true
-	case "mitigation":
-		return fhirVal.Mitigation, true
-	case "parent":
-		return fhirVal.Parent, true
-	case "context":
-		return fhirVal.Context, true
-	case "condition":
-		return fhirVal.Condition, true
-	case "performer":
-		return fhirVal.Performer, true
 	case "reasonreference":
 		return fhirVal.ReasonReference, true
-	case "basis":
-		return fhirVal.Basis, true
-	case "prediction":
-		return fhirVal.Prediction, true
+	case "mitigation":
+		return fhirVal.Mitigation, true
 	case "comment":
 		return fhirVal.Comment, true
+	case "code":
+		return fhirVal.Code, true
+	case "method":
+		return fhirVal.Method, true
+	case "context":
+		return fhirVal.Context, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
+	case "performer":
+		return fhirVal.Performer, true
+	case "reasoncodeableconcept":
+		return fhirVal.ReasonCodeableConcept, true
+	case "prediction":
+		return fhirVal.Prediction, true
+	case "parent":
+		return fhirVal.Parent, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "condition":
+		return fhirVal.Condition, true
+	case "basis":
+		return fhirVal.Basis, true
+	case "identifier":
+		return fhirVal.Identifier, true
 
 	default:
 		return nil, false
@@ -83,24 +83,24 @@ func (fhirVal *RiskAssessment) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
-		"method": &FieldTypeSupport{"CodeableConcept", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"basedon": &FieldTypeSupport{"Reference", false, true},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"mitigation": &FieldTypeSupport{"string", false, false},
-		"parent": &FieldTypeSupport{"Reference", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"condition": &FieldTypeSupport{"Reference", false, true},
-		"performer": &FieldTypeSupport{"Reference", false, true},
 		"reasonreference": &FieldTypeSupport{"Reference", false, true},
-		"basis": &FieldTypeSupport{"Reference", true, false},
-		"prediction": &FieldTypeSupport{"RiskAssessmentPredictionComponent", true, false},
+		"mitigation": &FieldTypeSupport{"string", false, false},
 		"comment": &FieldTypeSupport{"string", false, false},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"method": &FieldTypeSupport{"CodeableConcept", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"performer": &FieldTypeSupport{"Reference", false, true},
+		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"prediction": &FieldTypeSupport{"RiskAssessmentPredictionComponent", true, false},
+		"parent": &FieldTypeSupport{"Reference", false, true},
+		"basedon": &FieldTypeSupport{"Reference", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"condition": &FieldTypeSupport{"Reference", false, true},
+		"basis": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
 
 	}
 }

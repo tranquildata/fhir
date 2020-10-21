@@ -28,30 +28,30 @@ func (fhirVal *DocumentManifest) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "status":
-		return fhirVal.Status, true
-	case "subject":
-		return fhirVal.Subject, true
+	case "type":
+		return fhirVal.Type, true
 	case "created":
 		return fhirVal.Created, true
+	case "author":
+		return fhirVal.Author, true
+	case "source":
+		return fhirVal.Source, true
 	case "description":
 		return fhirVal.Description, true
-	case "related":
-		return fhirVal.Related, true
 	case "masteridentifier":
 		return fhirVal.MasterIdentifier, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "type":
-		return fhirVal.Type, true
-	case "author":
-		return fhirVal.Author, true
+	case "status":
+		return fhirVal.Status, true
+	case "subject":
+		return fhirVal.Subject, true
 	case "recipient":
 		return fhirVal.Recipient, true
-	case "source":
-		return fhirVal.Source, true
 	case "content":
 		return fhirVal.Content, true
+	case "related":
+		return fhirVal.Related, true
 
 	default:
 		return nil, false
@@ -71,18 +71,18 @@ func (fhirVal *DocumentManifest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"status": &FieldTypeSupport{"string", false, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"author": &FieldTypeSupport{"Reference", true, false},
+		"source": &FieldTypeSupport{"string", false, false},
 		"description": &FieldTypeSupport{"string", false, false},
-		"related": &FieldTypeSupport{"DocumentManifestRelatedComponent", true, false},
 		"masteridentifier": &FieldTypeSupport{"Identifier", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"author": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 		"recipient": &FieldTypeSupport{"Reference", true, false},
-		"source": &FieldTypeSupport{"string", false, false},
 		"content": &FieldTypeSupport{"DocumentManifestContentComponent", true, false},
+		"related": &FieldTypeSupport{"DocumentManifestRelatedComponent", true, false},
 
 	}
 }

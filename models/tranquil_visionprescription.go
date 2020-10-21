@@ -28,24 +28,24 @@ func (fhirVal *VisionPrescription) FieldByLowerName(nameLower string) (interface
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "prescriber":
+		return fhirVal.Prescriber, true
+	case "reasoncodeableconcept":
+		return fhirVal.ReasonCodeableConcept, true
+	case "dispense":
+		return fhirVal.Dispense, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
 	case "patient":
 		return fhirVal.Patient, true
 	case "encounter":
 		return fhirVal.Encounter, true
 	case "datewritten":
 		return fhirVal.DateWritten, true
-	case "status":
-		return fhirVal.Status, true
-	case "prescriber":
-		return fhirVal.Prescriber, true
-	case "reasoncodeableconcept":
-		return fhirVal.ReasonCodeableConcept, true
-	case "reasonreference":
-		return fhirVal.ReasonReference, true
-	case "dispense":
-		return fhirVal.Dispense, true
 
 	default:
 		return nil, false
@@ -65,15 +65,15 @@ func (fhirVal *VisionPrescription) FieldsToTypes() map[string]*FieldTypeSupport 
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"prescriber": &FieldTypeSupport{"Reference", false, true},
+		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"dispense": &FieldTypeSupport{"VisionPrescriptionDispenseComponent", true, false},
+		"reasonreference": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"patient": &FieldTypeSupport{"Reference", false, true},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
 		"datewritten": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"prescriber": &FieldTypeSupport{"Reference", false, true},
-		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"reasonreference": &FieldTypeSupport{"Reference", false, true},
-		"dispense": &FieldTypeSupport{"VisionPrescriptionDispenseComponent", true, false},
 
 	}
 }

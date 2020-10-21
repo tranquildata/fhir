@@ -26,6 +26,12 @@ func (fhirVal *%s) TupleName() (id string, resourceType string) {
 }
 `
 
+const TupleNameResource = `
+func (fhirVal *%s) TupleName() (id string, resourceType string) {
+	return fhirVal.Resource.Id, fhirVal.Resource.ResourceType
+}
+`
+
 //Need to format with the actual struct type name
 const FieldToTypesPreamble = `
 func (fhirVal *%s) FieldsToTypes() map[string]*FieldTypeSupport {
@@ -243,11 +249,17 @@ func EmitTupleNameDomainResource(fhirType *fhirStruct) string {
 	return fmt.Sprintf(TupleNameDomainResource, fhirType.name)
 }
 
+func EmitTupleNameResource(fhirType *fhirStruct) string {
+	return fmt.Sprintf(TupleNameResource, fhirType.name)
+}
+
 func EmitTupleName(fhirType *fhirStruct) (string, error) {
 	for _, includedStruct := range fhirType.includedStructs {
 		switch strings.ToLower(includedStruct) {
 		case "domainresource":
 			return EmitTupleNameDomainResource(fhirType), nil
+		case "resource":
+			return EmitTupleNameResource(fhirType), nil
 		}
 	}
 	return "", fmt.Errorf("No tuple name function found: %s", fhirType.name)

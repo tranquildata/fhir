@@ -36,18 +36,18 @@ func (fhirVal *MeasureReport) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Measure, true
 	case "patient":
 		return fhirVal.Patient, true
-	case "reportingorganization":
-		return fhirVal.ReportingOrganization, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "period":
-		return fhirVal.Period, true
-	case "group":
-		return fhirVal.Group, true
-	case "evaluatedresources":
-		return fhirVal.EvaluatedResources, true
 	case "date":
 		return fhirVal.Date, true
+	case "reportingorganization":
+		return fhirVal.ReportingOrganization, true
+	case "period":
+		return fhirVal.Period, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "evaluatedresources":
+		return fhirVal.EvaluatedResources, true
+	case "group":
+		return fhirVal.Group, true
 
 	default:
 		return nil, false
@@ -71,12 +71,12 @@ func (fhirVal *MeasureReport) FieldsToTypes() map[string]*FieldTypeSupport {
 		"type": &FieldTypeSupport{"string", false, false},
 		"measure": &FieldTypeSupport{"Reference", false, true},
 		"patient": &FieldTypeSupport{"Reference", false, true},
-		"reportingorganization": &FieldTypeSupport{"Reference", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"period": &FieldTypeSupport{"Period", false, true},
-		"group": &FieldTypeSupport{"MeasureReportGroupComponent", true, false},
-		"evaluatedresources": &FieldTypeSupport{"Reference", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"reportingorganization": &FieldTypeSupport{"Reference", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"evaluatedresources": &FieldTypeSupport{"Reference", false, true},
+		"group": &FieldTypeSupport{"MeasureReportGroupComponent", true, false},
 
 	}
 }

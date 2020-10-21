@@ -28,46 +28,46 @@ func (fhirVal *Consent) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "consentingparty":
-		return fhirVal.ConsentingParty, true
 	case "action":
 		return fhirVal.Action, true
 	case "sourcereference":
 		return fhirVal.SourceReference, true
-	case "category":
-		return fhirVal.Category, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "actor":
-		return fhirVal.Actor, true
-	case "organization":
-		return fhirVal.Organization, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "period":
-		return fhirVal.Period, true
-	case "sourceidentifier":
-		return fhirVal.SourceIdentifier, true
-	case "policy":
-		return fhirVal.Policy, true
 	case "policyrule":
 		return fhirVal.PolicyRule, true
-	case "securitylabel":
-		return fhirVal.SecurityLabel, true
-	case "purpose":
-		return fhirVal.Purpose, true
-	case "data":
-		return fhirVal.Data, true
-	case "status":
-		return fhirVal.Status, true
-	case "sourceattachment":
-		return fhirVal.SourceAttachment, true
 	case "except":
 		return fhirVal.Except, true
+	case "status":
+		return fhirVal.Status, true
 	case "datetime":
 		return fhirVal.DateTime, true
+	case "actor":
+		return fhirVal.Actor, true
+	case "policy":
+		return fhirVal.Policy, true
+	case "sourceattachment":
+		return fhirVal.SourceAttachment, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "period":
+		return fhirVal.Period, true
+	case "organization":
+		return fhirVal.Organization, true
+	case "purpose":
+		return fhirVal.Purpose, true
 	case "dataperiod":
 		return fhirVal.DataPeriod, true
+	case "data":
+		return fhirVal.Data, true
+	case "category":
+		return fhirVal.Category, true
+	case "consentingparty":
+		return fhirVal.ConsentingParty, true
+	case "sourceidentifier":
+		return fhirVal.SourceIdentifier, true
+	case "securitylabel":
+		return fhirVal.SecurityLabel, true
 
 	default:
 		return nil, false
@@ -87,26 +87,26 @@ func (fhirVal *Consent) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"consentingparty": &FieldTypeSupport{"Reference", true, false},
 		"action": &FieldTypeSupport{"CodeableConcept", true, false},
 		"sourcereference": &FieldTypeSupport{"Reference", false, true},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"actor": &FieldTypeSupport{"ConsentActorComponent", true, false},
-		"organization": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"period": &FieldTypeSupport{"Period", false, true},
-		"sourceidentifier": &FieldTypeSupport{"Identifier", false, true},
-		"policy": &FieldTypeSupport{"ConsentPolicyComponent", true, false},
 		"policyrule": &FieldTypeSupport{"string", false, false},
-		"securitylabel": &FieldTypeSupport{"Coding", true, false},
-		"purpose": &FieldTypeSupport{"Coding", true, false},
-		"data": &FieldTypeSupport{"ConsentDataComponent", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"sourceattachment": &FieldTypeSupport{"Attachment", false, true},
 		"except": &FieldTypeSupport{"ConsentExceptComponent", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"datetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"actor": &FieldTypeSupport{"ConsentActorComponent", true, false},
+		"policy": &FieldTypeSupport{"ConsentPolicyComponent", true, false},
+		"sourceattachment": &FieldTypeSupport{"Attachment", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"organization": &FieldTypeSupport{"Reference", true, false},
+		"purpose": &FieldTypeSupport{"Coding", true, false},
 		"dataperiod": &FieldTypeSupport{"Period", false, true},
+		"data": &FieldTypeSupport{"ConsentDataComponent", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"consentingparty": &FieldTypeSupport{"Reference", true, false},
+		"sourceidentifier": &FieldTypeSupport{"Identifier", false, true},
+		"securitylabel": &FieldTypeSupport{"Coding", true, false},
 
 	}
 }

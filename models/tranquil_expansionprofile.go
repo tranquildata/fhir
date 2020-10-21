@@ -28,52 +28,52 @@ func (fhirVal *ExpansionProfile) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "excludenested":
+		return fhirVal.ExcludeNested, true
 	case "url":
 		return fhirVal.Url, true
-	case "experimental":
-		return fhirVal.Experimental, true
-	case "fixedversion":
-		return fhirVal.FixedVersion, true
-	case "includedefinition":
-		return fhirVal.IncludeDefinition, true
-	case "activeonly":
-		return fhirVal.ActiveOnly, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "version":
-		return fhirVal.Version, true
-	case "date":
-		return fhirVal.Date, true
 	case "publisher":
 		return fhirVal.Publisher, true
-	case "contact":
-		return fhirVal.Contact, true
-	case "includedesignations":
-		return fhirVal.IncludeDesignations, true
-	case "excludenotforui":
-		return fhirVal.ExcludeNotForUI, true
-	case "excludepostcoordinated":
-		return fhirVal.ExcludePostCoordinated, true
+	case "excludedsystem":
+		return fhirVal.ExcludedSystem, true
+	case "activeonly":
+		return fhirVal.ActiveOnly, true
+	case "includedefinition":
+		return fhirVal.IncludeDefinition, true
+	case "displaylanguage":
+		return fhirVal.DisplayLanguage, true
 	case "name":
 		return fhirVal.Name, true
 	case "status":
 		return fhirVal.Status, true
-	case "usecontext":
-		return fhirVal.UseContext, true
-	case "jurisdiction":
-		return fhirVal.Jurisdiction, true
-	case "designation":
-		return fhirVal.Designation, true
-	case "excludenested":
-		return fhirVal.ExcludeNested, true
+	case "date":
+		return fhirVal.Date, true
 	case "description":
 		return fhirVal.Description, true
-	case "excludedsystem":
-		return fhirVal.ExcludedSystem, true
-	case "displaylanguage":
-		return fhirVal.DisplayLanguage, true
+	case "excludenotforui":
+		return fhirVal.ExcludeNotForUI, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "fixedversion":
+		return fhirVal.FixedVersion, true
+	case "designation":
+		return fhirVal.Designation, true
+	case "excludepostcoordinated":
+		return fhirVal.ExcludePostCoordinated, true
 	case "limitedexpansion":
 		return fhirVal.LimitedExpansion, true
+	case "version":
+		return fhirVal.Version, true
+	case "experimental":
+		return fhirVal.Experimental, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "includedesignations":
+		return fhirVal.IncludeDesignations, true
 
 	default:
 		return nil, false
@@ -93,29 +93,29 @@ func (fhirVal *ExpansionProfile) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"excludenested": &FieldTypeSupport{"bool", false, true},
 		"url": &FieldTypeSupport{"string", false, false},
-		"experimental": &FieldTypeSupport{"bool", false, true},
-		"fixedversion": &FieldTypeSupport{"ExpansionProfileFixedVersionComponent", true, false},
-		"includedefinition": &FieldTypeSupport{"bool", false, true},
-		"activeonly": &FieldTypeSupport{"bool", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"version": &FieldTypeSupport{"string", false, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"publisher": &FieldTypeSupport{"string", false, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"includedesignations": &FieldTypeSupport{"bool", false, true},
-		"excludenotforui": &FieldTypeSupport{"bool", false, true},
-		"excludepostcoordinated": &FieldTypeSupport{"bool", false, true},
+		"excludedsystem": &FieldTypeSupport{"ExpansionProfileExcludedSystemComponent", false, true},
+		"activeonly": &FieldTypeSupport{"bool", false, true},
+		"includedefinition": &FieldTypeSupport{"bool", false, true},
+		"displaylanguage": &FieldTypeSupport{"string", false, false},
 		"name": &FieldTypeSupport{"string", false, false},
 		"status": &FieldTypeSupport{"string", false, false},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"designation": &FieldTypeSupport{"ExpansionProfileDesignationComponent", false, true},
-		"excludenested": &FieldTypeSupport{"bool", false, true},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"description": &FieldTypeSupport{"string", false, false},
-		"excludedsystem": &FieldTypeSupport{"ExpansionProfileExcludedSystemComponent", false, true},
-		"displaylanguage": &FieldTypeSupport{"string", false, false},
+		"excludenotforui": &FieldTypeSupport{"bool", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"fixedversion": &FieldTypeSupport{"ExpansionProfileFixedVersionComponent", true, false},
+		"designation": &FieldTypeSupport{"ExpansionProfileDesignationComponent", false, true},
+		"excludepostcoordinated": &FieldTypeSupport{"bool", false, true},
 		"limitedexpansion": &FieldTypeSupport{"bool", false, true},
+		"version": &FieldTypeSupport{"string", false, false},
+		"experimental": &FieldTypeSupport{"bool", false, true},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"includedesignations": &FieldTypeSupport{"bool", false, true},
 
 	}
 }

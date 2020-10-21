@@ -28,6 +28,8 @@ func (fhirVal *AppointmentResponse) FieldByLowerName(nameLower string) (interfac
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "participanttype":
+		return fhirVal.ParticipantType, true
 	case "actor":
 		return fhirVal.Actor, true
 	case "participantstatus":
@@ -42,8 +44,6 @@ func (fhirVal *AppointmentResponse) FieldByLowerName(nameLower string) (interfac
 		return fhirVal.Start, true
 	case "end":
 		return fhirVal.End, true
-	case "participanttype":
-		return fhirVal.ParticipantType, true
 
 	default:
 		return nil, false
@@ -63,6 +63,7 @@ func (fhirVal *AppointmentResponse) FieldsToTypes() map[string]*FieldTypeSupport
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"participanttype": &FieldTypeSupport{"CodeableConcept", true, false},
 		"actor": &FieldTypeSupport{"Reference", false, true},
 		"participantstatus": &FieldTypeSupport{"string", false, false},
 		"comment": &FieldTypeSupport{"string", false, false},
@@ -70,7 +71,6 @@ func (fhirVal *AppointmentResponse) FieldsToTypes() map[string]*FieldTypeSupport
 		"appointment": &FieldTypeSupport{"Reference", false, true},
 		"start": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"end": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"participanttype": &FieldTypeSupport{"CodeableConcept", true, false},
 
 	}
 }

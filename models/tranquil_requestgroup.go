@@ -28,38 +28,38 @@ func (fhirVal *RequestGroup) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "replaces":
-		return fhirVal.Replaces, true
-	case "priority":
-		return fhirVal.Priority, true
-	case "context":
-		return fhirVal.Context, true
 	case "authoredon":
 		return fhirVal.AuthoredOn, true
-	case "definition":
-		return fhirVal.Definition, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "reasoncodeableconcept":
+		return fhirVal.ReasonCodeableConcept, true
+	case "groupidentifier":
+		return fhirVal.GroupIdentifier, true
 	case "status":
 		return fhirVal.Status, true
+	case "priority":
+		return fhirVal.Priority, true
+	case "author":
+		return fhirVal.Author, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
+	case "action":
+		return fhirVal.Action, true
 	case "intent":
 		return fhirVal.Intent, true
 	case "subject":
 		return fhirVal.Subject, true
-	case "reasoncodeableconcept":
-		return fhirVal.ReasonCodeableConcept, true
-	case "reasonreference":
-		return fhirVal.ReasonReference, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "context":
+		return fhirVal.Context, true
 	case "note":
 		return fhirVal.Note, true
-	case "action":
-		return fhirVal.Action, true
-	case "groupidentifier":
-		return fhirVal.GroupIdentifier, true
-	case "author":
-		return fhirVal.Author, true
 
 	default:
 		return nil, false
@@ -79,22 +79,22 @@ func (fhirVal *RequestGroup) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"replaces": &FieldTypeSupport{"Reference", true, false},
-		"priority": &FieldTypeSupport{"string", false, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
 		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"definition": &FieldTypeSupport{"Reference", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
+		"priority": &FieldTypeSupport{"string", false, false},
+		"author": &FieldTypeSupport{"Reference", false, true},
+		"reasonreference": &FieldTypeSupport{"Reference", false, true},
+		"action": &FieldTypeSupport{"RequestGroupActionComponent", true, false},
 		"intent": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"reasonreference": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"definition": &FieldTypeSupport{"Reference", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"replaces": &FieldTypeSupport{"Reference", true, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
 		"note": &FieldTypeSupport{"Annotation", true, false},
-		"action": &FieldTypeSupport{"RequestGroupActionComponent", true, false},
-		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
-		"author": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

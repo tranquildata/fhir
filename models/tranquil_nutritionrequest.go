@@ -28,18 +28,14 @@ func (fhirVal *NutritionRequest) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "patient":
-		return fhirVal.Patient, true
+	case "foodpreferencemodifier":
+		return fhirVal.FoodPreferenceModifier, true
+	case "excludefoodmodifier":
+		return fhirVal.ExcludeFoodModifier, true
 	case "oraldiet":
 		return fhirVal.OralDiet, true
-	case "enteralformula":
-		return fhirVal.EnteralFormula, true
 	case "supplement":
 		return fhirVal.Supplement, true
-	case "status":
-		return fhirVal.Status, true
 	case "encounter":
 		return fhirVal.Encounter, true
 	case "datetime":
@@ -48,10 +44,14 @@ func (fhirVal *NutritionRequest) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Orderer, true
 	case "allergyintolerance":
 		return fhirVal.AllergyIntolerance, true
-	case "foodpreferencemodifier":
-		return fhirVal.FoodPreferenceModifier, true
-	case "excludefoodmodifier":
-		return fhirVal.ExcludeFoodModifier, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "enteralformula":
+		return fhirVal.EnteralFormula, true
 
 	default:
 		return nil, false
@@ -71,18 +71,18 @@ func (fhirVal *NutritionRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
+		"foodpreferencemodifier": &FieldTypeSupport{"CodeableConcept", true, false},
+		"excludefoodmodifier": &FieldTypeSupport{"CodeableConcept", true, false},
 		"oraldiet": &FieldTypeSupport{"NutritionRequestOralDietComponent", false, true},
-		"enteralformula": &FieldTypeSupport{"NutritionRequestEnteralFormulaComponent", false, true},
 		"supplement": &FieldTypeSupport{"NutritionRequestSupplementComponent", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
 		"datetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"orderer": &FieldTypeSupport{"Reference", false, true},
 		"allergyintolerance": &FieldTypeSupport{"Reference", true, false},
-		"foodpreferencemodifier": &FieldTypeSupport{"CodeableConcept", true, false},
-		"excludefoodmodifier": &FieldTypeSupport{"CodeableConcept", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"enteralformula": &FieldTypeSupport{"NutritionRequestEnteralFormulaComponent", false, true},
 
 	}
 }

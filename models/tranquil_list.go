@@ -28,32 +28,32 @@ func (fhirVal *List) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "status":
-		return fhirVal.Status, true
-	case "code":
-		return fhirVal.Code, true
 	case "subject":
 		return fhirVal.Subject, true
 	case "orderedby":
 		return fhirVal.OrderedBy, true
-	case "note":
-		return fhirVal.Note, true
-	case "entry":
-		return fhirVal.Entry, true
-	case "emptyreason":
-		return fhirVal.EmptyReason, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "mode":
-		return fhirVal.Mode, true
-	case "title":
-		return fhirVal.Title, true
 	case "encounter":
 		return fhirVal.Encounter, true
 	case "date":
 		return fhirVal.Date, true
 	case "source":
 		return fhirVal.Source, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "mode":
+		return fhirVal.Mode, true
+	case "title":
+		return fhirVal.Title, true
+	case "code":
+		return fhirVal.Code, true
+	case "note":
+		return fhirVal.Note, true
+	case "entry":
+		return fhirVal.Entry, true
+	case "emptyreason":
+		return fhirVal.EmptyReason, true
 
 	default:
 		return nil, false
@@ -73,19 +73,19 @@ func (fhirVal *List) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"status": &FieldTypeSupport{"string", false, false},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subject": &FieldTypeSupport{"Reference", false, true},
 		"orderedby": &FieldTypeSupport{"CodeableConcept", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"entry": &FieldTypeSupport{"ListEntryComponent", true, false},
-		"emptyreason": &FieldTypeSupport{"CodeableConcept", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"mode": &FieldTypeSupport{"string", false, false},
-		"title": &FieldTypeSupport{"string", false, false},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"source": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"mode": &FieldTypeSupport{"string", false, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"entry": &FieldTypeSupport{"ListEntryComponent", true, false},
+		"emptyreason": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

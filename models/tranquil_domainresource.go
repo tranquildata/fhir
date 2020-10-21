@@ -2,11 +2,11 @@
 package models
 
 
-func (fhirVal *Linkage) TupleName() (id string, resourceType string) {
-	return fhirVal.DomainResource.Resource.Id, fhirVal.DomainResource.Resource.ResourceType
+func (fhirVal *DomainResource) TupleName() (id string, resourceType string) {
+	return fhirVal.Resource.Id, fhirVal.Resource.ResourceType
 }
 
-func (fhirVal *Linkage) FieldByLowerName(nameLower string) (interface{}, bool) {
+func (fhirVal *DomainResource) FieldByLowerName(nameLower string) (interface{}, bool) {
 	switch nameLower {
 
 	case "resourcetype":
@@ -19,7 +19,6 @@ func (fhirVal *Linkage) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.ImplicitRules, true
 	case "language":
 		return fhirVal.Language, true
-
 	case "text":
 		return fhirVal.Text, true
 	case "contained":
@@ -28,19 +27,13 @@ func (fhirVal *Linkage) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "item":
-		return fhirVal.Item, true
-	case "active":
-		return fhirVal.Active, true
-	case "author":
-		return fhirVal.Author, true
 
 	default:
 		return nil, false
 	}
 }
 
-func (fhirVal *Linkage) FieldsToTypes() map[string]*FieldTypeSupport {
+func (fhirVal *DomainResource) FieldsToTypes() map[string]*FieldTypeSupport {
 	return map[string]*FieldTypeSupport {
 
 			"resourcetype": &FieldTypeSupport{"string", false, false},
@@ -48,14 +41,10 @@ func (fhirVal *Linkage) FieldsToTypes() map[string]*FieldTypeSupport {
 		"meta": &FieldTypeSupport{"Meta", false, true},
 		"implicitrules": &FieldTypeSupport{"string", false, false},
 		"language": &FieldTypeSupport{"string", false, false},
-
 		"text": &FieldTypeSupport{"Narrative", false, true},
-		"Contained": &FieldTypeSupport{"Containedresources", false, false},
+		"contained": &FieldTypeSupport{"ContainedResources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
-		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"item": &FieldTypeSupport{"LinkageItemComponent", true, false},
-		"active": &FieldTypeSupport{"bool", false, true},
-		"author": &FieldTypeSupport{"Reference", false, true},
+		"modifierextension": &FieldTypeSupport{"Extension", true, false},
 
 	}
 }

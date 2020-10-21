@@ -28,56 +28,56 @@ func (fhirVal *CodeSystem) FieldByLowerName(nameLower string) (interface{}, bool
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "purpose":
-		return fhirVal.Purpose, true
-	case "valueset":
-		return fhirVal.ValueSet, true
-	case "versionneeded":
-		return fhirVal.VersionNeeded, true
-	case "property":
-		return fhirVal.Property, true
-	case "status":
-		return fhirVal.Status, true
-	case "experimental":
-		return fhirVal.Experimental, true
-	case "publisher":
-		return fhirVal.Publisher, true
-	case "description":
-		return fhirVal.Description, true
-	case "filter":
-		return fhirVal.Filter, true
 	case "usecontext":
 		return fhirVal.UseContext, true
-	case "hierarchymeaning":
-		return fhirVal.HierarchyMeaning, true
+	case "casesensitive":
+		return fhirVal.CaseSensitive, true
+	case "valueset":
+		return fhirVal.ValueSet, true
+	case "property":
+		return fhirVal.Property, true
+	case "url":
+		return fhirVal.Url, true
+	case "date":
+		return fhirVal.Date, true
+	case "description":
+		return fhirVal.Description, true
+	case "purpose":
+		return fhirVal.Purpose, true
+	case "versionneeded":
+		return fhirVal.VersionNeeded, true
+	case "filter":
+		return fhirVal.Filter, true
+	case "concept":
+		return fhirVal.Concept, true
+	case "name":
+		return fhirVal.Name, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "copyright":
+		return fhirVal.Copyright, true
+	case "compositional":
+		return fhirVal.Compositional, true
 	case "content":
 		return fhirVal.Content, true
 	case "count":
 		return fhirVal.Count, true
-	case "jurisdiction":
-		return fhirVal.Jurisdiction, true
-	case "casesensitive":
-		return fhirVal.CaseSensitive, true
-	case "url":
-		return fhirVal.Url, true
-	case "name":
-		return fhirVal.Name, true
-	case "title":
-		return fhirVal.Title, true
+	case "experimental":
+		return fhirVal.Experimental, true
 	case "contact":
 		return fhirVal.Contact, true
-	case "compositional":
-		return fhirVal.Compositional, true
-	case "concept":
-		return fhirVal.Concept, true
+	case "title":
+		return fhirVal.Title, true
+	case "status":
+		return fhirVal.Status, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
+	case "hierarchymeaning":
+		return fhirVal.HierarchyMeaning, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "version":
 		return fhirVal.Version, true
-	case "date":
-		return fhirVal.Date, true
-	case "copyright":
-		return fhirVal.Copyright, true
 
 	default:
 		return nil, false
@@ -97,31 +97,31 @@ func (fhirVal *CodeSystem) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"purpose": &FieldTypeSupport{"string", false, false},
-		"valueset": &FieldTypeSupport{"string", false, false},
-		"versionneeded": &FieldTypeSupport{"bool", false, true},
-		"property": &FieldTypeSupport{"CodeSystemPropertyComponent", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"experimental": &FieldTypeSupport{"bool", false, true},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"filter": &FieldTypeSupport{"CodeSystemFilterComponent", true, false},
 		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"hierarchymeaning": &FieldTypeSupport{"string", false, false},
+		"casesensitive": &FieldTypeSupport{"bool", false, true},
+		"valueset": &FieldTypeSupport{"string", false, false},
+		"property": &FieldTypeSupport{"CodeSystemPropertyComponent", true, false},
+		"url": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"description": &FieldTypeSupport{"string", false, false},
+		"purpose": &FieldTypeSupport{"string", false, false},
+		"versionneeded": &FieldTypeSupport{"bool", false, true},
+		"filter": &FieldTypeSupport{"CodeSystemFilterComponent", true, false},
+		"concept": &FieldTypeSupport{"CodeSystemConceptDefinitionComponent", true, false},
+		"name": &FieldTypeSupport{"string", false, false},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"copyright": &FieldTypeSupport{"string", false, false},
+		"compositional": &FieldTypeSupport{"bool", false, true},
 		"content": &FieldTypeSupport{"string", false, false},
 		"count": &FieldTypeSupport{"uint32", false, true},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"casesensitive": &FieldTypeSupport{"bool", false, true},
-		"url": &FieldTypeSupport{"string", false, false},
-		"name": &FieldTypeSupport{"string", false, false},
-		"title": &FieldTypeSupport{"string", false, false},
+		"experimental": &FieldTypeSupport{"bool", false, true},
 		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"compositional": &FieldTypeSupport{"bool", false, true},
-		"concept": &FieldTypeSupport{"CodeSystemConceptDefinitionComponent", true, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"hierarchymeaning": &FieldTypeSupport{"string", false, false},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"version": &FieldTypeSupport{"string", false, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"copyright": &FieldTypeSupport{"string", false, false},
 
 	}
 }

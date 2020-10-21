@@ -28,26 +28,26 @@ func (fhirVal *Organization) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "alias":
-		return fhirVal.Alias, true
 	case "telecom":
 		return fhirVal.Telecom, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "endpoint":
-		return fhirVal.Endpoint, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "active":
-		return fhirVal.Active, true
-	case "address":
-		return fhirVal.Address, true
 	case "contact":
 		return fhirVal.Contact, true
-	case "type":
-		return fhirVal.Type, true
+	case "endpoint":
+		return fhirVal.Endpoint, true
+	case "active":
+		return fhirVal.Active, true
 	case "name":
 		return fhirVal.Name, true
+	case "alias":
+		return fhirVal.Alias, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "type":
+		return fhirVal.Type, true
+	case "address":
+		return fhirVal.Address, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *Organization) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"alias": &FieldTypeSupport{"string", true, false},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
-		"partof": &FieldTypeSupport{"Reference", false, true},
-		"endpoint": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"active": &FieldTypeSupport{"bool", false, true},
-		"address": &FieldTypeSupport{"Address", true, false},
 		"contact": &FieldTypeSupport{"OrganizationContactComponent", true, false},
-		"type": &FieldTypeSupport{"CodeableConcept", true, false},
+		"endpoint": &FieldTypeSupport{"Reference", true, false},
+		"active": &FieldTypeSupport{"bool", false, true},
 		"name": &FieldTypeSupport{"string", false, false},
+		"alias": &FieldTypeSupport{"string", true, false},
+		"partof": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", true, false},
+		"address": &FieldTypeSupport{"Address", true, false},
 
 	}
 }
