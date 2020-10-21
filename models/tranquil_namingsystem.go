@@ -28,34 +28,34 @@ func (fhirVal *NamingSystem) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "name":
-		return fhirVal.Name, true
-	case "jurisdiction":
-		return fhirVal.Jurisdiction, true
+	case "status":
+		return fhirVal.Status, true
+	case "date":
+		return fhirVal.Date, true
+	case "responsible":
+		return fhirVal.Responsible, true
 	case "type":
 		return fhirVal.Type, true
+	case "uniqueid":
+		return fhirVal.UniqueId, true
+	case "kind":
+		return fhirVal.Kind, true
+	case "name":
+		return fhirVal.Name, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "description":
+		return fhirVal.Description, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "usecontext":
+		return fhirVal.UseContext, true
+	case "jurisdiction":
+		return fhirVal.Jurisdiction, true
 	case "usage":
 		return fhirVal.Usage, true
 	case "replacedby":
 		return fhirVal.ReplacedBy, true
-	case "kind":
-		return fhirVal.Kind, true
-	case "contact":
-		return fhirVal.Contact, true
-	case "description":
-		return fhirVal.Description, true
-	case "uniqueid":
-		return fhirVal.UniqueId, true
-	case "date":
-		return fhirVal.Date, true
-	case "publisher":
-		return fhirVal.Publisher, true
-	case "usecontext":
-		return fhirVal.UseContext, true
-	case "status":
-		return fhirVal.Status, true
-	case "responsible":
-		return fhirVal.Responsible, true
 
 	default:
 		return nil, false
@@ -75,20 +75,20 @@ func (fhirVal *NamingSystem) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"name": &FieldTypeSupport{"string", false, false},
-		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"responsible": &FieldTypeSupport{"string", false, false},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"uniqueid": &FieldTypeSupport{"NamingSystemUniqueIdComponent", true, false},
+		"kind": &FieldTypeSupport{"string", false, false},
+		"name": &FieldTypeSupport{"string", false, false},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
+		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
 		"usage": &FieldTypeSupport{"string", false, false},
 		"replacedby": &FieldTypeSupport{"Reference", false, true},
-		"kind": &FieldTypeSupport{"string", false, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"uniqueid": &FieldTypeSupport{"NamingSystemUniqueIdComponent", true, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"responsible": &FieldTypeSupport{"string", false, false},
 
 	}
 }

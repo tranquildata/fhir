@@ -28,44 +28,44 @@ func (fhirVal *Patient) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "multiplebirthboolean":
-		return fhirVal.MultipleBirthBoolean, true
-	case "photo":
-		return fhirVal.Photo, true
-	case "generalpractitioner":
-		return fhirVal.GeneralPractitioner, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "active":
 		return fhirVal.Active, true
-	case "deceaseddatetime":
-		return fhirVal.DeceasedDateTime, true
-	case "deceasedboolean":
-		return fhirVal.DeceasedBoolean, true
-	case "contact":
-		return fhirVal.Contact, true
-	case "address":
-		return fhirVal.Address, true
-	case "maritalstatus":
-		return fhirVal.MaritalStatus, true
-	case "animal":
-		return fhirVal.Animal, true
-	case "managingorganization":
-		return fhirVal.ManagingOrganization, true
 	case "telecom":
 		return fhirVal.Telecom, true
+	case "multiplebirthboolean":
+		return fhirVal.MultipleBirthBoolean, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
 	case "gender":
 		return fhirVal.Gender, true
 	case "birthdate":
 		return fhirVal.BirthDate, true
-	case "link":
-		return fhirVal.Link, true
-	case "name":
-		return fhirVal.Name, true
+	case "animal":
+		return fhirVal.Animal, true
+	case "generalpractitioner":
+		return fhirVal.GeneralPractitioner, true
+	case "managingorganization":
+		return fhirVal.ManagingOrganization, true
+	case "maritalstatus":
+		return fhirVal.MaritalStatus, true
 	case "multiplebirthinteger":
 		return fhirVal.MultipleBirthInteger, true
+	case "photo":
+		return fhirVal.Photo, true
+	case "deceasedboolean":
+		return fhirVal.DeceasedBoolean, true
+	case "deceaseddatetime":
+		return fhirVal.DeceasedDateTime, true
+	case "address":
+		return fhirVal.Address, true
+	case "contact":
+		return fhirVal.Contact, true
 	case "communication":
 		return fhirVal.Communication, true
+	case "link":
+		return fhirVal.Link, true
 
 	default:
 		return nil, false
@@ -85,25 +85,25 @@ func (fhirVal *Patient) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"multiplebirthboolean": &FieldTypeSupport{"bool", false, true},
-		"photo": &FieldTypeSupport{"Attachment", true, false},
-		"generalpractitioner": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"active": &FieldTypeSupport{"bool", false, true},
-		"deceaseddatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"deceasedboolean": &FieldTypeSupport{"bool", false, true},
-		"contact": &FieldTypeSupport{"PatientContactComponent", true, false},
-		"address": &FieldTypeSupport{"Address", true, false},
-		"maritalstatus": &FieldTypeSupport{"CodeableConcept", false, true},
-		"animal": &FieldTypeSupport{"PatientAnimalComponent", false, true},
-		"managingorganization": &FieldTypeSupport{"Reference", false, true},
 		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
+		"multiplebirthboolean": &FieldTypeSupport{"bool", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"name": &FieldTypeSupport{"HumanName", true, false},
 		"gender": &FieldTypeSupport{"string", false, false},
 		"birthdate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"link": &FieldTypeSupport{"PatientLinkComponent", true, false},
-		"name": &FieldTypeSupport{"HumanName", true, false},
+		"animal": &FieldTypeSupport{"PatientAnimalComponent", false, true},
+		"generalpractitioner": &FieldTypeSupport{"Reference", true, false},
+		"managingorganization": &FieldTypeSupport{"Reference", false, true},
+		"maritalstatus": &FieldTypeSupport{"CodeableConcept", false, true},
 		"multiplebirthinteger": &FieldTypeSupport{"int32", false, true},
+		"photo": &FieldTypeSupport{"Attachment", true, false},
+		"deceasedboolean": &FieldTypeSupport{"bool", false, true},
+		"deceaseddatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"address": &FieldTypeSupport{"Address", true, false},
+		"contact": &FieldTypeSupport{"PatientContactComponent", true, false},
 		"communication": &FieldTypeSupport{"PatientCommunicationComponent", true, false},
+		"link": &FieldTypeSupport{"PatientLinkComponent", true, false},
 
 	}
 }

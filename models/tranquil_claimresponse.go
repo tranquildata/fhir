@@ -28,52 +28,52 @@ func (fhirVal *ClaimResponse) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "disposition":
-		return fhirVal.Disposition, true
-	case "totalbenefit":
-		return fhirVal.TotalBenefit, true
 	case "insurance":
 		return fhirVal.Insurance, true
-	case "payment":
-		return fhirVal.Payment, true
+	case "disposition":
+		return fhirVal.Disposition, true
+	case "item":
+		return fhirVal.Item, true
+	case "additem":
+		return fhirVal.AddItem, true
+	case "error":
+		return fhirVal.Error, true
 	case "status":
 		return fhirVal.Status, true
+	case "created":
+		return fhirVal.Created, true
+	case "insurer":
+		return fhirVal.Insurer, true
+	case "request":
+		return fhirVal.Request, true
+	case "payment":
+		return fhirVal.Payment, true
+	case "reserved":
+		return fhirVal.Reserved, true
+	case "unallocdeductable":
+		return fhirVal.UnallocDeductable, true
+	case "form":
+		return fhirVal.Form, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "requestprovider":
 		return fhirVal.RequestProvider, true
 	case "requestorganization":
 		return fhirVal.RequestOrganization, true
-	case "request":
-		return fhirVal.Request, true
-	case "additem":
-		return fhirVal.AddItem, true
 	case "totalcost":
 		return fhirVal.TotalCost, true
-	case "unallocdeductable":
-		return fhirVal.UnallocDeductable, true
-	case "reserved":
-		return fhirVal.Reserved, true
-	case "insurer":
-		return fhirVal.Insurer, true
-	case "payeetype":
-		return fhirVal.PayeeType, true
-	case "error":
-		return fhirVal.Error, true
-	case "communicationrequest":
-		return fhirVal.CommunicationRequest, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "created":
-		return fhirVal.Created, true
-	case "outcome":
-		return fhirVal.Outcome, true
-	case "item":
-		return fhirVal.Item, true
-	case "form":
-		return fhirVal.Form, true
 	case "processnote":
 		return fhirVal.ProcessNote, true
+	case "communicationrequest":
+		return fhirVal.CommunicationRequest, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "payeetype":
+		return fhirVal.PayeeType, true
+	case "totalbenefit":
+		return fhirVal.TotalBenefit, true
 
 	default:
 		return nil, false
@@ -93,29 +93,29 @@ func (fhirVal *ClaimResponse) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"disposition": &FieldTypeSupport{"string", false, false},
-		"totalbenefit": &FieldTypeSupport{"Quantity", false, true},
 		"insurance": &FieldTypeSupport{"ClaimResponseInsuranceComponent", true, false},
-		"payment": &FieldTypeSupport{"ClaimResponsePaymentComponent", false, true},
+		"disposition": &FieldTypeSupport{"string", false, false},
+		"item": &FieldTypeSupport{"ClaimResponseItemComponent", true, false},
+		"additem": &FieldTypeSupport{"ClaimResponseAddedItemComponent", true, false},
+		"error": &FieldTypeSupport{"ClaimResponseErrorComponent", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
+		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"insurer": &FieldTypeSupport{"Reference", false, true},
+		"request": &FieldTypeSupport{"Reference", false, true},
+		"payment": &FieldTypeSupport{"ClaimResponsePaymentComponent", false, true},
+		"reserved": &FieldTypeSupport{"Coding", false, true},
+		"unallocdeductable": &FieldTypeSupport{"Quantity", false, true},
+		"form": &FieldTypeSupport{"CodeableConcept", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"requestprovider": &FieldTypeSupport{"Reference", false, true},
 		"requestorganization": &FieldTypeSupport{"Reference", false, true},
-		"request": &FieldTypeSupport{"Reference", false, true},
-		"additem": &FieldTypeSupport{"ClaimResponseAddedItemComponent", true, false},
 		"totalcost": &FieldTypeSupport{"Quantity", false, true},
-		"unallocdeductable": &FieldTypeSupport{"Quantity", false, true},
-		"reserved": &FieldTypeSupport{"Coding", false, true},
-		"insurer": &FieldTypeSupport{"Reference", false, true},
-		"payeetype": &FieldTypeSupport{"CodeableConcept", false, true},
-		"error": &FieldTypeSupport{"ClaimResponseErrorComponent", true, false},
-		"communicationrequest": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
-		"item": &FieldTypeSupport{"ClaimResponseItemComponent", true, false},
-		"form": &FieldTypeSupport{"CodeableConcept", false, true},
 		"processnote": &FieldTypeSupport{"ClaimResponseNoteComponent", true, false},
+		"communicationrequest": &FieldTypeSupport{"Reference", true, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
+		"payeetype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"totalbenefit": &FieldTypeSupport{"Quantity", false, true},
 
 	}
 }

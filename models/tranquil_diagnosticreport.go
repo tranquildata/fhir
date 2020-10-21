@@ -28,42 +28,42 @@ func (fhirVal *DiagnosticReport) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "code":
-		return fhirVal.Code, true
-	case "context":
-		return fhirVal.Context, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "issued":
-		return fhirVal.Issued, true
-	case "conclusion":
-		return fhirVal.Conclusion, true
-	case "specimen":
-		return fhirVal.Specimen, true
-	case "imagingstudy":
-		return fhirVal.ImagingStudy, true
-	case "image":
-		return fhirVal.Image, true
-	case "codeddiagnosis":
-		return fhirVal.CodedDiagnosis, true
-	case "subject":
-		return fhirVal.Subject, true
+	case "category":
+		return fhirVal.Category, true
 	case "effectiveperiod":
 		return fhirVal.EffectivePeriod, true
-	case "performer":
-		return fhirVal.Performer, true
-	case "effectivedatetime":
-		return fhirVal.EffectiveDateTime, true
-	case "result":
-		return fhirVal.Result, true
+	case "specimen":
+		return fhirVal.Specimen, true
+	case "codeddiagnosis":
+		return fhirVal.CodedDiagnosis, true
 	case "presentedform":
 		return fhirVal.PresentedForm, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "code":
+		return fhirVal.Code, true
+	case "effectivedatetime":
+		return fhirVal.EffectiveDateTime, true
+	case "performer":
+		return fhirVal.Performer, true
 	case "status":
 		return fhirVal.Status, true
-	case "category":
-		return fhirVal.Category, true
+	case "issued":
+		return fhirVal.Issued, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "context":
+		return fhirVal.Context, true
+	case "result":
+		return fhirVal.Result, true
+	case "imagingstudy":
+		return fhirVal.ImagingStudy, true
+	case "image":
+		return fhirVal.Image, true
+	case "conclusion":
+		return fhirVal.Conclusion, true
 
 	default:
 		return nil, false
@@ -83,24 +83,24 @@ func (fhirVal *DiagnosticReport) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"conclusion": &FieldTypeSupport{"string", false, false},
-		"specimen": &FieldTypeSupport{"Reference", true, false},
-		"imagingstudy": &FieldTypeSupport{"Reference", true, false},
-		"image": &FieldTypeSupport{"DiagnosticReportImageComponent", true, false},
-		"codeddiagnosis": &FieldTypeSupport{"CodeableConcept", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
 		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
-		"performer": &FieldTypeSupport{"DiagnosticReportPerformerComponent", true, false},
-		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"result": &FieldTypeSupport{"Reference", true, false},
+		"specimen": &FieldTypeSupport{"Reference", true, false},
+		"codeddiagnosis": &FieldTypeSupport{"CodeableConcept", true, false},
 		"presentedform": &FieldTypeSupport{"Attachment", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"performer": &FieldTypeSupport{"DiagnosticReportPerformerComponent", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", false, true},
+		"issued": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"result": &FieldTypeSupport{"Reference", true, false},
+		"imagingstudy": &FieldTypeSupport{"Reference", true, false},
+		"image": &FieldTypeSupport{"DiagnosticReportImageComponent", true, false},
+		"conclusion": &FieldTypeSupport{"string", false, false},
 
 	}
 }

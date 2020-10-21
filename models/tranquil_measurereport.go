@@ -28,26 +28,26 @@ func (fhirVal *MeasureReport) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "status":
-		return fhirVal.Status, true
+	case "evaluatedresources":
+		return fhirVal.EvaluatedResources, true
 	case "type":
 		return fhirVal.Type, true
 	case "measure":
 		return fhirVal.Measure, true
 	case "patient":
 		return fhirVal.Patient, true
-	case "date":
-		return fhirVal.Date, true
 	case "reportingorganization":
 		return fhirVal.ReportingOrganization, true
 	case "period":
 		return fhirVal.Period, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "evaluatedresources":
-		return fhirVal.EvaluatedResources, true
 	case "group":
 		return fhirVal.Group, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "date":
+		return fhirVal.Date, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *MeasureReport) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"status": &FieldTypeSupport{"string", false, false},
+		"evaluatedresources": &FieldTypeSupport{"Reference", false, true},
 		"type": &FieldTypeSupport{"string", false, false},
 		"measure": &FieldTypeSupport{"Reference", false, true},
 		"patient": &FieldTypeSupport{"Reference", false, true},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"reportingorganization": &FieldTypeSupport{"Reference", false, true},
 		"period": &FieldTypeSupport{"Period", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"evaluatedresources": &FieldTypeSupport{"Reference", false, true},
 		"group": &FieldTypeSupport{"MeasureReportGroupComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 
 	}
 }

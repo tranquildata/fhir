@@ -30,44 +30,44 @@ func (fhirVal *ResearchStudy) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.ModifierExtension, true
 	case "protocol":
 		return fhirVal.Protocol, true
-	case "keyword":
-		return fhirVal.Keyword, true
-	case "description":
-		return fhirVal.Description, true
-	case "enrollment":
-		return fhirVal.Enrollment, true
-	case "note":
-		return fhirVal.Note, true
-	case "reasonstopped":
-		return fhirVal.ReasonStopped, true
-	case "arm":
-		return fhirVal.Arm, true
 	case "status":
 		return fhirVal.Status, true
 	case "focus":
 		return fhirVal.Focus, true
-	case "relatedartifact":
-		return fhirVal.RelatedArtifact, true
+	case "keyword":
+		return fhirVal.Keyword, true
 	case "jurisdiction":
 		return fhirVal.Jurisdiction, true
+	case "sponsor":
+		return fhirVal.Sponsor, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "enrollment":
+		return fhirVal.Enrollment, true
+	case "arm":
+		return fhirVal.Arm, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "category":
+		return fhirVal.Category, true
 	case "principalinvestigator":
 		return fhirVal.PrincipalInvestigator, true
 	case "title":
 		return fhirVal.Title, true
-	case "contact":
-		return fhirVal.Contact, true
+	case "relatedartifact":
+		return fhirVal.RelatedArtifact, true
+	case "description":
+		return fhirVal.Description, true
 	case "period":
 		return fhirVal.Period, true
-	case "sponsor":
-		return fhirVal.Sponsor, true
 	case "site":
 		return fhirVal.Site, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "category":
-		return fhirVal.Category, true
+	case "reasonstopped":
+		return fhirVal.ReasonStopped, true
+	case "note":
+		return fhirVal.Note, true
 
 	default:
 		return nil, false
@@ -88,25 +88,25 @@ func (fhirVal *ResearchStudy) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"protocol": &FieldTypeSupport{"Reference", true, false},
-		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"enrollment": &FieldTypeSupport{"Reference", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"reasonstopped": &FieldTypeSupport{"CodeableConcept", false, true},
-		"arm": &FieldTypeSupport{"ResearchStudyArmComponent", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"focus": &FieldTypeSupport{"CodeableConcept", true, false},
-		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
+		"keyword": &FieldTypeSupport{"CodeableConcept", true, false},
 		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
+		"sponsor": &FieldTypeSupport{"Reference", false, true},
+		"partof": &FieldTypeSupport{"Reference", true, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"enrollment": &FieldTypeSupport{"Reference", true, false},
+		"arm": &FieldTypeSupport{"ResearchStudyArmComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
 		"principalinvestigator": &FieldTypeSupport{"Reference", false, true},
 		"title": &FieldTypeSupport{"string", false, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"relatedartifact": &FieldTypeSupport{"RelatedArtifact", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
 		"period": &FieldTypeSupport{"Period", false, true},
-		"sponsor": &FieldTypeSupport{"Reference", false, true},
 		"site": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"partof": &FieldTypeSupport{"Reference", true, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"reasonstopped": &FieldTypeSupport{"CodeableConcept", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
 
 	}
 }

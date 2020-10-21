@@ -28,8 +28,6 @@ func (fhirVal *Flag) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "code":
-		return fhirVal.Code, true
 	case "subject":
 		return fhirVal.Subject, true
 	case "period":
@@ -44,6 +42,8 @@ func (fhirVal *Flag) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Status, true
 	case "category":
 		return fhirVal.Category, true
+	case "code":
+		return fhirVal.Code, true
 
 	default:
 		return nil, false
@@ -63,7 +63,6 @@ func (fhirVal *Flag) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subject": &FieldTypeSupport{"Reference", false, true},
 		"period": &FieldTypeSupport{"Period", false, true},
 		"encounter": &FieldTypeSupport{"Reference", false, true},
@@ -71,6 +70,7 @@ func (fhirVal *Flag) FieldsToTypes() map[string]*FieldTypeSupport {
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"category": &FieldTypeSupport{"CodeableConcept", false, true},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 
 	}
 }

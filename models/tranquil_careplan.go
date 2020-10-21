@@ -28,46 +28,46 @@ func (fhirVal *CarePlan) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "period":
-		return fhirVal.Period, true
+	case "addresses":
+		return fhirVal.Addresses, true
+	case "goal":
+		return fhirVal.Goal, true
 	case "activity":
 		return fhirVal.Activity, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "description":
+		return fhirVal.Description, true
+	case "context":
+		return fhirVal.Context, true
+	case "period":
+		return fhirVal.Period, true
+	case "author":
+		return fhirVal.Author, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "category":
+		return fhirVal.Category, true
+	case "supportinginfo":
+		return fhirVal.SupportingInfo, true
+	case "careteam":
+		return fhirVal.CareTeam, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "status":
+		return fhirVal.Status, true
 	case "intent":
 		return fhirVal.Intent, true
 	case "subject":
 		return fhirVal.Subject, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "goal":
-		return fhirVal.Goal, true
-	case "note":
-		return fhirVal.Note, true
-	case "context":
-		return fhirVal.Context, true
-	case "careteam":
-		return fhirVal.CareTeam, true
-	case "addresses":
-		return fhirVal.Addresses, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "title":
-		return fhirVal.Title, true
-	case "description":
-		return fhirVal.Description, true
-	case "category":
-		return fhirVal.Category, true
-	case "author":
-		return fhirVal.Author, true
-	case "supportinginfo":
-		return fhirVal.SupportingInfo, true
-	case "definition":
-		return fhirVal.Definition, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "replaces":
 		return fhirVal.Replaces, true
-	case "status":
-		return fhirVal.Status, true
+	case "title":
+		return fhirVal.Title, true
+	case "note":
+		return fhirVal.Note, true
 
 	default:
 		return nil, false
@@ -87,26 +87,26 @@ func (fhirVal *CarePlan) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"period": &FieldTypeSupport{"Period", false, true},
+		"addresses": &FieldTypeSupport{"Reference", true, false},
+		"goal": &FieldTypeSupport{"Reference", true, false},
 		"activity": &FieldTypeSupport{"CarePlanActivityComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
+		"author": &FieldTypeSupport{"Reference", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"partof": &FieldTypeSupport{"Reference", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
+		"careteam": &FieldTypeSupport{"Reference", true, false},
+		"definition": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 		"intent": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"partof": &FieldTypeSupport{"Reference", true, false},
-		"goal": &FieldTypeSupport{"Reference", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"careteam": &FieldTypeSupport{"Reference", true, false},
-		"addresses": &FieldTypeSupport{"Reference", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"author": &FieldTypeSupport{"Reference", true, false},
-		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
-		"definition": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"replaces": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
 
 	}
 }

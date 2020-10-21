@@ -28,46 +28,46 @@ func (fhirVal *ClinicalImpression) FieldByLowerName(nameLower string) (interface
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "date":
-		return fhirVal.Date, true
+	case "code":
+		return fhirVal.Code, true
+	case "context":
+		return fhirVal.Context, true
+	case "assessor":
+		return fhirVal.Assessor, true
 	case "protocol":
 		return fhirVal.Protocol, true
 	case "summary":
 		return fhirVal.Summary, true
-	case "prognosiscodeableconcept":
-		return fhirVal.PrognosisCodeableConcept, true
-	case "prognosisreference":
-		return fhirVal.PrognosisReference, true
-	case "action":
-		return fhirVal.Action, true
 	case "note":
 		return fhirVal.Note, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "status":
-		return fhirVal.Status, true
-	case "assessor":
-		return fhirVal.Assessor, true
-	case "previous":
-		return fhirVal.Previous, true
-	case "context":
-		return fhirVal.Context, true
-	case "effectivedatetime":
-		return fhirVal.EffectiveDateTime, true
-	case "effectiveperiod":
-		return fhirVal.EffectivePeriod, true
-	case "investigation":
-		return fhirVal.Investigation, true
-	case "code":
-		return fhirVal.Code, true
 	case "description":
 		return fhirVal.Description, true
-	case "subject":
-		return fhirVal.Subject, true
+	case "effectiveperiod":
+		return fhirVal.EffectivePeriod, true
 	case "problem":
 		return fhirVal.Problem, true
 	case "finding":
 		return fhirVal.Finding, true
+	case "status":
+		return fhirVal.Status, true
+	case "previous":
+		return fhirVal.Previous, true
+	case "investigation":
+		return fhirVal.Investigation, true
+	case "action":
+		return fhirVal.Action, true
+	case "effectivedatetime":
+		return fhirVal.EffectiveDateTime, true
+	case "date":
+		return fhirVal.Date, true
+	case "prognosiscodeableconcept":
+		return fhirVal.PrognosisCodeableConcept, true
+	case "prognosisreference":
+		return fhirVal.PrognosisReference, true
+	case "subject":
+		return fhirVal.Subject, true
 
 	default:
 		return nil, false
@@ -87,26 +87,26 @@ func (fhirVal *ClinicalImpression) FieldsToTypes() map[string]*FieldTypeSupport 
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"assessor": &FieldTypeSupport{"Reference", false, true},
 		"protocol": &FieldTypeSupport{"string", true, false},
 		"summary": &FieldTypeSupport{"string", false, false},
-		"prognosiscodeableconcept": &FieldTypeSupport{"CodeableConcept", true, false},
-		"prognosisreference": &FieldTypeSupport{"Reference", true, false},
-		"action": &FieldTypeSupport{"Reference", true, false},
 		"note": &FieldTypeSupport{"Annotation", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"assessor": &FieldTypeSupport{"Reference", false, true},
-		"previous": &FieldTypeSupport{"Reference", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
-		"investigation": &FieldTypeSupport{"ClinicalImpressionInvestigationComponent", true, false},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"description": &FieldTypeSupport{"string", false, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
+		"effectiveperiod": &FieldTypeSupport{"Period", false, true},
 		"problem": &FieldTypeSupport{"Reference", true, false},
 		"finding": &FieldTypeSupport{"ClinicalImpressionFindingComponent", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"previous": &FieldTypeSupport{"Reference", false, true},
+		"investigation": &FieldTypeSupport{"ClinicalImpressionInvestigationComponent", true, false},
+		"action": &FieldTypeSupport{"Reference", true, false},
+		"effectivedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"prognosiscodeableconcept": &FieldTypeSupport{"CodeableConcept", true, false},
+		"prognosisreference": &FieldTypeSupport{"Reference", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

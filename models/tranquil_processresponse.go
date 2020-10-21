@@ -28,32 +28,32 @@ func (fhirVal *ProcessResponse) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "request":
-		return fhirVal.Request, true
-	case "outcome":
-		return fhirVal.Outcome, true
-	case "disposition":
-		return fhirVal.Disposition, true
-	case "requestprovider":
-		return fhirVal.RequestProvider, true
-	case "requestorganization":
-		return fhirVal.RequestOrganization, true
-	case "status":
-		return fhirVal.Status, true
 	case "created":
 		return fhirVal.Created, true
 	case "organization":
 		return fhirVal.Organization, true
+	case "disposition":
+		return fhirVal.Disposition, true
+	case "requestorganization":
+		return fhirVal.RequestOrganization, true
 	case "form":
 		return fhirVal.Form, true
-	case "error":
-		return fhirVal.Error, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "processnote":
 		return fhirVal.ProcessNote, true
+	case "error":
+		return fhirVal.Error, true
+	case "status":
+		return fhirVal.Status, true
+	case "request":
+		return fhirVal.Request, true
+	case "outcome":
+		return fhirVal.Outcome, true
+	case "requestprovider":
+		return fhirVal.RequestProvider, true
 	case "communicationrequest":
 		return fhirVal.CommunicationRequest, true
+	case "identifier":
+		return fhirVal.Identifier, true
 
 	default:
 		return nil, false
@@ -73,19 +73,19 @@ func (fhirVal *ProcessResponse) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"request": &FieldTypeSupport{"Reference", false, true},
-		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
-		"disposition": &FieldTypeSupport{"string", false, false},
-		"requestprovider": &FieldTypeSupport{"Reference", false, true},
-		"requestorganization": &FieldTypeSupport{"Reference", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"organization": &FieldTypeSupport{"Reference", false, true},
+		"disposition": &FieldTypeSupport{"string", false, false},
+		"requestorganization": &FieldTypeSupport{"Reference", false, true},
 		"form": &FieldTypeSupport{"CodeableConcept", false, true},
-		"error": &FieldTypeSupport{"CodeableConcept", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"processnote": &FieldTypeSupport{"ProcessResponseProcessNoteComponent", true, false},
+		"error": &FieldTypeSupport{"CodeableConcept", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"request": &FieldTypeSupport{"Reference", false, true},
+		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
+		"requestprovider": &FieldTypeSupport{"Reference", false, true},
 		"communicationrequest": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 
 	}
 }

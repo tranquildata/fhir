@@ -28,36 +28,16 @@ func (fhirVal *DiagnosticRequest) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "performer":
-		return fhirVal.Performer, true
-	case "reasonreference":
-		return fhirVal.ReasonReference, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "priority":
-		return fhirVal.Priority, true
-	case "code":
-		return fhirVal.Code, true
-	case "occurrencedatetime":
-		return fhirVal.OccurrenceDateTime, true
-	case "authoredon":
-		return fhirVal.AuthoredOn, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
 	case "performertype":
 		return fhirVal.PerformerType, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
 	case "supportinginformation":
 		return fhirVal.SupportingInformation, true
-	case "note":
-		return fhirVal.Note, true
 	case "definition":
 		return fhirVal.Definition, true
-	case "context":
-		return fhirVal.Context, true
-	case "requester":
-		return fhirVal.Requester, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "replaces":
-		return fhirVal.Replaces, true
 	case "requisition":
 		return fhirVal.Requisition, true
 	case "status":
@@ -66,14 +46,34 @@ func (fhirVal *DiagnosticRequest) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Subject, true
 	case "occurrencetiming":
 		return fhirVal.OccurrenceTiming, true
+	case "requester":
+		return fhirVal.Requester, true
 	case "intent":
 		return fhirVal.Intent, true
-	case "occurrenceperiod":
-		return fhirVal.OccurrencePeriod, true
+	case "code":
+		return fhirVal.Code, true
+	case "performer":
+		return fhirVal.Performer, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "replaces":
+		return fhirVal.Replaces, true
+	case "authoredon":
+		return fhirVal.AuthoredOn, true
 	case "reasoncode":
 		return fhirVal.ReasonCode, true
+	case "note":
+		return fhirVal.Note, true
 	case "relevanthistory":
 		return fhirVal.RelevantHistory, true
+	case "priority":
+		return fhirVal.Priority, true
+	case "context":
+		return fhirVal.Context, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
 
 	default:
 		return nil, false
@@ -93,29 +93,29 @@ func (fhirVal *DiagnosticRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"performer": &FieldTypeSupport{"Reference", false, true},
-		"reasonreference": &FieldTypeSupport{"Reference", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"priority": &FieldTypeSupport{"string", false, false},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
 		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
+		"reasonreference": &FieldTypeSupport{"Reference", true, false},
 		"supportinginformation": &FieldTypeSupport{"Reference", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
 		"definition": &FieldTypeSupport{"Reference", true, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
-		"requester": &FieldTypeSupport{"Reference", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"replaces": &FieldTypeSupport{"Reference", true, false},
 		"requisition": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
 		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
+		"requester": &FieldTypeSupport{"Reference", false, true},
 		"intent": &FieldTypeSupport{"string", false, false},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"performer": &FieldTypeSupport{"Reference", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"replaces": &FieldTypeSupport{"Reference", true, false},
+		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
 		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
+		"priority": &FieldTypeSupport{"string", false, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 
 	}
 }

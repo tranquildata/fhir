@@ -30,36 +30,36 @@ func (fhirVal *AdverseEvent) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.ModifierExtension, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "location":
-		return fhirVal.Location, true
-	case "recorder":
-		return fhirVal.Recorder, true
-	case "suspectentity":
-		return fhirVal.SuspectEntity, true
-	case "study":
-		return fhirVal.Study, true
 	case "date":
 		return fhirVal.Date, true
-	case "reaction":
-		return fhirVal.Reaction, true
+	case "location":
+		return fhirVal.Location, true
+	case "seriousness":
+		return fhirVal.Seriousness, true
+	case "referencedocument":
+		return fhirVal.ReferenceDocument, true
+	case "category":
+		return fhirVal.Category, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "study":
+		return fhirVal.Study, true
+	case "type":
+		return fhirVal.Type, true
 	case "outcome":
 		return fhirVal.Outcome, true
 	case "subjectmedicalhistory":
 		return fhirVal.SubjectMedicalHistory, true
-	case "description":
-		return fhirVal.Description, true
-	case "category":
-		return fhirVal.Category, true
-	case "type":
-		return fhirVal.Type, true
-	case "seriousness":
-		return fhirVal.Seriousness, true
+	case "reaction":
+		return fhirVal.Reaction, true
+	case "recorder":
+		return fhirVal.Recorder, true
 	case "eventparticipant":
 		return fhirVal.EventParticipant, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "referencedocument":
-		return fhirVal.ReferenceDocument, true
+	case "description":
+		return fhirVal.Description, true
+	case "suspectentity":
+		return fhirVal.SuspectEntity, true
 
 	default:
 		return nil, false
@@ -80,21 +80,21 @@ func (fhirVal *AdverseEvent) FieldsToTypes() map[string]*FieldTypeSupport {
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"location": &FieldTypeSupport{"Reference", false, true},
-		"recorder": &FieldTypeSupport{"Reference", false, true},
-		"suspectentity": &FieldTypeSupport{"AdverseEventSuspectEntityComponent", true, false},
-		"study": &FieldTypeSupport{"Reference", true, false},
 		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"reaction": &FieldTypeSupport{"Reference", true, false},
+		"location": &FieldTypeSupport{"Reference", false, true},
+		"seriousness": &FieldTypeSupport{"CodeableConcept", false, true},
+		"referencedocument": &FieldTypeSupport{"Reference", true, false},
+		"category": &FieldTypeSupport{"string", false, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"study": &FieldTypeSupport{"Reference", true, false},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
 		"outcome": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subjectmedicalhistory": &FieldTypeSupport{"Reference", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"category": &FieldTypeSupport{"string", false, false},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"seriousness": &FieldTypeSupport{"CodeableConcept", false, true},
+		"reaction": &FieldTypeSupport{"Reference", true, false},
+		"recorder": &FieldTypeSupport{"Reference", false, true},
 		"eventparticipant": &FieldTypeSupport{"Reference", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"referencedocument": &FieldTypeSupport{"Reference", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"suspectentity": &FieldTypeSupport{"AdverseEventSuspectEntityComponent", true, false},
 
 	}
 }

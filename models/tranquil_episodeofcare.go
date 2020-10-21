@@ -28,14 +28,6 @@ func (fhirVal *EpisodeOfCare) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "period":
-		return fhirVal.Period, true
-	case "team":
-		return fhirVal.Team, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "status":
 		return fhirVal.Status, true
 	case "statushistory":
@@ -44,14 +36,22 @@ func (fhirVal *EpisodeOfCare) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Type, true
 	case "diagnosis":
 		return fhirVal.Diagnosis, true
+	case "team":
+		return fhirVal.Team, true
+	case "account":
+		return fhirVal.Account, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "managingorganization":
 		return fhirVal.ManagingOrganization, true
+	case "period":
+		return fhirVal.Period, true
 	case "referralrequest":
 		return fhirVal.ReferralRequest, true
 	case "caremanager":
 		return fhirVal.CareManager, true
-	case "account":
-		return fhirVal.Account, true
+	case "patient":
+		return fhirVal.Patient, true
 
 	default:
 		return nil, false
@@ -71,18 +71,18 @@ func (fhirVal *EpisodeOfCare) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"period": &FieldTypeSupport{"Period", false, true},
-		"team": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"statushistory": &FieldTypeSupport{"EpisodeOfCareStatusHistoryComponent", true, false},
 		"type": &FieldTypeSupport{"CodeableConcept", true, false},
 		"diagnosis": &FieldTypeSupport{"EpisodeOfCareDiagnosisComponent", true, false},
+		"team": &FieldTypeSupport{"Reference", true, false},
+		"account": &FieldTypeSupport{"Reference", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"managingorganization": &FieldTypeSupport{"Reference", false, true},
+		"period": &FieldTypeSupport{"Period", false, true},
 		"referralrequest": &FieldTypeSupport{"Reference", true, false},
 		"caremanager": &FieldTypeSupport{"Reference", false, true},
-		"account": &FieldTypeSupport{"Reference", true, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

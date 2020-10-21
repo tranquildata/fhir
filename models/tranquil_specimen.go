@@ -28,30 +28,30 @@ func (fhirVal *Specimen) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "status":
-		return fhirVal.Status, true
-	case "collection":
-		return fhirVal.Collection, true
-	case "processing":
-		return fhirVal.Processing, true
-	case "note":
-		return fhirVal.Note, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "receivedtime":
+		return fhirVal.ReceivedTime, true
+	case "request":
+		return fhirVal.Request, true
+	case "note":
+		return fhirVal.Note, true
+	case "container":
+		return fhirVal.Container, true
 	case "accessionidentifier":
 		return fhirVal.AccessionIdentifier, true
+	case "status":
+		return fhirVal.Status, true
 	case "type":
 		return fhirVal.Type, true
 	case "subject":
 		return fhirVal.Subject, true
-	case "receivedtime":
-		return fhirVal.ReceivedTime, true
 	case "parent":
 		return fhirVal.Parent, true
-	case "request":
-		return fhirVal.Request, true
-	case "container":
-		return fhirVal.Container, true
+	case "collection":
+		return fhirVal.Collection, true
+	case "processing":
+		return fhirVal.Processing, true
 
 	default:
 		return nil, false
@@ -71,18 +71,18 @@ func (fhirVal *Specimen) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"status": &FieldTypeSupport{"string", false, false},
-		"collection": &FieldTypeSupport{"SpecimenCollectionComponent", false, true},
-		"processing": &FieldTypeSupport{"SpecimenProcessingComponent", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"receivedtime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"request": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"container": &FieldTypeSupport{"SpecimenContainerComponent", true, false},
 		"accessionidentifier": &FieldTypeSupport{"Identifier", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
 		"subject": &FieldTypeSupport{"Reference", false, true},
-		"receivedtime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"parent": &FieldTypeSupport{"Reference", true, false},
-		"request": &FieldTypeSupport{"Reference", true, false},
-		"container": &FieldTypeSupport{"SpecimenContainerComponent", true, false},
+		"collection": &FieldTypeSupport{"SpecimenCollectionComponent", false, true},
+		"processing": &FieldTypeSupport{"SpecimenProcessingComponent", true, false},
 
 	}
 }

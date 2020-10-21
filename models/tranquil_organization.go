@@ -28,26 +28,26 @@ func (fhirVal *Organization) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "telecom":
-		return fhirVal.Telecom, true
-	case "contact":
-		return fhirVal.Contact, true
-	case "endpoint":
-		return fhirVal.Endpoint, true
 	case "active":
 		return fhirVal.Active, true
-	case "name":
-		return fhirVal.Name, true
-	case "alias":
-		return fhirVal.Alias, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "identifier":
-		return fhirVal.Identifier, true
 	case "type":
 		return fhirVal.Type, true
+	case "alias":
+		return fhirVal.Alias, true
 	case "address":
 		return fhirVal.Address, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "name":
+		return fhirVal.Name, true
+	case "telecom":
+		return fhirVal.Telecom, true
+	case "endpoint":
+		return fhirVal.Endpoint, true
 
 	default:
 		return nil, false
@@ -67,16 +67,16 @@ func (fhirVal *Organization) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
-		"contact": &FieldTypeSupport{"OrganizationContactComponent", true, false},
-		"endpoint": &FieldTypeSupport{"Reference", true, false},
 		"active": &FieldTypeSupport{"bool", false, true},
-		"name": &FieldTypeSupport{"string", false, false},
-		"alias": &FieldTypeSupport{"string", true, false},
-		"partof": &FieldTypeSupport{"Reference", false, true},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"type": &FieldTypeSupport{"CodeableConcept", true, false},
+		"alias": &FieldTypeSupport{"string", true, false},
 		"address": &FieldTypeSupport{"Address", true, false},
+		"partof": &FieldTypeSupport{"Reference", false, true},
+		"contact": &FieldTypeSupport{"OrganizationContactComponent", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"name": &FieldTypeSupport{"string", false, false},
+		"telecom": &FieldTypeSupport{"ContactPoint", true, false},
+		"endpoint": &FieldTypeSupport{"Reference", true, false},
 
 	}
 }

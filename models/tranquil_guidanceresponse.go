@@ -28,36 +28,36 @@ func (fhirVal *GuidanceResponse) FieldByLowerName(nameLower string) (interface{}
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "context":
-		return fhirVal.Context, true
 	case "requestid":
 		return fhirVal.RequestId, true
-	case "module":
-		return fhirVal.Module, true
-	case "status":
-		return fhirVal.Status, true
-	case "occurrencedatetime":
-		return fhirVal.OccurrenceDateTime, true
-	case "reasoncodeableconcept":
-		return fhirVal.ReasonCodeableConcept, true
-	case "note":
-		return fhirVal.Note, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "outputparameters":
-		return fhirVal.OutputParameters, true
+	case "subject":
+		return fhirVal.Subject, true
 	case "performer":
 		return fhirVal.Performer, true
 	case "reasonreference":
 		return fhirVal.ReasonReference, true
+	case "outputparameters":
+		return fhirVal.OutputParameters, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
+	case "context":
+		return fhirVal.Context, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
+	case "reasoncodeableconcept":
+		return fhirVal.ReasonCodeableConcept, true
+	case "module":
+		return fhirVal.Module, true
 	case "evaluationmessage":
 		return fhirVal.EvaluationMessage, true
 	case "result":
 		return fhirVal.Result, true
 	case "datarequirement":
 		return fhirVal.DataRequirement, true
-	case "subject":
-		return fhirVal.Subject, true
 
 	default:
 		return nil, false
@@ -77,21 +77,21 @@ func (fhirVal *GuidanceResponse) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"context": &FieldTypeSupport{"Reference", false, true},
 		"requestid": &FieldTypeSupport{"string", false, false},
-		"module": &FieldTypeSupport{"Reference", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"outputparameters": &FieldTypeSupport{"Reference", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 		"performer": &FieldTypeSupport{"Reference", false, true},
 		"reasonreference": &FieldTypeSupport{"Reference", false, true},
+		"outputparameters": &FieldTypeSupport{"Reference", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"status": &FieldTypeSupport{"string", false, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"reasoncodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"module": &FieldTypeSupport{"Reference", false, true},
 		"evaluationmessage": &FieldTypeSupport{"Reference", true, false},
 		"result": &FieldTypeSupport{"Reference", false, true},
 		"datarequirement": &FieldTypeSupport{"DataRequirement", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

@@ -28,28 +28,28 @@ func (fhirVal *QuestionnaireResponse) FieldByLowerName(nameLower string) (interf
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "authored":
-		return fhirVal.Authored, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "basedon":
 		return fhirVal.BasedOn, true
 	case "parent":
 		return fhirVal.Parent, true
-	case "questionnaire":
-		return fhirVal.Questionnaire, true
-	case "context":
-		return fhirVal.Context, true
 	case "author":
 		return fhirVal.Author, true
-	case "source":
-		return fhirVal.Source, true
-	case "item":
-		return fhirVal.Item, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "questionnaire":
+		return fhirVal.Questionnaire, true
 	case "status":
 		return fhirVal.Status, true
 	case "subject":
 		return fhirVal.Subject, true
+	case "context":
+		return fhirVal.Context, true
+	case "authored":
+		return fhirVal.Authored, true
+	case "source":
+		return fhirVal.Source, true
+	case "item":
+		return fhirVal.Item, true
 
 	default:
 		return nil, false
@@ -69,17 +69,17 @@ func (fhirVal *QuestionnaireResponse) FieldsToTypes() map[string]*FieldTypeSuppo
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"authored": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"basedon": &FieldTypeSupport{"Reference", true, false},
 		"parent": &FieldTypeSupport{"Reference", true, false},
-		"questionnaire": &FieldTypeSupport{"Reference", false, true},
-		"context": &FieldTypeSupport{"Reference", false, true},
 		"author": &FieldTypeSupport{"Reference", false, true},
-		"source": &FieldTypeSupport{"Reference", false, true},
-		"item": &FieldTypeSupport{"QuestionnaireResponseItemComponent", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"questionnaire": &FieldTypeSupport{"Reference", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
 		"subject": &FieldTypeSupport{"Reference", false, true},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"authored": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"source": &FieldTypeSupport{"Reference", false, true},
+		"item": &FieldTypeSupport{"QuestionnaireResponseItemComponent", true, false},
 
 	}
 }

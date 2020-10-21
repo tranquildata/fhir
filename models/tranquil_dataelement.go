@@ -28,38 +28,38 @@ func (fhirVal *DataElement) FieldByLowerName(nameLower string) (interface{}, boo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "url":
-		return fhirVal.Url, true
-	case "contact":
-		return fhirVal.Contact, true
-	case "copyright":
-		return fhirVal.Copyright, true
+	case "title":
+		return fhirVal.Title, true
+	case "stringency":
+		return fhirVal.Stringency, true
 	case "mapping":
 		return fhirVal.Mapping, true
-	case "date":
-		return fhirVal.Date, true
-	case "publisher":
-		return fhirVal.Publisher, true
-	case "status":
-		return fhirVal.Status, true
+	case "url":
+		return fhirVal.Url, true
 	case "experimental":
 		return fhirVal.Experimental, true
+	case "element":
+		return fhirVal.Element, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "version":
+		return fhirVal.Version, true
+	case "status":
+		return fhirVal.Status, true
+	case "publisher":
+		return fhirVal.Publisher, true
+	case "contact":
+		return fhirVal.Contact, true
+	case "date":
+		return fhirVal.Date, true
 	case "name":
 		return fhirVal.Name, true
 	case "usecontext":
 		return fhirVal.UseContext, true
 	case "jurisdiction":
 		return fhirVal.Jurisdiction, true
-	case "stringency":
-		return fhirVal.Stringency, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "version":
-		return fhirVal.Version, true
-	case "title":
-		return fhirVal.Title, true
-	case "element":
-		return fhirVal.Element, true
+	case "copyright":
+		return fhirVal.Copyright, true
 
 	default:
 		return nil, false
@@ -79,22 +79,22 @@ func (fhirVal *DataElement) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"url": &FieldTypeSupport{"string", false, false},
-		"contact": &FieldTypeSupport{"ContactDetail", true, false},
-		"copyright": &FieldTypeSupport{"string", false, false},
+		"title": &FieldTypeSupport{"string", false, false},
+		"stringency": &FieldTypeSupport{"string", false, false},
 		"mapping": &FieldTypeSupport{"DataElementMappingComponent", true, false},
-		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"publisher": &FieldTypeSupport{"string", false, false},
-		"status": &FieldTypeSupport{"string", false, false},
+		"url": &FieldTypeSupport{"string", false, false},
 		"experimental": &FieldTypeSupport{"bool", false, true},
+		"element": &FieldTypeSupport{"ElementDefinition", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"version": &FieldTypeSupport{"string", false, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"publisher": &FieldTypeSupport{"string", false, false},
+		"contact": &FieldTypeSupport{"ContactDetail", true, false},
+		"date": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"name": &FieldTypeSupport{"string", false, false},
 		"usecontext": &FieldTypeSupport{"UsageContext", true, false},
 		"jurisdiction": &FieldTypeSupport{"CodeableConcept", true, false},
-		"stringency": &FieldTypeSupport{"string", false, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"version": &FieldTypeSupport{"string", false, false},
-		"title": &FieldTypeSupport{"string", false, false},
-		"element": &FieldTypeSupport{"ElementDefinition", true, false},
+		"copyright": &FieldTypeSupport{"string", false, false},
 
 	}
 }

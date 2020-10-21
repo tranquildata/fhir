@@ -28,54 +28,54 @@ func (fhirVal *DeviceRequest) FieldByLowerName(nameLower string) (interface{}, b
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "definition":
-		return fhirVal.Definition, true
+	case "priorrequest":
+		return fhirVal.PriorRequest, true
+	case "groupidentifier":
+		return fhirVal.GroupIdentifier, true
 	case "status":
 		return fhirVal.Status, true
-	case "occurrenceperiod":
-		return fhirVal.OccurrencePeriod, true
-	case "occurrencetiming":
-		return fhirVal.OccurrenceTiming, true
-	case "reasoncode":
-		return fhirVal.ReasonCode, true
-	case "note":
-		return fhirVal.Note, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "intent":
+		return fhirVal.Intent, true
 	case "priority":
 		return fhirVal.Priority, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "occurrenceperiod":
+		return fhirVal.OccurrencePeriod, true
+	case "requester":
+		return fhirVal.Requester, true
+	case "relevanthistory":
+		return fhirVal.RelevantHistory, true
+	case "definition":
+		return fhirVal.Definition, true
+	case "basedon":
+		return fhirVal.BasedOn, true
 	case "codereference":
 		return fhirVal.CodeReference, true
+	case "codecodeableconcept":
+		return fhirVal.CodeCodeableConcept, true
+	case "occurrencedatetime":
+		return fhirVal.OccurrenceDateTime, true
+	case "occurrencetiming":
+		return fhirVal.OccurrenceTiming, true
+	case "authoredon":
+		return fhirVal.AuthoredOn, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "context":
 		return fhirVal.Context, true
 	case "performertype":
 		return fhirVal.PerformerType, true
 	case "performer":
 		return fhirVal.Performer, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "codecodeableconcept":
-		return fhirVal.CodeCodeableConcept, true
-	case "occurrencedatetime":
-		return fhirVal.OccurrenceDateTime, true
-	case "authoredon":
-		return fhirVal.AuthoredOn, true
-	case "requester":
-		return fhirVal.Requester, true
-	case "relevanthistory":
-		return fhirVal.RelevantHistory, true
-	case "priorrequest":
-		return fhirVal.PriorRequest, true
-	case "groupidentifier":
-		return fhirVal.GroupIdentifier, true
-	case "intent":
-		return fhirVal.Intent, true
-	case "subject":
-		return fhirVal.Subject, true
 	case "reasonreference":
 		return fhirVal.ReasonReference, true
+	case "reasoncode":
+		return fhirVal.ReasonCode, true
 	case "supportinginfo":
 		return fhirVal.SupportingInfo, true
+	case "note":
+		return fhirVal.Note, true
 
 	default:
 		return nil, false
@@ -95,30 +95,30 @@ func (fhirVal *DeviceRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"definition": &FieldTypeSupport{"Reference", true, false},
+		"priorrequest": &FieldTypeSupport{"Reference", true, false},
+		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
 		"status": &FieldTypeSupport{"string", false, false},
-		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
-		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"intent": &FieldTypeSupport{"CodeableConcept", false, true},
 		"priority": &FieldTypeSupport{"string", false, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
+		"requester": &FieldTypeSupport{"DeviceRequestRequesterComponent", false, true},
+		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
+		"definition": &FieldTypeSupport{"Reference", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
 		"codereference": &FieldTypeSupport{"Reference", false, true},
+		"codecodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
+		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
+		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"context": &FieldTypeSupport{"Reference", false, true},
 		"performertype": &FieldTypeSupport{"CodeableConcept", false, true},
 		"performer": &FieldTypeSupport{"Reference", false, true},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"codecodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
-		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"requester": &FieldTypeSupport{"DeviceRequestRequesterComponent", false, true},
-		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
-		"priorrequest": &FieldTypeSupport{"Reference", true, false},
-		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
-		"intent": &FieldTypeSupport{"CodeableConcept", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
 		"reasonreference": &FieldTypeSupport{"Reference", true, false},
+		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
 		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
 
 	}
 }

@@ -28,54 +28,54 @@ func (fhirVal *ReferralRequest) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "requester":
-		return fhirVal.Requester, true
-	case "specialty":
-		return fhirVal.Specialty, true
+	case "recipient":
+		return fhirVal.Recipient, true
 	case "supportinginfo":
 		return fhirVal.SupportingInfo, true
-	case "relevanthistory":
-		return fhirVal.RelevantHistory, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "basedon":
-		return fhirVal.BasedOn, true
-	case "intent":
-		return fhirVal.Intent, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "description":
-		return fhirVal.Description, true
-	case "servicerequested":
-		return fhirVal.ServiceRequested, true
-	case "authoredon":
-		return fhirVal.AuthoredOn, true
-	case "reasoncode":
-		return fhirVal.ReasonCode, true
-	case "reasonreference":
-		return fhirVal.ReasonReference, true
 	case "definition":
 		return fhirVal.Definition, true
 	case "replaces":
 		return fhirVal.Replaces, true
-	case "groupidentifier":
-		return fhirVal.GroupIdentifier, true
-	case "status":
-		return fhirVal.Status, true
-	case "note":
-		return fhirVal.Note, true
+	case "intent":
+		return fhirVal.Intent, true
 	case "occurrenceperiod":
 		return fhirVal.OccurrencePeriod, true
-	case "recipient":
-		return fhirVal.Recipient, true
+	case "authoredon":
+		return fhirVal.AuthoredOn, true
+	case "requester":
+		return fhirVal.Requester, true
+	case "reasoncode":
+		return fhirVal.ReasonCode, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "basedon":
+		return fhirVal.BasedOn, true
+	case "groupidentifier":
+		return fhirVal.GroupIdentifier, true
 	case "type":
 		return fhirVal.Type, true
+	case "servicerequested":
+		return fhirVal.ServiceRequested, true
+	case "subject":
+		return fhirVal.Subject, true
 	case "priority":
 		return fhirVal.Priority, true
-	case "context":
-		return fhirVal.Context, true
 	case "occurrencedatetime":
 		return fhirVal.OccurrenceDateTime, true
+	case "relevanthistory":
+		return fhirVal.RelevantHistory, true
+	case "status":
+		return fhirVal.Status, true
+	case "context":
+		return fhirVal.Context, true
+	case "specialty":
+		return fhirVal.Specialty, true
+	case "reasonreference":
+		return fhirVal.ReasonReference, true
+	case "description":
+		return fhirVal.Description, true
 
 	default:
 		return nil, false
@@ -95,30 +95,30 @@ func (fhirVal *ReferralRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"requester": &FieldTypeSupport{"ReferralRequestRequesterComponent", false, true},
-		"specialty": &FieldTypeSupport{"CodeableConcept", false, true},
+		"recipient": &FieldTypeSupport{"Reference", true, false},
 		"supportinginfo": &FieldTypeSupport{"Reference", true, false},
-		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"intent": &FieldTypeSupport{"string", false, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"description": &FieldTypeSupport{"string", false, false},
-		"servicerequested": &FieldTypeSupport{"CodeableConcept", true, false},
-		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
-		"reasonreference": &FieldTypeSupport{"Reference", true, false},
 		"definition": &FieldTypeSupport{"Reference", true, false},
 		"replaces": &FieldTypeSupport{"Reference", true, false},
-		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
-		"note": &FieldTypeSupport{"Annotation", true, false},
+		"intent": &FieldTypeSupport{"string", false, false},
 		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"recipient": &FieldTypeSupport{"Reference", true, false},
+		"authoredon": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"requester": &FieldTypeSupport{"ReferralRequestRequesterComponent", false, true},
+		"reasoncode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"groupidentifier": &FieldTypeSupport{"Identifier", false, true},
 		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"servicerequested": &FieldTypeSupport{"CodeableConcept", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 		"priority": &FieldTypeSupport{"string", false, false},
-		"context": &FieldTypeSupport{"Reference", false, true},
 		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"relevanthistory": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"context": &FieldTypeSupport{"Reference", false, true},
+		"specialty": &FieldTypeSupport{"CodeableConcept", false, true},
+		"reasonreference": &FieldTypeSupport{"Reference", true, false},
+		"description": &FieldTypeSupport{"string", false, false},
 
 	}
 }

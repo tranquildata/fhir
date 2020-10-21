@@ -28,32 +28,32 @@ func (fhirVal *DeviceUseStatement) FieldByLowerName(nameLower string) (interface
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "recordedon":
+		return fhirVal.RecordedOn, true
+	case "indication":
+		return fhirVal.Indication, true
 	case "status":
 		return fhirVal.Status, true
 	case "whenused":
 		return fhirVal.WhenUsed, true
-	case "recordedon":
-		return fhirVal.RecordedOn, true
-	case "source":
-		return fhirVal.Source, true
-	case "note":
-		return fhirVal.Note, true
-	case "subject":
-		return fhirVal.Subject, true
 	case "timingtiming":
 		return fhirVal.TimingTiming, true
 	case "timingperiod":
 		return fhirVal.TimingPeriod, true
-	case "timingdatetime":
-		return fhirVal.TimingDateTime, true
 	case "device":
 		return fhirVal.Device, true
-	case "indication":
-		return fhirVal.Indication, true
 	case "bodysite":
 		return fhirVal.BodySite, true
+	case "note":
+		return fhirVal.Note, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "timingdatetime":
+		return fhirVal.TimingDateTime, true
+	case "source":
+		return fhirVal.Source, true
 
 	default:
 		return nil, false
@@ -73,19 +73,19 @@ func (fhirVal *DeviceUseStatement) FieldsToTypes() map[string]*FieldTypeSupport 
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"recordedon": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"indication": &FieldTypeSupport{"CodeableConcept", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"whenused": &FieldTypeSupport{"Period", false, true},
-		"recordedon": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"source": &FieldTypeSupport{"Reference", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
 		"timingtiming": &FieldTypeSupport{"Timing", false, true},
 		"timingperiod": &FieldTypeSupport{"Period", false, true},
-		"timingdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"device": &FieldTypeSupport{"Reference", false, true},
-		"indication": &FieldTypeSupport{"CodeableConcept", true, false},
 		"bodysite": &FieldTypeSupport{"CodeableConcept", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"timingdatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"source": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

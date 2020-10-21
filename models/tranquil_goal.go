@@ -28,38 +28,38 @@ func (fhirVal *Goal) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "expressedby":
-		return fhirVal.ExpressedBy, true
-	case "category":
-		return fhirVal.Category, true
-	case "priority":
-		return fhirVal.Priority, true
 	case "description":
 		return fhirVal.Description, true
+	case "addresses":
+		return fhirVal.Addresses, true
+	case "outcomecode":
+		return fhirVal.OutcomeCode, true
+	case "outcomereference":
+		return fhirVal.OutcomeReference, true
+	case "category":
+		return fhirVal.Category, true
+	case "subject":
+		return fhirVal.Subject, true
 	case "startdate":
 		return fhirVal.StartDate, true
-	case "statusdate":
-		return fhirVal.StatusDate, true
-	case "status":
-		return fhirVal.Status, true
+	case "expressedby":
+		return fhirVal.ExpressedBy, true
+	case "note":
+		return fhirVal.Note, true
+	case "priority":
+		return fhirVal.Priority, true
 	case "startcodeableconcept":
 		return fhirVal.StartCodeableConcept, true
 	case "target":
 		return fhirVal.Target, true
-	case "addresses":
-		return fhirVal.Addresses, true
-	case "identifier":
-		return fhirVal.Identifier, true
+	case "statusdate":
+		return fhirVal.StatusDate, true
 	case "statusreason":
 		return fhirVal.StatusReason, true
-	case "outcomereference":
-		return fhirVal.OutcomeReference, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "note":
-		return fhirVal.Note, true
-	case "outcomecode":
-		return fhirVal.OutcomeCode, true
+	case "identifier":
+		return fhirVal.Identifier, true
+	case "status":
+		return fhirVal.Status, true
 
 	default:
 		return nil, false
@@ -79,22 +79,22 @@ func (fhirVal *Goal) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"expressedby": &FieldTypeSupport{"Reference", false, true},
-		"category": &FieldTypeSupport{"CodeableConcept", true, false},
-		"priority": &FieldTypeSupport{"CodeableConcept", false, true},
 		"description": &FieldTypeSupport{"CodeableConcept", false, true},
+		"addresses": &FieldTypeSupport{"Reference", true, false},
+		"outcomecode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"outcomereference": &FieldTypeSupport{"Reference", true, false},
+		"category": &FieldTypeSupport{"CodeableConcept", true, false},
+		"subject": &FieldTypeSupport{"Reference", false, true},
 		"startdate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"statusdate": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"status": &FieldTypeSupport{"string", false, false},
+		"expressedby": &FieldTypeSupport{"Reference", false, true},
+		"note": &FieldTypeSupport{"Annotation", true, false},
+		"priority": &FieldTypeSupport{"CodeableConcept", false, true},
 		"startcodeableconcept": &FieldTypeSupport{"CodeableConcept", false, true},
 		"target": &FieldTypeSupport{"GoalTargetComponent", false, true},
-		"addresses": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"statusdate": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"statusreason": &FieldTypeSupport{"string", false, false},
-		"outcomereference": &FieldTypeSupport{"Reference", true, false},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"note": &FieldTypeSupport{"Annotation", true, false},
-		"outcomecode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"identifier": &FieldTypeSupport{"Identifier", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
 
 	}
 }

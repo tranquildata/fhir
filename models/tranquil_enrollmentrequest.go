@@ -28,12 +28,6 @@ func (fhirVal *EnrollmentRequest) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "organization":
-		return fhirVal.Organization, true
-	case "subject":
-		return fhirVal.Subject, true
-	case "coverage":
-		return fhirVal.Coverage, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "status":
@@ -44,6 +38,12 @@ func (fhirVal *EnrollmentRequest) FieldByLowerName(nameLower string) (interface{
 		return fhirVal.Insurer, true
 	case "provider":
 		return fhirVal.Provider, true
+	case "organization":
+		return fhirVal.Organization, true
+	case "subject":
+		return fhirVal.Subject, true
+	case "coverage":
+		return fhirVal.Coverage, true
 
 	default:
 		return nil, false
@@ -63,14 +63,14 @@ func (fhirVal *EnrollmentRequest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"organization": &FieldTypeSupport{"Reference", false, true},
-		"subject": &FieldTypeSupport{"Reference", false, true},
-		"coverage": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"status": &FieldTypeSupport{"string", false, false},
 		"created": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"insurer": &FieldTypeSupport{"Reference", false, true},
 		"provider": &FieldTypeSupport{"Reference", false, true},
+		"organization": &FieldTypeSupport{"Reference", false, true},
+		"subject": &FieldTypeSupport{"Reference", false, true},
+		"coverage": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

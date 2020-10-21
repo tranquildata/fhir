@@ -28,18 +28,18 @@ func (fhirVal *ImagingManifest) FieldByLowerName(nameLower string) (interface{},
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "authoringtime":
-		return fhirVal.AuthoringTime, true
-	case "author":
-		return fhirVal.Author, true
 	case "description":
 		return fhirVal.Description, true
 	case "study":
 		return fhirVal.Study, true
 	case "identifier":
 		return fhirVal.Identifier, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "authoringtime":
+		return fhirVal.AuthoringTime, true
+	case "author":
+		return fhirVal.Author, true
 
 	default:
 		return nil, false
@@ -59,12 +59,12 @@ func (fhirVal *ImagingManifest) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"authoringtime": &FieldTypeSupport{"FHIRDateTime", false, true},
-		"author": &FieldTypeSupport{"Reference", false, true},
 		"description": &FieldTypeSupport{"string", false, false},
 		"study": &FieldTypeSupport{"ImagingManifestStudyComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", false, true},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"authoringtime": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"author": &FieldTypeSupport{"Reference", false, true},
 
 	}
 }

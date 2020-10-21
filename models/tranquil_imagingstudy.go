@@ -28,44 +28,44 @@ func (fhirVal *ImagingStudy) FieldByLowerName(nameLower string) (interface{}, bo
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "modalitylist":
-		return fhirVal.ModalityList, true
-	case "procedurereference":
-		return fhirVal.ProcedureReference, true
-	case "reason":
-		return fhirVal.Reason, true
-	case "endpoint":
-		return fhirVal.Endpoint, true
-	case "numberofinstances":
-		return fhirVal.NumberOfInstances, true
-	case "procedurecode":
-		return fhirVal.ProcedureCode, true
-	case "description":
-		return fhirVal.Description, true
-	case "patient":
-		return fhirVal.Patient, true
-	case "started":
-		return fhirVal.Started, true
+	case "basedon":
+		return fhirVal.BasedOn, true
 	case "referrer":
 		return fhirVal.Referrer, true
-	case "interpreter":
-		return fhirVal.Interpreter, true
-	case "numberofseries":
-		return fhirVal.NumberOfSeries, true
-	case "series":
-		return fhirVal.Series, true
-	case "accession":
-		return fhirVal.Accession, true
+	case "endpoint":
+		return fhirVal.Endpoint, true
+	case "uid":
+		return fhirVal.Uid, true
 	case "availability":
 		return fhirVal.Availability, true
 	case "context":
 		return fhirVal.Context, true
-	case "uid":
-		return fhirVal.Uid, true
+	case "description":
+		return fhirVal.Description, true
+	case "series":
+		return fhirVal.Series, true
+	case "procedurecode":
+		return fhirVal.ProcedureCode, true
+	case "reason":
+		return fhirVal.Reason, true
+	case "started":
+		return fhirVal.Started, true
+	case "interpreter":
+		return fhirVal.Interpreter, true
+	case "numberofinstances":
+		return fhirVal.NumberOfInstances, true
+	case "patient":
+		return fhirVal.Patient, true
+	case "numberofseries":
+		return fhirVal.NumberOfSeries, true
+	case "procedurereference":
+		return fhirVal.ProcedureReference, true
+	case "accession":
+		return fhirVal.Accession, true
 	case "identifier":
 		return fhirVal.Identifier, true
-	case "basedon":
-		return fhirVal.BasedOn, true
+	case "modalitylist":
+		return fhirVal.ModalityList, true
 
 	default:
 		return nil, false
@@ -85,25 +85,25 @@ func (fhirVal *ImagingStudy) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"modalitylist": &FieldTypeSupport{"Coding", true, false},
-		"procedurereference": &FieldTypeSupport{"Reference", true, false},
-		"reason": &FieldTypeSupport{"CodeableConcept", false, true},
-		"endpoint": &FieldTypeSupport{"Reference", true, false},
-		"numberofinstances": &FieldTypeSupport{"uint32", false, true},
-		"procedurecode": &FieldTypeSupport{"CodeableConcept", true, false},
-		"description": &FieldTypeSupport{"string", false, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
-		"started": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"basedon": &FieldTypeSupport{"Reference", true, false},
 		"referrer": &FieldTypeSupport{"Reference", false, true},
-		"interpreter": &FieldTypeSupport{"Reference", true, false},
-		"numberofseries": &FieldTypeSupport{"uint32", false, true},
-		"series": &FieldTypeSupport{"ImagingStudySeriesComponent", true, false},
-		"accession": &FieldTypeSupport{"Identifier", false, true},
+		"endpoint": &FieldTypeSupport{"Reference", true, false},
+		"uid": &FieldTypeSupport{"string", false, false},
 		"availability": &FieldTypeSupport{"string", false, false},
 		"context": &FieldTypeSupport{"Reference", false, true},
-		"uid": &FieldTypeSupport{"string", false, false},
+		"description": &FieldTypeSupport{"string", false, false},
+		"series": &FieldTypeSupport{"ImagingStudySeriesComponent", true, false},
+		"procedurecode": &FieldTypeSupport{"CodeableConcept", true, false},
+		"reason": &FieldTypeSupport{"CodeableConcept", false, true},
+		"started": &FieldTypeSupport{"FHIRDateTime", false, true},
+		"interpreter": &FieldTypeSupport{"Reference", true, false},
+		"numberofinstances": &FieldTypeSupport{"uint32", false, true},
+		"patient": &FieldTypeSupport{"Reference", false, true},
+		"numberofseries": &FieldTypeSupport{"uint32", false, true},
+		"procedurereference": &FieldTypeSupport{"Reference", true, false},
+		"accession": &FieldTypeSupport{"Identifier", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
-		"basedon": &FieldTypeSupport{"Reference", true, false},
+		"modalitylist": &FieldTypeSupport{"Coding", true, false},
 
 	}
 }

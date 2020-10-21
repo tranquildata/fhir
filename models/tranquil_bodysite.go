@@ -28,6 +28,10 @@ func (fhirVal *BodySite) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "code":
+		return fhirVal.Code, true
+	case "qualifier":
+		return fhirVal.Qualifier, true
 	case "description":
 		return fhirVal.Description, true
 	case "image":
@@ -38,10 +42,6 @@ func (fhirVal *BodySite) FieldByLowerName(nameLower string) (interface{}, bool) 
 		return fhirVal.Identifier, true
 	case "active":
 		return fhirVal.Active, true
-	case "code":
-		return fhirVal.Code, true
-	case "qualifier":
-		return fhirVal.Qualifier, true
 
 	default:
 		return nil, false
@@ -61,13 +61,13 @@ func (fhirVal *BodySite) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
+		"qualifier": &FieldTypeSupport{"CodeableConcept", true, false},
 		"description": &FieldTypeSupport{"string", false, false},
 		"image": &FieldTypeSupport{"Attachment", true, false},
 		"patient": &FieldTypeSupport{"Reference", false, true},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"active": &FieldTypeSupport{"bool", false, true},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"qualifier": &FieldTypeSupport{"CodeableConcept", true, false},
 
 	}
 }

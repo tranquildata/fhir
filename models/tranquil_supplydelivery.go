@@ -28,32 +28,32 @@ func (fhirVal *SupplyDelivery) FieldByLowerName(nameLower string) (interface{}, 
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
+	case "identifier":
+		return fhirVal.Identifier, true
 	case "basedon":
 		return fhirVal.BasedOn, true
-	case "partof":
-		return fhirVal.PartOf, true
-	case "status":
-		return fhirVal.Status, true
-	case "patient":
-		return fhirVal.Patient, true
+	case "type":
+		return fhirVal.Type, true
+	case "supplieditem":
+		return fhirVal.SuppliedItem, true
+	case "occurrencetiming":
+		return fhirVal.OccurrenceTiming, true
 	case "supplier":
 		return fhirVal.Supplier, true
 	case "destination":
 		return fhirVal.Destination, true
 	case "receiver":
 		return fhirVal.Receiver, true
-	case "identifier":
-		return fhirVal.Identifier, true
-	case "type":
-		return fhirVal.Type, true
-	case "supplieditem":
-		return fhirVal.SuppliedItem, true
+	case "partof":
+		return fhirVal.PartOf, true
+	case "status":
+		return fhirVal.Status, true
+	case "patient":
+		return fhirVal.Patient, true
 	case "occurrencedatetime":
 		return fhirVal.OccurrenceDateTime, true
 	case "occurrenceperiod":
 		return fhirVal.OccurrencePeriod, true
-	case "occurrencetiming":
-		return fhirVal.OccurrenceTiming, true
 
 	default:
 		return nil, false
@@ -73,19 +73,19 @@ func (fhirVal *SupplyDelivery) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
+		"identifier": &FieldTypeSupport{"Identifier", false, true},
 		"basedon": &FieldTypeSupport{"Reference", true, false},
-		"partof": &FieldTypeSupport{"Reference", true, false},
-		"status": &FieldTypeSupport{"string", false, false},
-		"patient": &FieldTypeSupport{"Reference", false, true},
+		"type": &FieldTypeSupport{"CodeableConcept", false, true},
+		"supplieditem": &FieldTypeSupport{"SupplyDeliverySuppliedItemComponent", false, true},
+		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
 		"supplier": &FieldTypeSupport{"Reference", false, true},
 		"destination": &FieldTypeSupport{"Reference", false, true},
 		"receiver": &FieldTypeSupport{"Reference", true, false},
-		"identifier": &FieldTypeSupport{"Identifier", false, true},
-		"type": &FieldTypeSupport{"CodeableConcept", false, true},
-		"supplieditem": &FieldTypeSupport{"SupplyDeliverySuppliedItemComponent", false, true},
+		"partof": &FieldTypeSupport{"Reference", true, false},
+		"status": &FieldTypeSupport{"string", false, false},
+		"patient": &FieldTypeSupport{"Reference", false, true},
 		"occurrencedatetime": &FieldTypeSupport{"FHIRDateTime", false, true},
 		"occurrenceperiod": &FieldTypeSupport{"Period", false, true},
-		"occurrencetiming": &FieldTypeSupport{"Timing", false, true},
 
 	}
 }

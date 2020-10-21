@@ -28,22 +28,22 @@ func (fhirVal *Group) FieldByLowerName(nameLower string) (interface{}, bool) {
 		return fhirVal.Extension, true
 	case "modifierextension":
 		return fhirVal.ModifierExtension, true
-	case "name":
-		return fhirVal.Name, true
-	case "quantity":
-		return fhirVal.Quantity, true
-	case "characteristic":
-		return fhirVal.Characteristic, true
+	case "active":
+		return fhirVal.Active, true
+	case "code":
+		return fhirVal.Code, true
 	case "member":
 		return fhirVal.Member, true
 	case "identifier":
 		return fhirVal.Identifier, true
 	case "actual":
 		return fhirVal.Actual, true
-	case "code":
-		return fhirVal.Code, true
-	case "active":
-		return fhirVal.Active, true
+	case "name":
+		return fhirVal.Name, true
+	case "quantity":
+		return fhirVal.Quantity, true
+	case "characteristic":
+		return fhirVal.Characteristic, true
 	case "type":
 		return fhirVal.Type, true
 
@@ -65,14 +65,14 @@ func (fhirVal *Group) FieldsToTypes() map[string]*FieldTypeSupport {
 		"Contained": &FieldTypeSupport{"Containedresources", false, false},
 		"extension": &FieldTypeSupport{"Extension", true, false},
 		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-		"name": &FieldTypeSupport{"string", false, false},
-		"quantity": &FieldTypeSupport{"uint32", false, true},
-		"characteristic": &FieldTypeSupport{"GroupCharacteristicComponent", true, false},
+		"active": &FieldTypeSupport{"bool", false, true},
+		"code": &FieldTypeSupport{"CodeableConcept", false, true},
 		"member": &FieldTypeSupport{"GroupMemberComponent", true, false},
 		"identifier": &FieldTypeSupport{"Identifier", true, false},
 		"actual": &FieldTypeSupport{"bool", false, true},
-		"code": &FieldTypeSupport{"CodeableConcept", false, true},
-		"active": &FieldTypeSupport{"bool", false, true},
+		"name": &FieldTypeSupport{"string", false, false},
+		"quantity": &FieldTypeSupport{"uint32", false, true},
+		"characteristic": &FieldTypeSupport{"GroupCharacteristicComponent", true, false},
 		"type": &FieldTypeSupport{"string", false, false},
 
 	}
