@@ -5,7 +5,6 @@
 package utils
 
 import (
-	"io/ioutil"
 	"testing"
 )
 
@@ -23,10 +22,6 @@ func TestThatStructsCanBeParsed(t *testing.T) {
 	}
 	if len(emitted) == 0 {
 		t.Errorf("emitted was empty")
-	}
-	err = ioutil.WriteFile("../models/tranquil_activitydefinition.go", []byte(emitted), 0644)
-	if err != nil {
-		t.Errorf("error: %v", err)
 	}
 }
 
