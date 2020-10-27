@@ -16,93 +16,183 @@ import (
 
 //Format with the package name and the original type's import string
 const FileHeaderMaterial = `
-package %s
+ package %s
+ 
+ import (
+	 "fmt"
+ )
+ 
+ `
 
-`
+const FileHeaderMaterialForEOB = `
+ package %s
+ 
+ import (
+	 "encoding/json"
+	 "fmt"
+	 "strings"
+ )
+ 
+ `
 
 const TupleNameDomainResource = `
-func (fhirVal *%s) TupleName() (id string, resourceType string) {
-	return fhirVal.DomainResource.Resource.Id, fhirVal.DomainResource.Resource.ResourceType
-}
-`
+ func (fhirVal *%s) TupleName() (id string, resourceType string) {
+	 return fhirVal.DomainResource.Resource.Id, fhirVal.DomainResource.Resource.ResourceType
+ }
+ `
 
 const TupleNameResource = `
-func (fhirVal *%s) TupleName() (id string, resourceType string) {
-	return fhirVal.Resource.Id, fhirVal.Resource.ResourceType
-}
-`
+ func (fhirVal *%s) TupleName() (id string, resourceType string) {
+	 return fhirVal.Resource.Id, fhirVal.Resource.ResourceType
+ }
+ `
 
 //Need to format with the actual struct type name
 const FieldToTypesPreamble = `
-func (fhirVal *%s) FieldsToTypes() map[string]*FieldTypeSupport {
-	return map[string]*FieldTypeSupport {
-
-	`
+ func (fhirVal *%s) FieldsToTypes() map[string]*FieldTypeSupport {
+	 return map[string]*FieldTypeSupport {
+ 
+	 `
 
 const FieldToTypesPostamble = `
-	}
-}
-`
+	 }
+ }
+ `
 
 //Need to format with lowercase fieldname, type name, array flag (bool), struct pointer flag (bool)
 const FieldToTypesEntry = `		"%s": &FieldTypeSupport{"%s", %t, %t},
-`
+ `
 
 //Need to format with the actual struct type name
 const FieldByLowerNamePreamble = `
-func (fhirVal *%s) FieldByLowerName(nameLower string) (interface{}, bool) {
-	switch nameLower {
-`
+ func (fhirVal *%s) FieldByLowerName(nameLower string) (interface{}, bool) {
+	 switch nameLower {
+ `
 
 const FieldByLowerNamePostamble = `
-	default:
-		return nil, false
-	}
-}
-`
+	 default:
+		 return nil, false
+	 }
+ }
+ `
 
 //Need to format with lower name, struct type name, actual field name
 const FieldByLowerNameEntry = `	case "%s":
-		return fhirVal.%s, true
-`
+		 return fhirVal.%s, true
+ `
 
 const ResourceFields = `
-	case "resourcetype":
-		return fhirVal.ResourceType, true
-	case "id":
-		return fhirVal.Id, true
-	case "meta":
-		return fhirVal.Meta, true
-	case "implicitrules":
-		return fhirVal.ImplicitRules, true
-	case "language":
-		return fhirVal.Language, true
-`
+	 case "resourcetype":
+		 return fhirVal.ResourceType, true
+	 case "id":
+		 return fhirVal.Id, true
+	 case "meta":
+		 return fhirVal.Meta, true
+	 case "implicitrules":
+		 return fhirVal.ImplicitRules, true
+	 case "language":
+		 return fhirVal.Language, true
+ `
 
 const ResourceFieldMappings = `		"resourcetype": &FieldTypeSupport{"string", false, false},
-		"id": &FieldTypeSupport{"string", false, false},
-		"meta": &FieldTypeSupport{"Meta", false, true},
-		"implicitrules": &FieldTypeSupport{"string", false, false},
-		"language": &FieldTypeSupport{"string", false, false},
-`
+		 "id": &FieldTypeSupport{"string", false, false},
+		 "meta": &FieldTypeSupport{"Meta", false, true},
+		 "implicitrules": &FieldTypeSupport{"string", false, false},
+		 "language": &FieldTypeSupport{"string", false, false},
+ `
 
 const DomainResourceFields = ResourceFields + `
-	case "text":
-		return fhirVal.Text, true
-	case "contained":
-		return fhirVal.Contained, true
-	case "extension":
-		return fhirVal.Extension, true
-	case "modifierextension":
-		return fhirVal.ModifierExtension, true
-`
+	 case "text":
+		 return fhirVal.Text, true
+	 case "contained":
+		 return fhirVal.Contained, true
+	 case "extension":
+		 return fhirVal.Extension, true
+	 case "modifierextension":
+		 return fhirVal.ModifierExtension, true
+ `
 
 const DomainResourceFieldMappings = ResourceFieldMappings + `
-		"text": &FieldTypeSupport{"Narrative", false, true},
-		"Contained": &FieldTypeSupport{"Containedresources", false, false},
-		"extension": &FieldTypeSupport{"Extension", true, false},
-		"modifierextension": &FieldTypeSupport{"Extension", true, false},						
-`
+		 "text": &FieldTypeSupport{"Narrative", false, true},
+		 "Contained": &FieldTypeSupport{"Containedresources", false, false},
+		 "extension": &FieldTypeSupport{"Extension", true, false},
+		 "modifierextension": &FieldTypeSupport{"Extension", true, false},						
+ `
+
+//Needs to be formatted with the struct type
+const TruncateFunctionForReals = `
+ func (fhirVal *%s) Truncate(fieldToKeep string) (TupleSupport, error) {
+	 results, err := ApplyFieldName(fieldToKeep, fhirVal)
+	 if err != nil {
+		 return nil, err
+	 }
+	 /* TODO: need to reconstruct structure from fieldtoKeep
+	 structPtr := &%s{}
+	 err = json.Unmarshal(bytez, &structPtr)
+	 if err != nil {
+		 return nil, err
+	 }
+	 return structPtr, nil
+	 */
+ }
+ `
+
+//Needs to be formatted with the struct type
+const TruncateFunctionForEOB = `
+ func (fhirVal *ExplanationOfBenefit) Truncate(fieldToKeep string) (TupleSupport, error) {
+	 if strings.ToLower(fieldToKeep) == "benefitbalance" {
+		 fieldToKeep = "{.benefitBalance}"
+	 } else if !strings.HasPrefix(fieldToKeep, "{.benefitBalance[") {
+		 return nil, fmt.Errorf("Not yet supported")
+	 }
+	 results, err := ApplyFieldName(fieldToKeep, fhirVal)
+	 if err != nil {
+		 return nil, err
+	 }
+	 structPtr := &ExplanationOfBenefit {
+		 DomainResource: DomainResource{
+			 Resource: Resource{
+				 ResourceType: fhirVal.DomainResource.Resource.ResourceType,
+				 Id: fhirVal.DomainResource.Resource.Id,
+			 },
+		 },
+	 }
+	 benefitBal := []ExplanationOfBenefitBenefitBalanceComponent{}
+	 for _, benefit := range results {
+		 var asBytes []byte
+		 asBennies := []ExplanationOfBenefitBenefitBalanceComponent{}
+		 switch asType := benefit.(type) {
+		 case map[string]interface{}:
+			 if asBytes, err = json.Marshal(asType); err != nil {
+				 return nil, err
+			 } else {
+				 asBennies = append(asBennies, ExplanationOfBenefitBenefitBalanceComponent{})
+				 if err = json.Unmarshal(asBytes, &asBennies[0]); err != nil {
+					 return nil, err
+				 }
+			 }
+		 case []interface{}:
+			 if asBytes, err = json.Marshal(asType); err != nil {
+				 return nil, err
+			 } else if err = json.Unmarshal(asBytes, &asBennies); err != nil {
+				 return nil, err
+			 }
+		 default:
+			 return nil, fmt.Errorf("invalid type encountered")
+		 }
+		 benefitBal = append(benefitBal, asBennies...)
+	 }
+	 structPtr.BenefitBalance = benefitBal
+	 return structPtr, nil
+ }
+ `
+
+//needs to be formatted with the struct tyep
+const TruncateFunction = `
+ func (fhirVal *%s) Truncate(fieldToKeep string) (TupleSupport, error) {
+	 return nil, fmt.Errorf("Not yet supported")
+ }
+ `
 
 type fhirStruct struct {
 	name              string
@@ -194,7 +284,10 @@ func ParseFhirModel(filename string) (*fhirStruct, error) {
 	return theStruct, nil
 }
 
-func EmitFileHeader(packageName string) string {
+func EmitFileHeader(packageName string, fhirVal *fhirStruct) string {
+	if fhirVal.name == "ExplanationOfBenefit" {
+		return fmt.Sprintf(FileHeaderMaterialForEOB, packageName)
+	}
 	return fmt.Sprintf(FileHeaderMaterial, packageName)
 }
 
@@ -265,12 +358,19 @@ func EmitTupleName(fhirType *fhirStruct) (string, error) {
 	return "", fmt.Errorf("No tuple name function found: %s", fhirType.name)
 }
 
+func EmitTruncate(fhirType *fhirStruct) string {
+	if fhirType.name == "ExplanationOfBenefit" {
+		return TruncateFunctionForEOB
+	}
+	return fmt.Sprintf(TruncateFunction, fhirType.name)
+}
+
 func EmitTupleCode(fhirType *fhirStruct, destPackage string) (string, error) {
 	bldr := strings.Builder{}
 	fieldToTypesBuilder := strings.Builder{}
 	fieldByLowerBuilder := strings.Builder{}
 	//@TODO: need to add inlined fields to fieldToTypes map
-	bldr.WriteString(EmitFileHeader(destPackage))
+	bldr.WriteString(EmitFileHeader(destPackage, fhirType))
 	tupleName, err := EmitTupleName(fhirType)
 	if err != nil {
 		return "", err
@@ -295,6 +395,7 @@ func EmitTupleCode(fhirType *fhirStruct, destPackage string) (string, error) {
 	fieldByLowerBuilder.WriteString(FieldByLowerNamePostamble)
 	bldr.WriteString(fieldByLowerBuilder.String())
 	bldr.WriteString(fieldToTypesBuilder.String())
+	bldr.WriteString(EmitTruncate(fhirType))
 	return bldr.String(), nil
 }
 
@@ -332,3 +433,5 @@ func ProcessDirectory(directory string, targetPackage string) ([]string, error) 
 	}
 	return processed, nil
 }
+
+//@TODO: need to have a lowercase to actual case map

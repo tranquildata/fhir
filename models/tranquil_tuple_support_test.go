@@ -1,6 +1,9 @@
 package models
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestTupleMethods(t *testing.T) {
 	thingie := &ActivityDefinition{
@@ -85,5 +88,136 @@ func TestTupleMethods(t *testing.T) {
 	}
 	if rTy != "blah" {
 		t.Errorf("Invalid resource type: %s", rTy)
+	}
+
+	results, err := ApplyFieldName("status", thingie)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(results) != 1 || results[0].(string) != "foobar" {
+		t.Errorf("Wrong value for status: %v", results)
+	}
+}
+
+func Test_thatSpecialEOBTruncateLogicWorks(t *testing.T) {
+	eob := &ExplanationOfBenefit{
+		DomainResource: DomainResource{
+			Resource: Resource{
+				ResourceType: "blah blah blah",
+				Id:           "not a uuid2",
+			},
+		},
+		BenefitBalance: []ExplanationOfBenefitBenefitBalanceComponent{
+			ExplanationOfBenefitBenefitBalanceComponent{
+				Name: "balance 1",
+				Financial: []ExplanationOfBenefitBenefitComponent{
+					ExplanationOfBenefitBenefitComponent{
+						BackboneElement: BackboneElement{
+							Element: Element{
+								Id: "fin 1",
+							},
+						},
+					},
+				},
+			},
+			ExplanationOfBenefitBenefitBalanceComponent{
+				Name: "balance 2",
+				Financial: []ExplanationOfBenefitBenefitComponent{
+					ExplanationOfBenefitBenefitComponent{
+						BackboneElement: BackboneElement{
+							Element: Element{
+								Id: "fin 2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	results, err := ApplyFieldName("{.benefitBalance[1]}", eob)
+	if err != nil {
+		t.Error(err)
+	}
+	structPtr := &ExplanationOfBenefit{
+		DomainResource: DomainResource{
+			Resource: Resource{
+				ResourceType: eob.DomainResource.Resource.ResourceType,
+				Id:           eob.DomainResource.Resource.Id,
+			},
+		},
+	}
+	benefitBal := []ExplanationOfBenefitBenefitBalanceComponent{}
+	for _, benefit := range results {
+		var asBytes []byte
+		asBennies := []ExplanationOfBenefitBenefitBalanceComponent{}
+		switch asType := benefit.(type) {
+		case map[string]interface{}:
+			if asBytes, err = json.Marshal(asType); err != nil {
+				t.Error(err)
+			} else {
+				asBennies = append(asBennies, ExplanationOfBenefitBenefitBalanceComponent{})
+				if err = json.Unmarshal(asBytes, &asBennies[0]); err != nil {
+					t.Error(err)
+				}
+			}
+		case []interface{}:
+			if asBytes, err = json.Marshal(asType); err != nil {
+				t.Error(err)
+			} else if err = json.Unmarshal(asBytes, &asBennies); err != nil {
+				t.Error(err)
+			}
+		default:
+			t.Errorf("invalid type encountered")
+		}
+		benefitBal = append(benefitBal, asBennies...)
+	}
+	structPtr.BenefitBalance = benefitBal
+}
+
+func Test_thatSpecialEOBHandlingWorks(t *testing.T) {
+	eob := &ExplanationOfBenefit{
+		DomainResource: DomainResource{
+			Resource: Resource{
+				ResourceType: "blah blah blah",
+				Id:           "not a uuid2",
+			},
+		},
+		BenefitBalance: []ExplanationOfBenefitBenefitBalanceComponent{
+			ExplanationOfBenefitBenefitBalanceComponent{
+				Name: "balance 1",
+				Financial: []ExplanationOfBenefitBenefitComponent{
+					ExplanationOfBenefitBenefitComponent{
+						BackboneElement: BackboneElement{
+							Element: Element{
+								Id: "fin 1",
+							},
+						},
+					},
+				},
+			},
+			ExplanationOfBenefitBenefitBalanceComponent{
+				Name: "balance 2",
+				Financial: []ExplanationOfBenefitBenefitComponent{
+					ExplanationOfBenefitBenefitComponent{
+						BackboneElement: BackboneElement{
+							Element: Element{
+								Id: "fin 2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	nu, err := eob.Truncate("{.benefitBalance[1]}")
+	if err != nil {
+		t.Error(err)
+	}
+	if asEob, ok := nu.(*ExplanationOfBenefit); !ok {
+		t.Errorf("invalid return type")
+	} else if len(asEob.BenefitBalance) != 1 {
+		t.Errorf("incorrect number of benefits: %d", len(asEob.BenefitBalance))
 	}
 }
